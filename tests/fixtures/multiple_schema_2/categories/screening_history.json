@@ -18,7 +18,7 @@
           "title": "Ever"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -42,7 +42,7 @@
           "title": "Never screened"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -66,7 +66,7 @@
           "title": "Never screened"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing4"
+          "$ref": "../common/defs.json#/$defs/missing4"
         }
       ]
     }

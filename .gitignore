@@ -1,1 +1,4 @@
+.idea/
 json-schema-data-dictionary/
+node_modules/
+dist/

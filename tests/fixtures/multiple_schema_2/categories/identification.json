@@ -6,7 +6,7 @@
   "type": "object",
   "properties": {
     "subject_id": {
-      "$ref": "../../common/defs.json#/$defs/subject_id"
+      "$ref": "../common/defs.json#/$defs/subject_id"
     },
     "id": {
       "type": "string",
@@ -17,7 +17,7 @@
       "title": "Date of data/sample collection",
       "allOf": [
         {
-          "$ref": "../../common/defs.json#/$defs/date_ddmmyyyy"
+          "$ref": "../common/defs.json#/$defs/date_ddmmyyyy"
         }
       ],
       "$comment": "Source coding: dd/mm/yyyy; 08/08/8000 - Missing/Unknown."
@@ -38,7 +38,7 @@
           "description": "0 = baseline; positive integer = follow-up cycle number."
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },

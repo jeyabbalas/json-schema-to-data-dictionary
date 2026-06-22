@@ -26,7 +26,7 @@
           "title": "Never"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -50,7 +50,7 @@
           "title": "Nondrinker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -74,7 +74,7 @@
           "title": "Nondrinker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -103,7 +103,7 @@
           "title": "Nondrinker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -127,7 +127,7 @@
           "title": "Nondrinker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -152,7 +152,7 @@
           "title": "Never"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -176,7 +176,7 @@
           "title": "Nonsmoker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -200,7 +200,7 @@
           "title": "Nonsmoker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -224,7 +224,7 @@
           "title": "Nonsmoker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -253,7 +253,7 @@
           "title": "Nonsmoker"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     }

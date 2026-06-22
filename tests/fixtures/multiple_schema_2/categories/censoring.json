@@ -21,7 +21,7 @@
           }
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing4"
+          "$ref": "../common/defs.json#/$defs/missing4"
         }
       ]
     },
@@ -46,7 +46,7 @@
           "title": "Withdrew from cohort"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     }

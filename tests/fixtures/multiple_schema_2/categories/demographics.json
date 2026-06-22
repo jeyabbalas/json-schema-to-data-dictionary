@@ -20,7 +20,7 @@
           }
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing4"
+          "$ref": "../common/defs.json#/$defs/missing4"
         }
       ]
     },
@@ -75,7 +75,7 @@
           "title": "Other, including multiracial"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -92,7 +92,7 @@
           "title": "Hispanic/Latino"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -121,7 +121,7 @@
           "title": "Graduate school (some or degree)"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     },
@@ -139,7 +139,7 @@
           "title": "Yes"
         },
         {
-          "$ref": "../../common/defs.json#/$defs/missing3"
+          "$ref": "../common/defs.json#/$defs/missing3"
         }
       ]
     }
