@@ -29,7 +29,10 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test tests/*.test.mjs",
-    "example": "npm run build && node examples/generate.mjs"
+    "example": "npm run build && node examples/generate.mjs",
+    "demo:presets": "node demo/build-presets.mjs",
+    "demo:bundle": "npm run build && cp dist/json-schema-data-dictionary.global.js demo/",
+    "demo": "npm run demo:bundle && npm run demo:presets"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^15.11.6",

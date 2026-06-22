@@ -1,4 +1,4 @@
-# json-schema-data-dictionary
+# JSON Schema → Data Dictionary
 
 Turn one or more interlinked **JSON Schema** documents that describe a *tabular* JSON dataset
 (an array of objects) into:

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JSON Schema → Data Dictionary — demo</title>
+  <meta name="description" content="Turn interlinked JSON Schema documents that describe a tabular dataset into a searchable data dictionary table." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>JSON&nbsp;Schema&nbsp;→&nbsp;Data&nbsp;Dictionary</h1>
+    <p class="tagline">
+      Turn one or more interlinked <strong>JSON Schema</strong> documents that describe a tabular
+      dataset (an array of objects) into a flat, searchable <strong>data dictionary</strong>.
+      Pick an example or upload your own schema files — everything runs in your browser.
+    </p>
+    <p class="links">
+      <a href="https://github.com/jeyabbalas/json-schema-to-data-dictionary" target="_blank" rel="noopener">GitHub repository</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.npmjs.com/package/json-schema-data-dictionary" target="_blank" rel="noopener">npm package</a>
+    </p>
+  </header>
+
+  <div id="missing-bundle" class="banner banner-error" hidden>
+    The library bundle didn’t load. Build it first with <code>npm run demo</code>, then reload this page.
+  </div>
+
+  <main class="layout">
+    <!-- INPUT -->
+    <section class="panel inputs" aria-label="Input">
+      <div class="field">
+        <label class="field-label" for="preset-select">Load an example</label>
+        <select id="preset-select"></select>
+        <p id="preset-description" class="hint"></p>
+      </div>
+
+      <div class="field">
+        <span class="field-label">…or upload your own schema(s)</span>
+        <div id="drop-zone" class="drop-zone">
+          <p class="drop-hint">Drag &amp; drop <code>.json</code> files or a folder here</p>
+          <div class="drop-actions">
+            <label class="btn">
+              Choose files
+              <input id="file-input" type="file" multiple accept=".json,application/json" hidden />
+            </label>
+            <label class="btn">
+              Choose folder
+              <input id="folder-input" type="file" webkitdirectory hidden />
+            </label>
+          </div>
+        </div>
+        <p class="hint">
+          For a multi-file set with subfolders (e.g.&nbsp;<code>categories/</code>,&nbsp;<code>common/</code>),
+          choose or drop the <em>folder</em> so relative <code>$ref</code> paths are preserved.
+        </p>
+      </div>
+
+      <div class="field" id="doc-list-field" hidden>
+        <div class="field-head">
+          <span class="field-label">Loaded documents (<span id="doc-count">0</span>)</span>
+          <button id="clear-btn" type="button" class="btn btn-ghost">Clear all</button>
+        </div>
+        <ul id="doc-list" class="doc-list"></ul>
+      </div>
+
+      <details class="field options">
+        <summary>Display options</summary>
+        <div class="options-grid">
+          <label class="opt" for="root-select">
+            <span>Root document</span>
+            <select id="root-select"><option value="">Auto-detect</option></select>
+          </label>
+          <label class="opt" for="theme">
+            <span>Theme</span>
+            <select id="theme">
+              <option value="auto">auto</option>
+              <option value="light">light</option>
+              <option value="dark">dark</option>
+            </select>
+          </label>
+          <label class="opt-check"><input type="checkbox" id="shadow" checked /> Style isolation (Shadow&nbsp;DOM)</label>
+          <label class="opt-check"><input type="checkbox" id="expand-categories" checked /> Expand category sections</label>
+          <label class="opt-check"><input type="checkbox" id="expand-additional" /> Expand “Additional information”</label>
+        </div>
+      </details>
+
+      <p class="hint synthetic-note">
+        Relative <code>$ref</code>s resolve against a synthetic base
+        <code>https://demo.local/&lt;path&gt;</code>, mirroring each document’s file path.
+      </p>
+    </section>
+
+    <!-- OUTPUT -->
+    <section class="panel output" aria-label="Output">
+      <div class="output-toolbar">
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <div class="export-actions">
+          <button id="download-html-btn" type="button" class="btn" disabled>Download HTML</button>
+          <button id="download-csv-btn" type="button" class="btn" disabled>Download CSV</button>
+        </div>
+      </div>
+      <div id="output" class="dict-output"></div>
+    </section>
+  </main>
+
+  <!-- Load order matters: bundle (defines window.JsonSchemaDataDictionary and the
+       <json-data-dictionary> element) → presets (window.DEMO_PRESETS) → app. -->
+  <script src="json-schema-data-dictionary.global.js"></script>
+  <script src="presets.js"></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

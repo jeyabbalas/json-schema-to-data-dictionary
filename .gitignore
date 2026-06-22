@@ -1,4 +1,8 @@
 .idea/
-json-schema-data-dictionary/
 node_modules/
 dist/
+
+# Generated demo assets (produced by `npm run demo` / CI; committed source lives in demo/*.{html,css,js,mjs})
+demo/presets.js
+demo/json-schema-data-dictionary.global.js
+demo/json-schema-data-dictionary.global.js.map
