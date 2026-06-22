@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+  "title": "CORE — Alcohol and Tobacco",
+  "description": "Alcohol and tobacco exposure. See COHORT_METADATA.alcohol_def / smoker_def for the cohort's definitions of drinker / current smoker.",
+  "type": "object",
+  "properties": {
+    "alcohol_status": {
+      "title": "Drinking status",
+      "$comment": "Source coding: 1 - Current; 2 - Former; 3 - Ever (unknown current or former); 4 - Never; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Current"
+        },
+        {
+          "const": 2,
+          "title": "Former"
+        },
+        {
+          "const": 3,
+          "title": "Ever (unknown current or former)"
+        },
+        {
+          "const": 4,
+          "title": "Never"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "alcohol_init": {
+      "title": "Age of initiation of regular alcohol drinking",
+      "$comment": "Source coding: Age in years; 777 - Nondrinker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nondrinker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "alcohol_amt": {
+      "title": "Current alcohol intake (grams/day)",
+      "$comment": "Source coding: Value; 777 - Nondrinker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nondrinker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "alcohol_stop": {
+      "title": "Age of cessation of regular alcohol drinking",
+      "$comment": "Source coding: Age in years; 666 - N/A (no stop date); 777 - Nondrinker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "N/A (no stop date)"
+        },
+        {
+          "const": 777,
+          "title": "Nondrinker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "alcohol_dur": {
+      "title": "Duration of regular alcohol drinking (years)",
+      "$comment": "Source coding: Years of alcohol use; 777 - Nondrinker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nondrinker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "smoking_status": {
+      "title": "Smoking status",
+      "$comment": "Source coding: 1 - Current; 2 - Former; 3 - Ever (unknown current or former); 4 - Never; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Current"
+        },
+        {
+          "const": 2,
+          "title": "Former"
+        },
+        {
+          "const": 3,
+          "title": "Ever (unknown current or former)"
+        },
+        {
+          "const": 4,
+          "title": "Never"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "smoking_init": {
+      "title": "Age of initiation of smoking",
+      "$comment": "Source coding: Age in years; 777 - Nonsmoker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonsmoker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "smoking_amt": {
+      "title": "Current amount smoked (cig/day)",
+      "$comment": "Source coding: Value; 777 - Nonsmoker; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonsmoker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "smoking_dur": {
+      "title": "Duration of smoking (years)",
+      "$comment": "Source coding: Years of regular smoking; 777 - Nonsmoker; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonsmoker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "smoking_stop": {
+      "title": "Age of cessation of smoking",
+      "$comment": "Source coding: Age in years; 666 - N/A (current smoker); 777 - Nonsmoker; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "N/A (current smoker)"
+        },
+        {
+          "const": 777,
+          "title": "Nonsmoker"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "alcohol_status",
+    "alcohol_init",
+    "alcohol_amt",
+    "alcohol_stop",
+    "alcohol_dur",
+    "smoking_status",
+    "smoking_init",
+    "smoking_amt",
+    "smoking_dur",
+    "smoking_stop"
+  ]
+}

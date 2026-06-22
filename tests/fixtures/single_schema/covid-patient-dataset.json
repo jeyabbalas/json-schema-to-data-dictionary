@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/covid-patient-dataset.json",
+  "title": "COVID-19 Patient Surveillance Dataset",
+  "description": "Comprehensive patient data for COVID-19 epidemiological surveillance and analysis",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "properties": {
+      "patient_id": {
+        "type": "string",
+        "description": "Unique identifier for the patient",
+        "pattern": "^PAT-[0-9]{8}$",
+        "minLength": 12,
+        "maxLength": 12
+      },
+      "enrollment_date": {
+        "type": ["string", "null"],
+        "description": "Date patient was enrolled in the study",
+        "format": "date"
+      },
+      "age": {
+        "type": "integer",
+        "description": "Age of patient at enrollment in years",
+        "minimum": 0,
+        "maximum": 120
+      },
+      "age_group": {
+        "type": "string",
+        "description": "Categorized age group for analysis",
+        "enum": ["0-17", "18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80+"],
+        "enumDescriptions": [
+          "Pediatric patients",
+          "Young adults",
+          "Adults in their thirties",
+          "Adults in their forties",
+          "Adults in their fifties",
+          "Adults in their sixties",
+          "Adults in their seventies",
+          "Elderly patients"
+        ]
+      },
+      "sex": {
+        "type": "string",
+        "description": "Biological sex at birth",
+        "enum": ["Male", "Female", "Other", "Unknown"],
+        "enumDescriptions": [
+          "Male sex at birth",
+          "Female sex at birth",
+          "Other/Intersex",
+          "Not reported or unknown"
+        ]
+      },
+      "bmi": {
+        "type": "number",
+        "description": "Body Mass Index calculated as weight(kg)/height(m)²",
+        "minimum": 10,
+        "maximum": 70,
+        "multipleOf": 0.1
+      },
+      "vaccination_status": {
+        "type": "string",
+        "description": "COVID-19 vaccination status at time of infection",
+        "enum": ["Unvaccinated", "Partially", "Fully", "Boosted"],
+        "enumDescriptions": [
+          "No COVID-19 vaccine doses received",
+          "1 dose of 2-dose series or <14 days after final dose",
+          "Completed primary series ≥14 days ago",
+          "Received booster dose ≥14 days ago"
+        ]
+      },
+      "symptom_onset_date": {
+        "type": "string",
+        "description": "Date of first COVID-19 symptom appearance",
+        "format": "date"
+      },
+      "hospitalized": {
+        "type": "boolean",
+        "description": "Whether patient required hospitalization"
+      },
+      "icu_admission": {
+        "type": "boolean",
+        "description": "Whether patient required ICU level care"
+      },
+      "days_hospitalized": {
+        "type": "integer",
+        "description": "Total days in hospital (0 if not hospitalized)",
+        "minimum": 0,
+        "maximum": 365
+      },
+      "outcome": {
+        "type": "string",
+        "description": "Final outcome of COVID-19 infection",
+        "enum": ["Recovered", "Death", "Ongoing", "Lost_to_followup"],
+        "enumDescriptions": [
+          "Full recovery confirmed",
+          "Death related to COVID-19",
+          "Still under treatment/observation",
+          "Patient lost to follow-up"
+        ]
+      },
+      "comorbidities": {
+        "type": "array",
+        "description": "List of pre-existing medical conditions",
+        "items": {
+          "type": "string",
+          "enum": ["Diabetes", "Hypertension", "Heart_Disease", "Lung_Disease", "Kidney_Disease", "Immunocompromised", "Obesity", "None"]
+        },
+        "uniqueItems": true,
+        "minItems": 1
+      },
+      "ct_value": {
+        "type": "number",
+        "description": "Cycle threshold value from PCR test (lower = higher viral load)",
+        "exclusiveMinimum": 0,
+        "exclusiveMaximum": 45
+      },
+      "variant": {
+        "type": "string",
+        "description": "SARS-CoV-2 variant identified through sequencing",
+        "enum": ["Alpha", "Beta", "Gamma", "Delta", "Omicron_BA1", "Omicron_BA2", "Omicron_BA5", "Other", "Not_Sequenced"],
+        "enumDescriptions": [
+          "B.1.1.7 lineage",
+          "B.1.351 lineage",
+          "P.1 lineage",
+          "B.1.617.2 lineage",
+          "BA.1 sublineage",
+          "BA.2 sublineage",
+          "BA.5 sublineage",
+          "Other variant detected",
+          "Sample not sequenced"
+        ]
+      },
+      "zip_code": {
+        "type": "string",
+        "description": "5-digit ZIP code of patient residence",
+        "pattern": "^[0-9]{5}$"
+      },
+      "rural_urban": {
+        "type": "string",
+        "description": "Rural-Urban Commuting Area classification",
+        "enum": ["Urban", "Suburban", "Rural"],
+        "enumDescriptions": [
+          "Metropolitan core area",
+          "Micropolitan or large town area",
+          "Small town or rural area"
+        ]
+      }
+    },
+    "required": ["patient_id", "enrollment_date", "age", "sex", "vaccination_status", "outcome"],
+    "dependentRequired": {
+      "hospitalized": ["days_hospitalized"],
+      "icu_admission": ["hospitalized"]
+    }
+  }
+}

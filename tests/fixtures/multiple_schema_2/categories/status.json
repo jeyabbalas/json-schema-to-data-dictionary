@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/status.json",
+  "title": "CORE — Status",
+  "description": "Breast cancer case status.",
+  "type": "object",
+  "properties": {
+    "Status": {
+      "title": "Breast cancer status",
+      "description": "Coded 1 if the participant was diagnosed with breast cancer (invasive or in situ) prior to cohort enrollment (prevalent breast cancer) or diagnosed over cohort follow-up; otherwise 0.",
+      "$comment": "Source coding: 0 - non-breast cancer case; 1 - case. No missing code defined in source. Variable name is capitalised ('Status') in the dictionary.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Non-breast cancer case"
+        },
+        {
+          "const": 1,
+          "title": "Case"
+        }
+      ]
+    }
+  },
+  "required": [
+    "Status"
+  ]
+}

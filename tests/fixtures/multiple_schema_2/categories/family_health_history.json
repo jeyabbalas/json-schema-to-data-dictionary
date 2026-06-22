@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+  "title": "CORE — Family Health History",
+  "description": "Family history of breast and ovarian cancer. Count fields use 888 = Don't Know. Soft consistency rules quoted from the source (e.g. 'if sisters=0 then brCancerSis should be 0') are documented but not enforced.",
+  "type": "object",
+  "properties": {
+    "fhx_fdr_brca": {
+      "title": "Family history of breast cancer (first degree relative)",
+      "description": "See COHORT_METADATA.fhx_def for which relatives were included.",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "sisters": {
+      "title": "Total number of sisters",
+      "description": "Including half-sisters.",
+      "$comment": "Source coding: 888 = DK (Don't Know). Variable type 'quantitative - continuous'.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "brCancerSis": {
+      "title": "Number of sisters with breast cancer",
+      "description": "Including half-sisters. Consistency (not enforced): if sisters=0 then brCancerSis should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "daughters": {
+      "title": "Total number of daughters",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "brCancerDau": {
+      "title": "Number of daughters with breast cancer",
+      "description": "Consistency (not enforced): if daughters=0 then brCancerDau should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "brCancerMom": {
+      "title": "Mother had breast cancer",
+      "$comment": "Source coding: 0=No, 1=Yes, 888=DK.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "brCancerDad": {
+      "title": "Father had breast cancer",
+      "$comment": "Source coding: 0=No, 1=Yes, 888=DK.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "FHisFstBC": {
+      "title": "First degree female family history of breast cancer",
+      "description": "First degree: mother, sisters, daughters.",
+      "$comment": "Source coding: 0=No, 1=Yes, 888=DK.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "FHisFstBCNr": {
+      "title": "Number of first degree female family members with breast cancer",
+      "description": "Consistency (not enforced): if FHisFstBC=0 then FHisFstBCNr should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "fam1grBC50": {
+      "title": "Number of first degree female family members with breast cancer before age 50 (<50)",
+      "description": "Consistency (not enforced): if FHisFstBC=0 then fam1grBC50 should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ovCancerSis": {
+      "title": "Number of sisters with ovarian cancer",
+      "description": "Including half-sisters. Consistency (not enforced): if sisters=0 then ovCancerSis should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ovCancerDau": {
+      "title": "Number of daughters with ovarian cancer",
+      "description": "Consistency (not enforced): if daughters=0 then ovCancerDau should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ovCancerMom": {
+      "title": "Mother had ovarian cancer",
+      "$comment": "Source coding: 0=No, 1=Yes, 888=DK.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "FHisFstOC": {
+      "title": "First degree female family members with ovarian cancer",
+      "description": "First degree: mother, sisters, daughters.",
+      "$comment": "Source coding: 0=No, 1=Yes, 888=DK.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "FHisFstOCNr": {
+      "title": "Number of first degree female family members with ovarian cancer",
+      "description": "Consistency (not enforced): if FHisFstOC=0 then FHisFstOCNr should be 0.",
+      "$comment": "Source coding: integer; 888 = DK.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "fam1grOC50": {
+      "title": "Number of first degree family members with ovarian cancer before age 50 (<50)",
+      "description": "Consistency (not enforced): if FHisFstOC=0 then fam1grOC50 should be 0.",
+      "$comment": "Source coding: integer; 888 = DK. NOTE: the source comment erroneously references 'FHisFstBC=0'; the intended gate is FHisFstOC.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "fhx_fdr_brca",
+    "sisters",
+    "brCancerSis",
+    "daughters",
+    "brCancerDau",
+    "brCancerMom",
+    "brCancerDad",
+    "FHisFstBC",
+    "FHisFstBCNr",
+    "fam1grBC50",
+    "ovCancerSis",
+    "ovCancerDau",
+    "ovCancerMom",
+    "FHisFstOC",
+    "FHisFstOCNr",
+    "fam1grOC50"
+  ]
+}

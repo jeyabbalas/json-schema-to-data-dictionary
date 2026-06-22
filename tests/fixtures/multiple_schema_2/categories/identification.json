@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/identification.json",
+  "title": "CORE — Identification/Dates",
+  "description": "Identifiers and record timing for one participant at one questionnaire / record cycle.",
+  "type": "object",
+  "properties": {
+    "subject_id": {
+      "$ref": "../../common/defs.json#/$defs/subject_id"
+    },
+    "id": {
+      "type": "string",
+      "title": "Individual ID (original from study)",
+      "description": "Study-specific person ID as supplied by the originating cohort."
+    },
+    "record_date": {
+      "title": "Date of data/sample collection",
+      "allOf": [
+        {
+          "$ref": "../../common/defs.json#/$defs/date_ddmmyyyy"
+        }
+      ],
+      "$comment": "Source coding: dd/mm/yyyy; 08/08/8000 - Missing/Unknown."
+    },
+    "qcycle": {
+      "title": "Questionnaire cycle (repeated measures)",
+      "$comment": "Source coding: 0 - Baseline; 1+ - Follow up cycle #; 888 - Missing. Open-ended count, not a closed enum.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              888
+            ]
+          },
+          "description": "0 = baseline; positive integer = follow-up cycle number."
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "baseline": {
+      "title": "Baseline record indicator",
+      "$comment": "Source coding: 0 - Record taken subsequent to baseline; 1 - Record taken at baseline.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Record taken subsequent to baseline"
+        },
+        {
+          "const": 1,
+          "title": "Record taken at baseline"
+        }
+      ]
+    }
+  },
+  "required": [
+    "subject_id",
+    "id",
+    "record_date",
+    "qcycle",
+    "baseline"
+  ]
+}

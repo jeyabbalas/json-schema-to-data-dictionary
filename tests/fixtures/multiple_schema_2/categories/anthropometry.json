@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+  "title": "CORE — Anthropometry",
+  "description": "Adult body-size measurements of the participant. Plausibility bounds are inferred; 888 denotes Missing.",
+  "type": "object",
+  "properties": {
+    "height": {
+      "title": "Height (cm)",
+      "description": "Adult height in cm.",
+      "$comment": "Source coding: Height in cm; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 250,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "weight": {
+      "title": "Weight (kg)",
+      "description": "Adult weight in kg.",
+      "$comment": "Source coding: Weight in kg; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 300,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "bmi": {
+      "title": "Body Mass Index (BMI) (kg/m2)",
+      "description": "Adult BMI in kg/m2.",
+      "$comment": "Source coding: BMI in kg/m2; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 80,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "waist": {
+      "title": "Waist Circumference (cm)",
+      "description": "Adult waist circumference in cm.",
+      "$comment": "Source coding: Waist circumference in cm; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 40,
+          "maximum": 250,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "hip": {
+      "title": "Hip Circumference (cm)",
+      "description": "Adult hip circumference in cm.",
+      "$comment": "Source coding: Hip circumference in cm; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 40,
+          "maximum": 250,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "whr": {
+      "title": "Waist to hip ratio",
+      "description": "Adult waist-to-hip ratio.",
+      "$comment": "Source coding: Waist-to-hip ratio; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0.4,
+          "maximum": 3.0,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "bmi_earlyadult": {
+      "title": "Body Mass Index (BMI) (kg/m2) age 18-24",
+      "description": "BMI in kg/m2 at age 18-24.",
+      "$comment": "Source coding: BMI in kg/m2; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 80,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "height",
+    "weight",
+    "bmi",
+    "waist",
+    "hip",
+    "whr",
+    "bmi_earlyadult"
+  ]
+}

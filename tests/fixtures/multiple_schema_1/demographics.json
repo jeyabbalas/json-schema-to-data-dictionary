@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/clinical-trial/demographics.json",
+  "title": "Patient Demographics",
+  "description": "Basic demographic information for clinical trial participants",
+  "type": "object",
+  "properties": {
+    "subject_id": {
+      "type": "string",
+      "description": "Unique subject identifier",
+      "pattern": "^SUBJ-[0-9]{6}$"
+    },
+    "site_id": {
+      "type": "string",
+      "description": "Clinical trial site identifier",
+      "pattern": "^SITE-[0-9]{3}$"
+    },
+    "enrollment_date": {
+      "type": "string",
+      "description": "Date of enrollment in clinical trial",
+      "format": "date"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "description": "Subject's date of birth",
+      "format": "date"
+    },
+    "sex": {
+      "type": "string",
+      "description": "Biological sex at birth",
+      "enum": ["M", "F"],
+      "enumDescriptions": ["Male", "Female"]
+    },
+    "race": {
+      "type": "string",
+      "description": "Self-reported race category",
+      "enum": ["White", "Black", "Asian", "Native_American", "Pacific_Islander", "Multiple", "Unknown"],
+      "enumDescriptions": [
+        "White/Caucasian",
+        "Black/African American",
+        "Asian",
+        "American Indian/Alaska Native",
+        "Native Hawaiian/Pacific Islander",
+        "Multiple races",
+        "Unknown or not reported"
+      ]
+    },
+    "ethnicity": {
+      "type": "string",
+      "description": "Self-reported ethnicity",
+      "enum": ["Hispanic", "Non-Hispanic", "Unknown"],
+      "enumDescriptions": [
+        "Hispanic or Latino",
+        "Not Hispanic or Latino",
+        "Unknown or not reported"
+      ]
+    },
+    "weight_kg": {
+      "type": "number",
+      "description": "Body weight in kilograms at baseline",
+      "exclusiveMinimum": 0,
+      "maximum": 300
+    },
+    "height_cm": {
+      "type": "number",
+      "description": "Height in centimeters at baseline",
+      "minimum": 50,
+      "maximum": 250
+    },
+    "smoking_status": {
+      "type": "string",
+      "description": "Current smoking status",
+      "enum": ["Never", "Former", "Current"],
+      "enumDescriptions": [
+        "Never smoked",
+        "Former smoker (quit >6 months ago)",
+        "Current smoker"
+      ]
+    }
+  },
+  "required": ["subject_id", "site_id", "enrollment_date", "date_of_birth", "sex"]
+}

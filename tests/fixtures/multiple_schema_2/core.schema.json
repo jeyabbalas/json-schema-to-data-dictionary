@@ -1,0 +1,851 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jeyabbalas/epi-schemas/refs/heads/main/bcrpp/json_schema/core/core.schema.json",
+  "title": "BCRPP - CORE table",
+  "description": "Array of CORE records. One element = one participant at one questionnaire / record cycle. Each record is the union of the category object schemas; structurally-missing values are encoded via sentinels and the key skip patterns are enforced by the conditional blocks below.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "title": "CORE record",
+    "allOf": [
+      {
+        "$ref": "categories/identification.json"
+      },
+      {
+        "$ref": "categories/censoring.json"
+      },
+      {
+        "$ref": "categories/status.json"
+      },
+      {
+        "$ref": "categories/demographics.json"
+      },
+      {
+        "$ref": "categories/anthropometry.json"
+      },
+      {
+        "$ref": "categories/alcohol_tobacco.json"
+      },
+      {
+        "$ref": "categories/family_health_history.json"
+      },
+      {
+        "$ref": "categories/personal_health_history.json"
+      },
+      {
+        "$ref": "categories/reproductive_history.json"
+      },
+      {
+        "$ref": "categories/physical_activity.json"
+      },
+      {
+        "$ref": "categories/screening_history.json"
+      },
+      {
+        "$comment": "Skip pattern: nonparous (parous=0) => all pregnancy/breastfeeding fields are Nonparous (777).",
+        "if": {
+          "required": [
+            "parous"
+          ],
+          "properties": {
+            "parous": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg1": {
+              "const": 777
+            },
+            "age_preg2": {
+              "const": 777
+            },
+            "age_preg3": {
+              "const": 777
+            },
+            "age_preg4": {
+              "const": 777
+            },
+            "age_preg5": {
+              "const": 777
+            },
+            "age_preg6": {
+              "const": 777
+            },
+            "age_preg7": {
+              "const": 777
+            },
+            "age_preg8": {
+              "const": 777
+            },
+            "age_preg9": {
+              "const": 777
+            },
+            "age_preg10": {
+              "const": 777
+            },
+            "breastfeed": {
+              "const": 777
+            },
+            "breastfeed_dur": {
+              "const": 777
+            },
+            "breastfeed_dur_b1": {
+              "const": 777
+            },
+            "breastfeed_dur_b2": {
+              "const": 777
+            },
+            "breastfeed_dur_b3": {
+              "const": 777
+            },
+            "breastfeed_dur_b4": {
+              "const": 777
+            },
+            "breastfeed_dur_b5": {
+              "const": 777
+            },
+            "breastfeed_dur_b6": {
+              "const": 777
+            },
+            "breastfeed_dur_b7": {
+              "const": 777
+            },
+            "breastfeed_dur_b8": {
+              "const": 777
+            },
+            "breastfeed_dur_b9": {
+              "const": 777
+            },
+            "breastfeed_dur_b10": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 2 full-term pregnancies => 2nd pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg2": {
+              "const": 666
+            },
+            "breastfeed_dur_b2": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 3 full-term pregnancies => 3rd pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg3": {
+              "const": 666
+            },
+            "breastfeed_dur_b3": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 4 full-term pregnancies => 4th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg4": {
+              "const": 666
+            },
+            "breastfeed_dur_b4": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 5 full-term pregnancies => 5th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg5": {
+              "const": 666
+            },
+            "breastfeed_dur_b5": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 6 full-term pregnancies => 6th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg6": {
+              "const": 666
+            },
+            "breastfeed_dur_b6": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 7 full-term pregnancies => 7th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg7": {
+              "const": 666
+            },
+            "breastfeed_dur_b7": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 8 full-term pregnancies => 8th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg8": {
+              "const": 666
+            },
+            "breastfeed_dur_b8": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 9 full-term pregnancies => 9th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg9": {
+              "const": 666
+            },
+            "breastfeed_dur_b9": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: parous with fewer than 10 full-term pregnancies => 10th pregnancy/birth fields are N/A (666).",
+        "if": {
+          "required": [
+            "parous",
+            "parity"
+          ],
+          "properties": {
+            "parous": {
+              "const": 1
+            },
+            "parity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "age_preg10": {
+              "const": 666
+            },
+            "breastfeed_dur_b10": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: premenopausal (meno_status=2) => age/reason at menopause are Premenopausal/NA (777) and HRT durations are not real values (sentinel 666/777/888).",
+        "if": {
+          "required": [
+            "meno_status"
+          ],
+          "properties": {
+            "meno_status": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "meno_age": {
+              "const": 777
+            },
+            "meno_reason": {
+              "const": 777
+            },
+            "hrt_dur": {
+              "enum": [
+                666,
+                777,
+                888
+              ]
+            },
+            "hrtep_dur": {
+              "enum": [
+                666,
+                777,
+                888
+              ]
+            },
+            "hrteonly_dur": {
+              "enum": [
+                666,
+                777,
+                888
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never used any HRT (hrtuse=0) => total HRT duration is Never-user (777).",
+        "if": {
+          "required": [
+            "hrtuse"
+          ],
+          "properties": {
+            "hrtuse": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "hrt_dur": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never used E+P HRT (hrtuse_ep=0) => E+P HRT duration is Never-user (777).",
+        "if": {
+          "required": [
+            "hrtuse_ep"
+          ],
+          "properties": {
+            "hrtuse_ep": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "hrtep_dur": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never used E-only HRT (hrtuse_eonly=0) => E-only HRT duration is Never-user (777).",
+        "if": {
+          "required": [
+            "hrtuse_eonly"
+          ],
+          "properties": {
+            "hrtuse_eonly": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "hrteonly_dur": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never drinker (alcohol_status=4) => alcohol init/amt/dur/stop are Nondrinker (777).",
+        "if": {
+          "required": [
+            "alcohol_status"
+          ],
+          "properties": {
+            "alcohol_status": {
+              "const": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "alcohol_init": {
+              "const": 777
+            },
+            "alcohol_amt": {
+              "const": 777
+            },
+            "alcohol_dur": {
+              "const": 777
+            },
+            "alcohol_stop": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: current drinker (alcohol_status=1) => alcohol stop age is N/A no-stop-date (666).",
+        "if": {
+          "required": [
+            "alcohol_status"
+          ],
+          "properties": {
+            "alcohol_status": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "alcohol_stop": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never smoker (smoking_status=4) => smoking init/amt/dur/stop are Nonsmoker (777).",
+        "if": {
+          "required": [
+            "smoking_status"
+          ],
+          "properties": {
+            "smoking_status": {
+              "const": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "smoking_init": {
+              "const": 777
+            },
+            "smoking_amt": {
+              "const": 777
+            },
+            "smoking_dur": {
+              "const": 777
+            },
+            "smoking_stop": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: current smoker (smoking_status=1) => smoking stop age is N/A current-smoker (666).",
+        "if": {
+          "required": [
+            "smoking_status"
+          ],
+          "properties": {
+            "smoking_status": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "smoking_stop": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never OC user (ocuse_ever=0) => OC duration/start/stop are NA never-user (777).",
+        "if": {
+          "required": [
+            "ocuse_ever"
+          ],
+          "properties": {
+            "ocuse_ever": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "ocuse_dur": {
+              "const": 777
+            },
+            "ocuse_start": {
+              "const": 777
+            },
+            "ocuse_stop": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: current OC user (ocuse_current=1) => OC stop age is Current-user (666).",
+        "if": {
+          "required": [
+            "ocuse_current"
+          ],
+          "properties": {
+            "ocuse_current": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "ocuse_stop": {
+              "const": 666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never other-hormonal-contraceptive user (othcontracep_ever=0) => current use is NA never-user (777).",
+        "if": {
+          "required": [
+            "othcontracep_ever"
+          ],
+          "properties": {
+            "othcontracep_ever": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "othcontracep_current": {
+              "const": 777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: never screened (screen_ever=0) => age at first screen is Never-screened (777) and last-screen year is Never-screened (7777).",
+        "if": {
+          "required": [
+            "screen_ever"
+          ],
+          "properties": {
+            "screen_ever": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "screen_start": {
+              "const": 777
+            },
+            "lastscreen_year": {
+              "const": 7777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: no benign breast disease (BBD_history=0) => all four BBD type/year slots are NA (777 / 7777).",
+        "if": {
+          "required": [
+            "BBD_history"
+          ],
+          "properties": {
+            "BBD_history": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "BBD_type1": {
+              "const": 777
+            },
+            "BBD_type2": {
+              "const": 777
+            },
+            "BBD_type3": {
+              "const": 777
+            },
+            "BBD_type4": {
+              "const": 777
+            },
+            "BBD_year1": {
+              "const": 7777
+            },
+            "BBD_year2": {
+              "const": 7777
+            },
+            "BBD_year3": {
+              "const": 7777
+            },
+            "BBD_year4": {
+              "const": 7777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: zero BBD diagnoses (BBD_number=0) => all four BBD type/year slots are NA (777 / 7777).",
+        "if": {
+          "required": [
+            "BBD_number"
+          ],
+          "properties": {
+            "BBD_number": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "BBD_type1": {
+              "const": 777
+            },
+            "BBD_type2": {
+              "const": 777
+            },
+            "BBD_type3": {
+              "const": 777
+            },
+            "BBD_type4": {
+              "const": 777
+            },
+            "BBD_year1": {
+              "const": 7777
+            },
+            "BBD_year2": {
+              "const": 7777
+            },
+            "BBD_year3": {
+              "const": 7777
+            },
+            "BBD_year4": {
+              "const": 7777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: exactly 1 BBD diagnosis (BBD_number=1) => BBD type/year slots 2-4 are NA (777 / 7777).",
+        "if": {
+          "required": [
+            "BBD_number"
+          ],
+          "properties": {
+            "BBD_number": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "BBD_type2": {
+              "const": 777
+            },
+            "BBD_type3": {
+              "const": 777
+            },
+            "BBD_type4": {
+              "const": 777
+            },
+            "BBD_year2": {
+              "const": 7777
+            },
+            "BBD_year3": {
+              "const": 7777
+            },
+            "BBD_year4": {
+              "const": 7777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: exactly 2 BBD diagnoses (BBD_number=2) => BBD type/year slots 3-4 are NA (777 / 7777).",
+        "if": {
+          "required": [
+            "BBD_number"
+          ],
+          "properties": {
+            "BBD_number": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "BBD_type3": {
+              "const": 777
+            },
+            "BBD_type4": {
+              "const": 777
+            },
+            "BBD_year3": {
+              "const": 7777
+            },
+            "BBD_year4": {
+              "const": 7777
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: exactly 3 BBD diagnoses (BBD_number=3) => BBD type/year slot 4 is NA (777 / 7777).",
+        "if": {
+          "required": [
+            "BBD_number"
+          ],
+          "properties": {
+            "BBD_number": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "BBD_type4": {
+              "const": 777
+            },
+            "BBD_year4": {
+              "const": 7777
+            }
+          }
+        }
+      }
+    ],
+    "unevaluatedProperties": false
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/screening_history.json",
+  "title": "CORE — Screening History",
+  "description": "Mammographic screening history.",
+  "type": "object",
+  "properties": {
+    "screen_ever": {
+      "title": "Ever had a screening mammogram",
+      "$comment": "Source coding: 0 - Never; 1 - Ever; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Never"
+        },
+        {
+          "const": 1,
+          "title": "Ever"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "screen_start": {
+      "title": "Age at first screening mammogram",
+      "$comment": "Source coding: Age in years; 777 - Never screened; 888 - Unknown/Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Never screened"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "lastscreen_year": {
+      "title": "Year of last screening mammogram",
+      "$comment": "Source coding: YYYY; 7777 - Never screened; 8888 - Unknown/Missing.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1950,
+          "maximum": 2030,
+          "not": {
+            "enum": [
+              7777,
+              8888
+            ]
+          }
+        },
+        {
+          "const": 7777,
+          "title": "Never screened"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing4"
+        }
+      ]
+    }
+  },
+  "required": [
+    "screen_ever",
+    "screen_start",
+    "lastscreen_year"
+  ]
+}

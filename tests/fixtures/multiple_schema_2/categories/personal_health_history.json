@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+  "title": "CORE — Personal Health History",
+  "description": "Breast biopsy and benign breast disease (BBD) history. Up to four BBD diagnoses are stored wide; unused slots take the NA sentinel (777 for type, 7777 for year).",
+  "type": "object",
+  "properties": {
+    "Biopsies_yesno": {
+      "title": "Ever had a breast biopsy (excluding biopsies leading to a cancer diagnosis in cases)",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "Biopsies_number": {
+      "title": "Number of breast biopsies (excluding biopsies leading to a breast cancer diagnosis in cases)",
+      "description": "See COHORT_METADATA.biopsynum_def for how the number of biopsies was determined.",
+      "$comment": "Source coding: number; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "BBD_history": {
+      "title": "History of benign breast disease",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "BBD_number": {
+      "title": "Number of benign breast disease diagnoses",
+      "$comment": "Source coding: number 0-4; 5 - more than 4; 888 - Missing/Unknown. Top-coded categorical, not a free integer.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "0"
+        },
+        {
+          "const": 1,
+          "title": "1"
+        },
+        {
+          "const": 2,
+          "title": "2"
+        },
+        {
+          "const": 3,
+          "title": "3"
+        },
+        {
+          "const": 4,
+          "title": "4"
+        },
+        {
+          "const": 5,
+          "title": "More than 4"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "BBD_type1": {
+      "$ref": "#/$defs/bbd_type",
+      "title": "Type of benign breast disease for first BBD diagnosis"
+    },
+    "BBD_year1": {
+      "$ref": "#/$defs/bbd_year",
+      "title": "Year of diagnosis of first benign breast disease diagnosis"
+    },
+    "BBD_type2": {
+      "$ref": "#/$defs/bbd_type",
+      "title": "Type of benign breast disease for second BBD diagnosis"
+    },
+    "BBD_year2": {
+      "$ref": "#/$defs/bbd_year",
+      "title": "Year of diagnosis of second benign breast disease diagnosis"
+    },
+    "BBD_type3": {
+      "$ref": "#/$defs/bbd_type",
+      "title": "Type of benign breast disease for third BBD diagnosis"
+    },
+    "BBD_year3": {
+      "$ref": "#/$defs/bbd_year",
+      "title": "Year of diagnosis of third benign breast disease diagnosis"
+    },
+    "BBD_type4": {
+      "$ref": "#/$defs/bbd_type",
+      "title": "Type of benign breast disease for fourth BBD diagnosis"
+    },
+    "BBD_year4": {
+      "$ref": "#/$defs/bbd_year",
+      "title": "Year of diagnosis of fourth benign breast disease diagnosis"
+    }
+  },
+  "required": [
+    "Biopsies_yesno",
+    "Biopsies_number",
+    "BBD_history",
+    "BBD_number",
+    "BBD_type1",
+    "BBD_year1",
+    "BBD_type2",
+    "BBD_year2",
+    "BBD_type3",
+    "BBD_year3",
+    "BBD_type4",
+    "BBD_year4"
+  ],
+  "$defs": {
+    "bbd_type": {
+      "$comment": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Non-proliferative disease"
+        },
+        {
+          "const": 2,
+          "title": "Proliferative disease without atypia"
+        },
+        {
+          "const": 3,
+          "title": "Atypical hyperplasia"
+        },
+        {
+          "const": 777,
+          "title": "NA"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "bbd_year": {
+      "$comment": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2030,
+          "not": {
+            "enum": [
+              7777,
+              8888
+            ]
+          }
+        },
+        {
+          "const": 7777,
+          "title": "NA"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing4"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,662 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+  "title": "CORE — Reproductive History",
+  "description": "Menstrual, pregnancy, breastfeeding, contraceptive, menopause and HRT history. Pregnancy/birth slots are stored wide; inapplicable slots take 666 (fewer than N full-term pregnancies) or 777 (nonparous). The cross-field skip rules are enforced at the table level (see core.schema.json).",
+  "type": "object",
+  "properties": {
+    "agemenarche": {
+      "title": "Age at menarche",
+      "$comment": "Source coding: Age in years; 777 - Never had a period; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 8,
+          "maximum": 21,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Never had a period"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "parous": {
+      "title": "Parous or not",
+      "$comment": "Source coding: 0 - Non-parous; 1 - Parous; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Non-parous"
+        },
+        {
+          "const": 1,
+          "title": "Parous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "age_preg1": {
+      "title": "Age at first pregnancy (full-term)",
+      "$comment": "Source coding: Age in years; 777 - Nonparous; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 12,
+          "maximum": 55,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "parity": {
+      "title": "Number of pregnancies (full-term)",
+      "description": "See COHORT_METADATA.preg_def for the cohort's definition of full-term pregnancies.",
+      "$comment": "Source coding: 0+; 888 - Missing/Unknown. Open-ended count, not a closed enum. No nonparous sentinel: a non-parous participant is expected to record 0.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "age_preg2": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at second pregnancy (full-term)",
+      "$comment": "666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg3": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at third pregnancy (full-term)",
+      "$comment": "666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg4": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at fourth pregnancy (full-term)",
+      "$comment": "666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg5": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at fifth pregnancy (full-term)",
+      "$comment": "666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)"
+    },
+    "age_preg6": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at sixth pregnancy (full-term)",
+      "$comment": "666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)"
+    },
+    "age_preg7": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at seventh pregnancy (full-term)",
+      "$comment": "666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg8": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at eighth pregnancy (full-term)",
+      "$comment": "666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg9": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at ninth pregnancy (full-term)",
+      "$comment": "666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "age_preg10": {
+      "$ref": "#/$defs/age_preg_later",
+      "title": "Age at tenth pregnancy (full-term)",
+      "$comment": "666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed": {
+      "title": "Ever breastfeed",
+      "$comment": "Source coding: 0 - Never Breastfed; 1 - Ever Breastfed; 777 - Nonparous; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Never breastfed"
+        },
+        {
+          "const": 1,
+          "title": "Ever breastfed"
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "breastfeed_dur": {
+      "title": "Cumulative lifetime duration of breastfeeding (months)",
+      "description": "Enter 0 if parous and did not breastfeed.",
+      "$comment": "Source coding: Time in months; 777 - Nonparous; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "breastfeed_dur_b1": {
+      "title": "Duration of breastfeeding (months) for first birth",
+      "description": "Enter 0 if parous and did not breastfeed for the first birth.",
+      "$comment": "Source coding: Time in months; 777 - Nonparous; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 120,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "breastfeed_dur_b2": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for second birth",
+      "$comment": "666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b3": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for third birth",
+      "$comment": "666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b4": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for fourth birth",
+      "$comment": "666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b5": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for fifth birth",
+      "$comment": "666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b6": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for sixth birth",
+      "$comment": "666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b7": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for seventh birth",
+      "$comment": "666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b8": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for eighth birth",
+      "$comment": "666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b9": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for ninth birth",
+      "$comment": "666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "breastfeed_dur_b10": {
+      "$ref": "#/$defs/bf_dur_later",
+      "title": "Duration of breastfeeding (months) for tenth birth",
+      "$comment": "666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing."
+    },
+    "ocuse_ever": {
+      "title": "Ever use of oral contraceptives",
+      "$comment": "Source coding: 0 - Never used oral contraceptives; 1 - Ever used oral contraceptives; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Never used oral contraceptives"
+        },
+        {
+          "const": 1,
+          "title": "Ever used oral contraceptives"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ocuse_current": {
+      "title": "Current OC use (at record_date)",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 888 - Missing/Unknown. (No nonuser sentinel defined.)",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ocuse_dur": {
+      "title": "Lifetime duration of oral contraceptive use (months)",
+      "$comment": "Source coding: Time in months; 777 - NA (never user); 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "NA (never user)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ocuse_start": {
+      "title": "Age at first use of oral contraceptive",
+      "$comment": "Source coding: Age in years; 777 - NA (never user); 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "NA (never user)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ocuse_stop": {
+      "title": "Age at last use of oral contraceptive",
+      "description": "Age in years if stopped before reference date.",
+      "$comment": "Source coding: 666 - Current user; 777 - NA (never user); 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "Current user"
+        },
+        {
+          "const": 777,
+          "title": "NA (never user)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "othcontracep_ever": {
+      "title": "Use of other types of hormonal contraceptives",
+      "$comment": "Source coding: 0 - Never; 1 - Ever; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Never"
+        },
+        {
+          "const": 1,
+          "title": "Ever"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "othcontracep_current": {
+      "title": "Current use of other types of hormonal contraceptives",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 777 - NA (never user); 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "const": 777,
+          "title": "NA (never user)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "meno_status": {
+      "title": "Menopausal status",
+      "description": "See COHORT_METADATA.menoage_def for how age of menopause and/or menopausal status was defined.",
+      "$comment": "Source coding: 1 - Postmenopausal; 2 - Premenopausal [source spells 'Premenopuasal']; 3 - Perimenopausal/other; 888 - Missing/Unknown. NOTE: this 1=Post/2=Pre coding is INVERTED relative to MAMMOGRAPHIC_DENSITY.MamMenoStat (1=Pre/2=Post).",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Postmenopausal"
+        },
+        {
+          "const": 2,
+          "title": "Premenopausal"
+        },
+        {
+          "const": 3,
+          "title": "Perimenopausal/other"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "meno_age": {
+      "title": "Age at menopause (years)",
+      "description": "Surgically/medically induced menopause can occur well before the typical natural range.",
+      "$comment": "Source coding: Age in years; 777 - Premenopausal at questionnaire; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 65,
+          "not": {
+            "enum": [
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 777,
+          "title": "Premenopausal at questionnaire"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "meno_reason": {
+      "title": "Reason for menopause",
+      "$comment": "Source coding: 1 - Natural; 2 - Surgical; 3 - Radiation/Chemotherapy induced; 4 - Medication; 5 - Artificial/Induced (no detail); 777 - NA (premenopausal); 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Natural"
+        },
+        {
+          "const": 2,
+          "title": "Surgical"
+        },
+        {
+          "const": 3,
+          "title": "Radiation/Chemotherapy induced"
+        },
+        {
+          "const": 4,
+          "title": "Medication"
+        },
+        {
+          "const": 5,
+          "title": "Artificial/Induced (no detail)"
+        },
+        {
+          "const": 777,
+          "title": "NA (premenopausal)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "hrtuse": {
+      "$ref": "#/$defs/hrt_use",
+      "title": "Use of any hormone replacement therapy"
+    },
+    "hrt_dur": {
+      "$ref": "#/$defs/hrt_duration",
+      "title": "Lifetime duration of any hormone replacement therapy (months)"
+    },
+    "hrtuse_ep": {
+      "$ref": "#/$defs/hrt_use",
+      "title": "Use of E+P hormone replacement therapy"
+    },
+    "hrtep_dur": {
+      "$ref": "#/$defs/hrt_duration",
+      "title": "Lifetime duration of E+P hormone replacement therapy (months)"
+    },
+    "hrtuse_eonly": {
+      "$ref": "#/$defs/hrt_use",
+      "title": "Use of E-only hormone replacement therapy"
+    },
+    "hrteonly_dur": {
+      "$ref": "#/$defs/hrt_duration",
+      "title": "Lifetime duration of E-only hormone replacement therapy (months)"
+    }
+  },
+  "required": [
+    "agemenarche",
+    "parous",
+    "age_preg1",
+    "parity",
+    "age_preg2",
+    "age_preg3",
+    "age_preg4",
+    "age_preg5",
+    "age_preg6",
+    "age_preg7",
+    "age_preg8",
+    "age_preg9",
+    "age_preg10",
+    "breastfeed",
+    "breastfeed_dur",
+    "breastfeed_dur_b1",
+    "breastfeed_dur_b2",
+    "breastfeed_dur_b3",
+    "breastfeed_dur_b4",
+    "breastfeed_dur_b5",
+    "breastfeed_dur_b6",
+    "breastfeed_dur_b7",
+    "breastfeed_dur_b8",
+    "breastfeed_dur_b9",
+    "breastfeed_dur_b10",
+    "ocuse_ever",
+    "ocuse_current",
+    "ocuse_dur",
+    "ocuse_start",
+    "ocuse_stop",
+    "othcontracep_ever",
+    "othcontracep_current",
+    "meno_status",
+    "meno_age",
+    "meno_reason",
+    "hrtuse",
+    "hrt_dur",
+    "hrtuse_ep",
+    "hrtep_dur",
+    "hrtuse_eonly",
+    "hrteonly_dur"
+  ],
+  "$defs": {
+    "age_preg_later": {
+      "$comment": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 12,
+          "maximum": 55,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "N/A (fewer than N full-term pregnancies)"
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "bf_dur_later": {
+      "$comment": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 120,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "N/A (fewer than N full-term pregnancies)"
+        },
+        {
+          "const": 777,
+          "title": "Nonparous"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "hrt_use": {
+      "$comment": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Never used hormone replacement therapy"
+        },
+        {
+          "const": 1,
+          "title": "Current use"
+        },
+        {
+          "const": 2,
+          "title": "Former use"
+        },
+        {
+          "const": 3,
+          "title": "Ever used (unknown current or former)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "hrt_duration": {
+      "$comment": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600,
+          "not": {
+            "enum": [
+              666,
+              777,
+              888
+            ]
+          }
+        },
+        {
+          "const": 666,
+          "title": "NA (premenopausal)"
+        },
+        {
+          "const": 777,
+          "title": "Never user"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  }
+}

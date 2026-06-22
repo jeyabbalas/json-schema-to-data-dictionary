@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/clinical-trial/lab-results.json",
+  "title": "Laboratory Results",
+  "description": "Baseline laboratory test results for safety monitoring",
+  "type": "object",
+  "properties": {
+    "hemoglobin_g_dl": {
+      "type": "number",
+      "description": "Hemoglobin level in g/dL",
+      "minimum": 5,
+      "maximum": 20,
+      "multipleOf": 0.1
+    },
+    "wbc_k_ul": {
+      "type": "number",
+      "description": "White blood cell count (thousands per μL)",
+      "minimum": 0.5,
+      "maximum": 50,
+      "multipleOf": 0.1
+    },
+    "platelet_k_ul": {
+      "type": "number",
+      "description": "Platelet count (thousands per μL)",
+      "minimum": 10,
+      "maximum": 1000
+    },
+    "alt_u_l": {
+      "type": "integer",
+      "description": "Alanine aminotransferase (ALT) in U/L",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "ast_u_l": {
+      "type": "integer",
+      "description": "Aspartate aminotransferase (AST) in U/L",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "creatinine_mg_dl": {
+      "type": "number",
+      "description": "Serum creatinine in mg/dL",
+      "minimum": 0.1,
+      "maximum": 15,
+      "multipleOf": 0.01
+    },
+    "egfr_ml_min": {
+      "type": "number",
+      "description": "Estimated glomerular filtration rate (mL/min/1.73m²)",
+      "exclusiveMinimum": 0,
+      "maximum": 200
+    },
+    "glucose_mg_dl": {
+      "type": "number",
+      "description": "Fasting plasma glucose in mg/dL",
+      "minimum": 20,
+      "maximum": 600
+    },
+    "hba1c_percent": {
+      "type": "number",
+      "description": "Glycated hemoglobin (HbA1c) percentage",
+      "minimum": 3,
+      "maximum": 15,
+      "multipleOf": 0.1
+    },
+    "ldl_cholesterol_mg_dl": {
+      "type": "number",
+      "description": "LDL cholesterol in mg/dL",
+      "minimum": 0,
+      "maximum": 500
+    },
+    "hdl_cholesterol_mg_dl": {
+      "type": "number",
+      "description": "HDL cholesterol in mg/dL",
+      "minimum": 0,
+      "maximum": 150
+    },
+    "triglycerides_mg_dl": {
+      "type": "number",
+      "description": "Triglycerides in mg/dL",
+      "minimum": 0,
+      "maximum": 2000
+    },
+    "lab_date": {
+      "type": "string",
+      "description": "Date of laboratory sample collection",
+      "format": "date"
+    },
+    "fasting_status": {
+      "type": "boolean",
+      "description": "Whether patient was fasting for lipid panel"
+    }
+  },
+  "required": ["hemoglobin_g_dl", "wbc_k_ul", "creatinine_mg_dl", "alt_u_l", "ast_u_l", "lab_date"]
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/censoring.json",
+  "title": "CORE — Censoring",
+  "description": "Follow-up censoring information.",
+  "type": "object",
+  "properties": {
+    "lastfup": {
+      "title": "Year of last available follow up",
+      "description": "Year of last follow up based on (1) most recent year cancer registry was linked/checked, (2) end of cohort study period, (3) date of death, or (4) other loss to follow up.",
+      "$comment": "Source coding: yyyy; 8888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1950,
+          "maximum": 2030,
+          "not": {
+            "enum": [
+              8888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing4"
+        }
+      ]
+    },
+    "lastfup_reason": {
+      "title": "Reason for last follow up date",
+      "$comment": "Source coding: 1 - Year of last cancer registry linkage; 2 - End of cohort study period; 3 - Death; 4 - Withdrew from cohort; 888 - Missing/Unknown.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Year of last cancer registry linkage"
+        },
+        {
+          "const": 2,
+          "title": "End of cohort study period"
+        },
+        {
+          "const": 3,
+          "title": "Death"
+        },
+        {
+          "const": 4,
+          "title": "Withdrew from cohort"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "lastfup",
+    "lastfup_reason"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+  "title": "CORE — Demographics",
+  "description": "Demographic characteristics of the participant.",
+  "type": "object",
+  "properties": {
+    "birth_year": {
+      "title": "Birth year",
+      "$comment": "Source coding: yyyy; 8888 - Missing/Unknown. Typed 'Date (yyyy)' in source but is a 4-digit calendar year.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1850,
+          "maximum": 2030,
+          "not": {
+            "enum": [
+              8888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing4"
+        }
+      ]
+    },
+    "sex": {
+      "title": "Sex",
+      "$comment": "Source coding: 0 - Female; 1 - Male. No missing code defined in source.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Female"
+        },
+        {
+          "const": 1,
+          "title": "Male"
+        }
+      ]
+    },
+    "age": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 120,
+      "title": "Age at record_date",
+      "description": "Age in years. No missing code defined in source.",
+      "$comment": "Source coding: Age in years."
+    },
+    "race": {
+      "title": "Race (US OMB categories)",
+      "$comment": "Source coding: 1 - White; 2 - Black/African American; 3 - Asian; 4 - Native Hawaiin/Pacific Islander [sic]; 5 - American Indian/Alaska Native; 6 - Other, including multiracial; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "White"
+        },
+        {
+          "const": 2,
+          "title": "Black/African American"
+        },
+        {
+          "const": 3,
+          "title": "Asian"
+        },
+        {
+          "const": 4,
+          "title": "Native Hawaiian/Pacific Islander"
+        },
+        {
+          "const": 5,
+          "title": "American Indian/Alaska Native"
+        },
+        {
+          "const": 6,
+          "title": "Other, including multiracial"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "ethnicity": {
+      "title": "Ethnicity (US OMB categories)",
+      "$comment": "Source coding: 0 - Non-Hispanic/Non-Latino; 1 - Hispanic/Latino; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Non-Hispanic/Non-Latino"
+        },
+        {
+          "const": 1,
+          "title": "Hispanic/Latino"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "education": {
+      "title": "Highest level education attained",
+      "$comment": "Source coding: 1 - Less than high school; 2 - High School; 3 - Some college education; 4 - University (degree); 5 - Graduate school (some or degree); 888 - Unknown/Missing.",
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Less than high school"
+        },
+        {
+          "const": 2,
+          "title": "High School"
+        },
+        {
+          "const": 3,
+          "title": "Some college education"
+        },
+        {
+          "const": 4,
+          "title": "University (degree)"
+        },
+        {
+          "const": 5,
+          "title": "Graduate school (some or degree)"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "AJAncestry": {
+      "title": "Ashkenazi Jewish Ancestry",
+      "description": "See COHORT_METADATA.ajancestry_def for how AJ ancestry was determined for the cohort.",
+      "$comment": "Source coding: 0 - No; 1 - Yes; 888 - Missing.",
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "birth_year",
+    "sex",
+    "age",
+    "race",
+    "ethnicity",
+    "education",
+    "AJAncestry"
+  ]
+}

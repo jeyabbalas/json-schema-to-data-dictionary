@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/clinical-trial/adverse-events.json",
+  "title": "Adverse Events",
+  "description": "Treatment-related adverse events monitoring",
+  "type": "object",
+  "properties": {
+    "any_ae": {
+      "type": "boolean",
+      "description": "Whether subject experienced any adverse event"
+    },
+    "ae_count": {
+      "type": "integer",
+      "description": "Total number of adverse events reported",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "serious_ae": {
+      "type": "boolean",
+      "description": "Whether subject experienced serious adverse event"
+    },
+    "ae_severity_max": {
+      "type": "string",
+      "description": "Maximum severity of any adverse event",
+      "enum": ["None", "Mild", "Moderate", "Severe", "Life-threatening"],
+      "enumDescriptions": [
+        "No adverse events",
+        "Grade 1 - Mild symptoms, no intervention needed",
+        "Grade 2 - Moderate symptoms, minimal intervention",
+        "Grade 3 - Severe symptoms, medical intervention required",
+        "Grade 4 - Life-threatening, urgent intervention required"
+      ]
+    },
+    "ae_related": {
+      "type": "string",
+      "description": "Relationship of AE to study treatment",
+      "enum": ["Not_related", "Unlikely", "Possibly", "Probably", "Definitely"],
+      "enumDescriptions": [
+        "Clearly not related to treatment",
+        "Unlikely to be related to treatment",
+        "Possibly related to treatment",
+        "Probably related to treatment",
+        "Definitely related to treatment"
+      ]
+    },
+    "discontinued_due_to_ae": {
+      "type": "boolean",
+      "description": "Whether treatment was discontinued due to adverse event"
+    },
+    "hospitalization_required": {
+      "type": "boolean",
+      "description": "Whether any AE required hospitalization"
+    },
+    "death": {
+      "type": "boolean",
+      "description": "Whether subject died during study period"
+    },
+    "common_ae_headache": {
+      "type": "boolean",
+      "description": "Experienced headache as adverse event"
+    },
+    "common_ae_nausea": {
+      "type": "boolean",
+      "description": "Experienced nausea as adverse event"
+    },
+    "common_ae_fatigue": {
+      "type": "boolean",
+      "description": "Experienced fatigue as adverse event"
+    },
+    "common_ae_dizziness": {
+      "type": "boolean",
+      "description": "Experienced dizziness as adverse event"
+    }
+  },
+  "required": ["any_ae", "serious_ae"],
+  "dependentRequired": {
+    "any_ae": ["ae_count", "ae_severity_max"],
+    "serious_ae": ["hospitalization_required"]
+  }
+}

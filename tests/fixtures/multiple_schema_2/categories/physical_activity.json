@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/core/categories/physical_activity.json",
+  "title": "CORE — Physical Activity",
+  "description": "Leisure-time physical activity. See COHORT_METADATA.pa_mets_def / pa_pct_def for derivation.",
+  "type": "object",
+  "properties": {
+    "pa_mets": {
+      "title": "Leisure time physical activity (MET hrs/wk)",
+      "$comment": "Source coding: MET hrs/wk; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    },
+    "pa_pct": {
+      "title": "Leisure time physical activity (percentile)",
+      "$comment": "Source coding: Percentile; 888 - Missing/Unknown.",
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "not": {
+            "enum": [
+              888
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/missing3"
+        }
+      ]
+    }
+  },
+  "required": [
+    "pa_mets",
+    "pa_pct"
+  ]
+}

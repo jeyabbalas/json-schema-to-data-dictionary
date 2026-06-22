@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/format-showcase-dataset.json",
+  "title": "Format Showcase Dataset",
+  "description": "Comprehensive dataset demonstrating all built-in JSON Schema format types for testing tabular rendering",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "properties": {
+      "record_id": {
+        "type": "string",
+        "description": "Unique identifier for the record",
+        "pattern": "^REC-[0-9]{6}$",
+        "minLength": 10,
+        "maxLength": 10
+      },
+      "created_datetime": {
+        "type": "string",
+        "description": "Date and time the record was created",
+        "format": "date-time"
+      },
+      "created_date": {
+        "type": "string",
+        "description": "Date the record was created (date only)",
+        "format": "date"
+      },
+      "created_time": {
+        "type": "string",
+        "description": "Time the record was created (time only)",
+        "format": "time"
+      },
+      "processing_duration": {
+        "type": "string",
+        "description": "Duration of processing (ISO 8601 format, e.g., P3D for 3 days)",
+        "format": "duration"
+      },
+      "contact_email": {
+        "type": "string",
+        "description": "Standard email address for contact",
+        "format": "email"
+      },
+      "international_email": {
+        "type": "string",
+        "description": "Internationalized email address (supports non-ASCII characters)",
+        "format": "idn-email"
+      },
+      "server_hostname": {
+        "type": "string",
+        "description": "Server hostname (standard ASCII)",
+        "format": "hostname"
+      },
+      "international_hostname": {
+        "type": "string",
+        "description": "Internationalized hostname (supports non-ASCII characters)",
+        "format": "idn-hostname"
+      },
+      "server_ipv4": {
+        "type": "string",
+        "description": "IPv4 address of the server",
+        "format": "ipv4"
+      },
+      "server_ipv6": {
+        "type": "string",
+        "description": "IPv6 address of the server",
+        "format": "ipv6"
+      },
+      "session_uuid": {
+        "type": "string",
+        "description": "UUID for the session",
+        "format": "uuid"
+      },
+      "resource_uri": {
+        "type": "string",
+        "description": "Full URI to the resource",
+        "format": "uri"
+      },
+      "resource_uri_reference": {
+        "type": "string",
+        "description": "URI reference (can be relative or absolute)",
+        "format": "uri-reference"
+      },
+      "international_resource_iri": {
+        "type": "string",
+        "description": "Internationalized Resource Identifier",
+        "format": "iri"
+      },
+      "international_resource_iri_reference": {
+        "type": "string",
+        "description": "IRI reference (can be relative or absolute)",
+        "format": "iri-reference"
+      },
+      "api_uri_template": {
+        "type": "string",
+        "description": "URI template for API endpoints",
+        "format": "uri-template"
+      },
+      "data_json_pointer": {
+        "type": "string",
+        "description": "JSON Pointer to specific data in document",
+        "format": "json-pointer"
+      },
+      "relative_data_pointer": {
+        "type": "string",
+        "description": "Relative JSON pointer for navigation",
+        "format": "relative-json-pointer"
+      },
+      "validation_regex": {
+        "type": "string",
+        "description": "Regular expression pattern for validation",
+        "format": "regex"
+      },
+      "status": {
+        "type": "string",
+        "description": "Processing status of the record",
+        "enum": ["pending", "processing", "completed", "failed"],
+        "enumDescriptions": [
+          "Awaiting processing",
+          "Currently being processed",
+          "Successfully completed",
+          "Failed during processing"
+        ]
+      },
+      "priority": {
+        "type": "integer",
+        "description": "Priority level (1-10, where 1 is highest)",
+        "minimum": 1,
+        "maximum": 10
+      },
+      "confidence_score": {
+        "type": "number",
+        "description": "Confidence score as a percentage",
+        "minimum": 0,
+        "maximum": 100,
+        "multipleOf": 0.01
+      },
+      "is_active": {
+        "type": "boolean",
+        "description": "Whether the record is currently active"
+      },
+      "tags": {
+        "type": "array",
+        "description": "Tags associated with the record",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "uniqueItems": true,
+        "minItems": 0,
+        "maxItems": 10
+      },
+      "metadata": {
+        "type": "object",
+        "description": "Additional metadata for the record",
+        "properties": {
+          "version": {
+            "type": "string",
+            "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "checksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "notes": {
+        "type": ["string", "null"],
+        "description": "Optional notes about the record",
+        "maxLength": 500
+      }
+    },
+    "required": [
+      "record_id",
+      "created_datetime",
+      "status",
+      "is_active"
+    ],
+    "dependentRequired": {
+      "server_ipv4": ["server_hostname"],
+      "server_ipv6": ["server_hostname"]
+    }
+  }
+}

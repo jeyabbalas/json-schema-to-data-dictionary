@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/clinical-trial/combined-row.json",
+  "title": "Clinical Trial Participant Record",
+  "description": "Complete participant record combining demographics, lab results, and adverse events",
+  "type": "object",
+  "allOf": [
+    { "$ref": "demographics.json" },
+    { "$ref": "lab-results.json" },
+    { "$ref": "adverse-events.json" }
+  ],
+  "properties": {
+    "treatment_arm": {
+      "type": "string",
+      "description": "Randomized treatment assignment",
+      "enum": ["Placebo", "Low_Dose", "High_Dose"],
+      "enumDescriptions": [
+        "Placebo control group",
+        "Low dose treatment (10mg daily)",
+        "High dose treatment (50mg daily)"
+      ]
+    },
+    "completed_study": {
+      "type": "boolean",
+      "description": "Whether participant completed the full study protocol"
+    },
+    "last_visit_date": {
+      "type": "string",
+      "description": "Date of last study visit",
+      "format": "date"
+    }
+  },
+  "required": ["treatment_arm", "completed_study"]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/clinical-trial/dataset.json",
+  "title": "Clinical Trial Dataset",
+  "description": "Complete dataset for Phase III clinical trial of experimental drug XYZ-123",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "$ref": "combined-row.json"
+  }
+}
