@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epi-schemas.bcrpp/common/defs.json",
+  "title": "BCRPP shared schema definitions",
+  "description": "Reusable building blocks shared across all BCRPP table schemas. Only invariant tokens are centralised here; the context-specific 666/777 sentinels are inlined per field because their meanings differ by variable.",
+  "$defs": {
+    "missing3": {
+      "const": 888,
+      "title": "Missing/Unknown",
+      "description": "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical)."
+    },
+    "missing4": {
+      "const": 8888,
+      "title": "Missing/Unknown",
+      "description": "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year)."
+    },
+    "subject_id": {
+      "type": "string",
+      "pattern": "^(0[1-9]|1[0-9]|2[0-4])_.+$",
+      "title": "Subject ID",
+      "description": "Individual ID combining study and person info, formatted '<study_id>_<person_id>' (e.g. 16_0012345). The two-digit prefix is one of the 24 BCRPP study codes 01-24 enumerated in COHORT_METADATA.study_id.",
+      "$comment": "Source CORE row 3: 'Study ID + \"_\" + person ID (e.g.: XX_XXX)'."
+    },
+    "date_ddmmyyyy": {
+      "type": "string",
+      "pattern": "^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4}$",
+      "title": "Date (dd/mm/yyyy)",
+      "description": "Calendar date in dd/mm/yyyy format. The reserved value 08/08/8000 denotes Missing/Unknown.",
+      "$comment": "The sentinel 08/08/8000 deliberately satisfies this pattern (a oneOf split would double-match), so missingness is documented here rather than enforced as a separate branch."
+    }
+  }
+}

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>json-schema-data-dictionary — live demo</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 28px; max-width: 1160px; margin: 0 auto; color: #1b2330; }
+    h1 { font-size: 1.3rem; }
+    .controls { display: flex; gap: 14px; align-items: center; margin: 14px 0 22px; flex-wrap: wrap; }
+    /* Theming the embedded component from the host page via CSS custom properties: */
+    #dict { --dd-accent: #2563eb; }
+    code { background: #eef1f6; padding: 1px 5px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>JSON Schema → Data Dictionary</h1>
+  <p>This page loads the browser bundle (<code>dist/json-schema-data-dictionary.global.js</code>) and renders an
+     interactive dictionary from three interlinked schema documents. Try the search box, <code>/</code> to focus it,
+     collapse a section, expand an <em>Additional</em> tree, or download the CSV. The accent colour is themed from this
+     page via <code>--dd-accent</code>.</p>
+
+  <div class="controls">
+    <label>Theme:
+      <select id="theme">
+        <option value="auto">auto</option>
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="shadow" checked /> Shadow DOM (style isolation)</label>
+  </div>
+
+  <div id="dict"></div>
+
+  <script src="../dist/json-schema-data-dictionary.global.js"></script>
+  <script>
+    const { schemaDocumentsToTable, renderDataDictionary } = JsonSchemaDataDictionary;
+
+    // Three interlinked documents that cumulatively describe one tabular dataset.
+    const dataset = {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "https://example.org/demo/dataset.json",
+      title: "Survey dataset (demo)",
+      description: "A small dataset showing categories, mixed types, sentinels and a skip pattern.",
+      type: "array",
+      items: {
+        type: "object",
+        title: "Participant record",
+        allOf: [
+          { $ref: "demographics.json" },
+          { $ref: "measures.json" },
+          {
+            $comment: "Skip pattern: never-smoker (smoking_status=0) => age stopped smoking is Not applicable (777).",
+            if: { required: ["smoking_status"], properties: { smoking_status: { const: 0 } } },
+            then: { properties: { smoking_stop_age: { const: 777 } } }
+          }
+        ]
+      }
+    };
+
+    const demographics = {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "https://example.org/demo/demographics.json",
+      title: "Demographics",
+      description: "Who the participant is.",
+      type: "object",
+      properties: {
+        participant_id: { type: "string", title: "Participant ID", pattern: "^P[0-9]{6}$" },
+        enrolled_on: { type: "string", title: "Enrollment date", format: "date" },
+        contact_email: { type: ["string", "null"], title: "Contact email", format: "email" },
+        sex: {
+          title: "Sex",
+          $comment: "Source coding: 0 - Female; 1 - Male; 888 - Missing.",
+          oneOf: [
+            { const: 0, title: "Female" },
+            { const: 1, title: "Male" },
+            { const: 888, title: "Missing/Unknown" }
+          ]
+        }
+      },
+      required: ["participant_id", "sex"]
+    };
+
+    const measures = {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      $id: "https://example.org/demo/measures.json",
+      title: "Measurements & lifestyle",
+      description: "Continuous measures mixed with structural-missingness codes.",
+      type: "object",
+      properties: {
+        bmi: { type: "number", title: "Body Mass Index", minimum: 10, maximum: 70, multipleOf: 0.1 },
+        smoking_status: {
+          title: "Smoking status",
+          oneOf: [
+            { const: 0, title: "Never smoker" },
+            { const: 1, title: "Current smoker" },
+            { const: 2, title: "Former smoker" }
+          ]
+        },
+        smoking_stop_age: {
+          title: "Age stopped smoking (years)",
+          $comment: "Source coding: Age in years; 666 - Current smoker (no stop age); 777 - Not applicable (never smoker).",
+          anyOf: [
+            { type: "integer", minimum: 10, maximum: 100, not: { enum: [666, 777] } },
+            { const: 666, title: "Current smoker" },
+            { const: 777, title: "Not applicable (never smoker)" }
+          ]
+        }
+      }
+    };
+
+    let el;
+    function render() {
+      const shadow = document.getElementById("shadow").checked;
+      const theme = document.getElementById("theme").value;
+      const table = schemaDocumentsToTable([dataset, demographics, measures]);
+      el = renderDataDictionary(document.getElementById("dict"), table, { shadow, theme });
+    }
+    document.getElementById("theme").addEventListener("change", render);
+    document.getElementById("shadow").addEventListener("change", render);
+    render();
+  </script>
+</body>
+</html>

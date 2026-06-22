@@ -1,0 +1,49 @@
+{
+  "name": "json-schema-data-dictionary",
+  "version": "0.1.0",
+  "description": "Turn interlinked JSON Schema documents that describe a tabular JSON dataset into a flat, spreadsheet-like data dictionary and an embeddable, searchable HTML table.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jeya Balaji Balasubramanian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeyabbalas/json-schema-to-data-dictionary.git"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": "./dist/json-schema-data-dictionary.global.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "example": "npm run build && node examples/generate.mjs"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^15.11.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3"
+  },
+  "keywords": [
+    "json-schema",
+    "data-dictionary",
+    "codebook",
+    "biomedical",
+    "epidemiology",
+    "metadata",
+    "html-table",
+    "web-component"
+  ]
+}
