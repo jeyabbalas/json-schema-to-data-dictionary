@@ -6,3 +6,4 @@ dist/
 demo/presets.js
 demo/json-schema-data-dictionary.global.js
 demo/json-schema-data-dictionary.global.js.map
+demo/exceljs.min.js

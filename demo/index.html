@@ -98,6 +98,7 @@
         <div class="export-actions">
           <button id="download-html-btn" type="button" class="btn" disabled>Download HTML</button>
           <button id="download-csv-btn" type="button" class="btn" disabled>Download CSV</button>
+          <button id="download-excel-btn" type="button" class="btn" disabled>Download Excel</button>
         </div>
       </div>
       <div id="output" class="dict-output"></div>
@@ -105,9 +106,11 @@
   </main>
 
   <!-- Load order matters: bundle (defines window.JsonSchemaDataDictionary and the
-       <json-data-dictionary> element) → presets (window.DEMO_PRESETS) → app. -->
+       <json-data-dictionary> element) → presets (window.DEMO_PRESETS) →
+       ExcelJS (window.ExcelJS, used by the “Download Excel” export) → app. -->
   <script src="json-schema-data-dictionary.global.js"></script>
   <script src="presets.js"></script>
+  <script src="exceljs.min.js"></script>
   <script src="app.js" defer></script>
 </body>
 </html>
