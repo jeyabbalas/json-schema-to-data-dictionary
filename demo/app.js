@@ -368,6 +368,21 @@
     );
   }
 
+  // --- Input panel collapse ----------------------------------------------
+  // Hide the upload sidebar so the table reclaims its grid column. The toggle lives
+  // in the always-rendered output toolbar, so it stays reachable once the panel is gone.
+  var INPUTS_COLLAPSED_KEY = "dd-demo:inputs-collapsed";
+
+  function setInputsCollapsed(collapsed) {
+    $("#layout").classList.toggle("inputs-collapsed", collapsed);
+    var btn = $("#toggle-input-btn");
+    btn.setAttribute("aria-expanded", String(!collapsed));
+    btn.title = collapsed ? "Show input panel" : "Hide input panel";
+    $(".panel-toggle-icon").textContent = collapsed ? "›" : "‹";
+    $(".panel-toggle-label").textContent = collapsed ? "Show panel" : "Hide panel";
+    try { localStorage.setItem(INPUTS_COLLAPSED_KEY, collapsed ? "1" : "0"); } catch (e) {}
+  }
+
   // --- Wiring -------------------------------------------------------------
   function wire() {
     $("#preset-select").addEventListener("change", function (e) { loadPreset(Number(e.target.value)); });
@@ -405,6 +420,10 @@
     $("#download-html-btn").addEventListener("click", downloadHtml);
     $("#download-csv-btn").addEventListener("click", downloadCsv);
     $("#download-excel-btn").addEventListener("click", downloadExcel);
+
+    $("#toggle-input-btn").addEventListener("click", function () {
+      setInputsCollapsed(!$("#layout").classList.contains("inputs-collapsed"));
+    });
   }
 
   // --- Bootstrap ----------------------------------------------------------
@@ -416,6 +435,11 @@
     }
     populatePresetSelect();
     wire();
+
+    var savedCollapsed = null;
+    try { savedCollapsed = localStorage.getItem(INPUTS_COLLAPSED_KEY); } catch (e) {}
+    if (savedCollapsed === "1") setInputsCollapsed(true);
+
     if ((window.DEMO_PRESETS || []).length) loadPreset(0);
     else render(); // show the empty-state prompt
   }

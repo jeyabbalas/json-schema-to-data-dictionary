@@ -26,9 +26,9 @@
     The library bundle didn’t load. Build it first with <code>npm run demo</code>, then reload this page.
   </div>
 
-  <main class="layout">
+  <main class="layout" id="layout">
     <!-- INPUT -->
-    <section class="panel inputs" aria-label="Input">
+    <section class="panel inputs" id="input-panel" aria-label="Input">
       <div class="field">
         <label class="field-label" for="preset-select">Load an example</label>
         <select id="preset-select"></select>
@@ -94,6 +94,11 @@
     <!-- OUTPUT -->
     <section class="panel output" aria-label="Output">
       <div class="output-toolbar">
+        <button id="toggle-input-btn" type="button" class="btn btn-ghost panel-toggle"
+                aria-controls="input-panel" aria-expanded="true" title="Hide input panel">
+          <span class="panel-toggle-icon" aria-hidden="true">‹</span>
+          <span class="panel-toggle-label">Hide panel</span>
+        </button>
         <div id="messages" class="messages" aria-live="polite"></div>
         <div class="export-actions">
           <button id="download-html-btn" type="button" class="btn" disabled>Download HTML</button>

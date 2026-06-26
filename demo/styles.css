@@ -54,7 +54,7 @@
 body {
   margin: 0;
   padding: 24px;
-  max-width: 1280px;
+  max-width: 1800px;
   margin-inline: auto;
   font: 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--fg);
@@ -98,6 +98,11 @@ a { color: var(--accent); }
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
 }
+
+/* Collapsing the input panel hands its column to the table (toggle in the output toolbar). */
+.layout.inputs-collapsed { grid-template-columns: 1fr; }
+.layout.inputs-collapsed .inputs { display: none; }
+.panel-toggle { flex: none; }
 
 .panel {
   background: var(--panel-bg);
