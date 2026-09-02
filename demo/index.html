@@ -82,12 +82,6 @@
           <label class="opt-check"><input type="checkbox" id="shadow" checked /> Style isolation (Shadow&nbsp;DOM)</label>
           <label class="opt-check"><input type="checkbox" id="expand-categories" checked /> Expand category sections</label>
           <label class="opt-check"><input type="checkbox" id="expand-additional" /> Expand “Additional information”</label>
-          <label class="opt-check"><input type="checkbox" id="semantic" /> Semantic search <span class="opt-note">(experimental)</span></label>
-          <p class="hint semantic-hint">
-            Also finds related variables (“smoking” → the tobacco rows) and ranks results.
-            Downloads a ~34&nbsp;MB model from huggingface.co once; embeddings are cached in your browser.
-          </p>
-          <p id="semantic-status" class="hint semantic-status" role="status" hidden></p>
         </div>
       </details>
 
@@ -105,6 +99,16 @@
           <span class="panel-toggle-icon" aria-hidden="true">‹</span>
           <span class="panel-toggle-label">Hide panel</span>
         </button>
+        <!-- Semantic search lives here (not in the collapsible sidebar) so it is always visible. -->
+        <div class="semantic-control">
+          <label class="semantic-toggle" for="semantic"
+                 title="Also finds related variables (“smoking” → the tobacco rows) and ranks results. Downloads a ~34 MB model from huggingface.co once; embeddings are cached in your browser.">
+            <input type="checkbox" id="semantic" />
+            <span>Semantic search</span>
+            <span class="opt-note">experimental</span>
+          </label>
+          <span id="semantic-status" class="semantic-status" role="status" hidden></span>
+        </div>
         <div id="messages" class="messages" aria-live="polite"></div>
         <div class="export-actions">
           <button id="download-html-btn" type="button" class="btn" disabled>Download HTML</button>

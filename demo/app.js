@@ -344,7 +344,9 @@
     } else if (status.state === "indexing") {
       el.textContent = "Indexing variables… " + status.done + " / " + status.total;
     } else if (status.state === "ready") {
-      el.textContent = "Ready — results now include related variables.";
+      // The component's own chip ("Semantic search on") takes over from here.
+      el.hidden = true;
+      el.textContent = "";
     } else {
       el.textContent = "Unavailable: " + status.message;
     }
