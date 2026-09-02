@@ -4,13 +4,18 @@
 // The element class is created lazily so importing this module in a non-DOM environment
 // (Node, SSR) does not reference HTMLElement at evaluation time.
 
-import type { DataDictionaryTable, RenderOptions } from "../types";
+import type { DataDictionaryTable, RenderOptions, SemanticSearchOptions } from "../types";
+import type { Embedder, SemanticIndex } from "../search/types";
+import type { SearchFields } from "../search/ranking";
+import { createSemanticIndex } from "../search/semanticIndex";
 import { slugify } from "../utils";
 import { tableToCsv } from "../serialize";
 import { buildViewModel } from "./viewModel";
+import type { ViewModel } from "./viewModel";
 import { buildMarkup } from "./markup";
 import { STYLES } from "./styles";
 import { attachBehavior } from "./behavior";
+import type { SemanticBehaviorOptions } from "./behavior";
 
 export const ELEMENT_TAG = "json-data-dictionary";
 const GLOBAL_STYLE_ID = "json-data-dictionary-styles";
@@ -18,6 +23,15 @@ const GLOBAL_STYLE_ID = "json-data-dictionary-styles";
 export interface DataDictionaryElement extends HTMLElement {
   table: DataDictionaryTable | undefined;
   options: RenderOptions;
+  /** The semantic index behind the search box, when `options.semanticSearch` is set. */
+  readonly semanticIndex: SemanticIndex | undefined;
+}
+
+interface SemanticState {
+  table: DataDictionaryTable;
+  embedder: Embedder;
+  index: SemanticIndex;
+  unsubscribe: () => void;
 }
 
 let ElementClass: (new () => DataDictionaryElement) | undefined;
@@ -30,6 +44,11 @@ function getElementClass(): new () => DataDictionaryElement {
     private _table: DataDictionaryTable | undefined;
     private _options: RenderOptions = {};
     private _cleanup: (() => void) | undefined;
+    private _semantic: SemanticState | undefined;
+
+    get semanticIndex(): SemanticIndex | undefined {
+      return this._semantic?.index;
+    }
 
     get table(): DataDictionaryTable | undefined {
       return this._table;
@@ -54,15 +73,46 @@ function getElementClass(): new () => DataDictionaryElement {
     disconnectedCallback(): void {
       this._cleanup?.();
       this._cleanup = undefined;
+      this.dropSemanticIndex();
+    }
+
+    // One index per (table, embedder) pair, kept across re-renders. Rebuilding after a table
+    // or embedder change is cheap: vectors come back from the cache, the model is never reloaded.
+    private syncSemanticIndex(): void {
+      const cfg = this._options.semanticSearch;
+      const current = this._semantic;
+      if (current && (!cfg || !this._table || current.table !== this._table || current.embedder !== cfg.embedder)) {
+        this.dropSemanticIndex();
+      }
+      if (!cfg || !this._table || this._semantic) return;
+      try {
+        const index = createSemanticIndex(this._table, { embedder: cfg.embedder, cache: cfg.cache });
+        const unsubscribe = cfg.onStatus ? index.subscribe(cfg.onStatus) : () => {};
+        this._semantic = { table: this._table, embedder: cfg.embedder, index, unsubscribe };
+        cfg.onStatus?.(index.status);
+      } catch {
+        /* keyword search keeps working without an index */
+      }
+    }
+
+    private dropSemanticIndex(): void {
+      const state = this._semantic;
+      if (!state) return;
+      this._semantic = undefined;
+      state.unsubscribe();
+      state.index.dispose();
     }
 
     private renderNow(): void {
       if (!this.isConnected || !this._table) return;
+      this.syncSemanticIndex();
       const vm = buildViewModel(this._table, this._options);
       const useShadow = this._options.shadow !== false;
       const markup = buildMarkup(vm);
       const csv = tableToCsv(this._table);
       const filename = `${slugify(vm.title)}.csv`;
+      const cfg = this._options.semanticSearch;
+      const semantic = this._semantic && cfg ? semanticBehavior(this._semantic.index, cfg, vm) : undefined;
 
       this._cleanup?.();
 
@@ -76,7 +126,7 @@ function getElementClass(): new () => DataDictionaryElement {
         this.innerHTML = markup;
         container = this;
       }
-      this._cleanup = attachBehavior(container, { csv, filename });
+      this._cleanup = attachBehavior(container, { csv, filename, ...(semantic ? { semantic } : {}) });
     }
   }
 
@@ -109,6 +159,23 @@ export function renderDataDictionary(
   if (options.replace === false) container.appendChild(el);
   else container.replaceChildren(el);
   return el;
+}
+
+const EMPTY_FIELDS: SearchFields = { name: "", description: "", values: "", all: "" };
+
+function semanticBehavior(index: SemanticIndex, cfg: SemanticSearchOptions, vm: ViewModel): SemanticBehaviorOptions {
+  const rows: SearchFields[] = Array.from({ length: vm.variableCount }, () => EMPTY_FIELDS);
+  for (const category of vm.categories) {
+    for (const row of category.rows) if (row.index >= 0 && row.index < rows.length) rows[row.index] = row.searchFields;
+  }
+  return {
+    index,
+    rows,
+    maxRelated: cfg.maxRelated ?? 10,
+    minScore: cfg.minScore,
+    minQueryLength: cfg.minQueryLength ?? 3,
+    debounceMs: cfg.debounceMs ?? 250
+  };
 }
 
 function ensureGlobalStyles(doc: Document): void {

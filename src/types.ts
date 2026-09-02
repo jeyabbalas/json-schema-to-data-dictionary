@@ -3,6 +3,8 @@
 // The seven user-facing keys on DataDictionaryRow are intentionally named exactly
 // as the spreadsheet column headers so `toPlainRows()` and CSV export are trivial.
 
+import type { Embedder, SemanticStatus, VectorCache } from "./search/types";
+
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
@@ -248,10 +250,34 @@ export interface RenderHtmlOptions {
   theme?: "light" | "dark" | "auto" | undefined;
 }
 
+/**
+ * Opt-in semantic search for the interactive component. Bring an {@link Embedder} (see
+ * `createTransformersEmbedder`); the component embeds every row once (cached in IndexedDB),
+ * and while a query is active shows one ranked results list: every keyword match plus up to
+ * `maxRelated` semantically related rows.
+ */
+export interface SemanticSearchOptions {
+  embedder: Embedder;
+  /** Vector cache. Default: IndexedDB when available. `false` keeps vectors in memory only. */
+  cache?: VectorCache | false | undefined;
+  /** Maximum number of semantic-only ("related") rows added to the results. Default: 10. */
+  maxRelated?: number | undefined;
+  /** Cosine floor for related rows. Default: the embedder's `minScore`, then 0.5. */
+  minScore?: number | undefined;
+  /** Shortest query that triggers a semantic lookup. Default: 3. */
+  minQueryLength?: number | undefined;
+  /** Idle time before a semantic lookup runs. Default: 250 ms. */
+  debounceMs?: number | undefined;
+  /** Observe model loading / indexing / readiness / errors. */
+  onStatus?: ((status: SemanticStatus) => void) | undefined;
+}
+
 /** Options for the interactive {@link renderDataDictionary} mount. */
 export interface RenderOptions extends RenderHtmlOptions {
   /** Render inside a Shadow DOM for full style isolation. Default: true. */
   shadow?: boolean | undefined;
   /** Replace the container's existing contents. Default: true. */
   replace?: boolean | undefined;
+  /** Enable semantic search (switches the search UI to a ranked results list). */
+  semanticSearch?: SemanticSearchOptions | undefined;
 }

@@ -41,7 +41,7 @@ jobs:
       - name: Assemble publish directory
         run: |
           mkdir -p _site
-          cp demo/index.html demo/styles.css demo/app.js demo/presets.js _site/
+          cp demo/index.html demo/styles.css demo/app.js demo/embed-worker.js demo/presets.js _site/
           cp dist/json-schema-data-dictionary.global.js _site/
           cp dist/json-schema-data-dictionary.global.js.map _site/ 2>/dev/null || true
           cp node_modules/exceljs/dist/exceljs.min.js _site/

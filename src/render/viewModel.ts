@@ -3,13 +3,19 @@
 
 import type {
   ConditionalRule,
+  DataDictionaryRow,
   DataDictionaryTable,
   JsonValue,
   RenderHtmlOptions,
+  SemanticSearchOptions,
   ValidValue
 } from "../types";
+import type { SearchFields } from "../search/ranking";
 import { additionalInfoText, constraintsText, validValuesText } from "../serialize";
 import { displayValue } from "../utils";
+
+/** Render options plus the component-only semantic flag (the static HTML never sets it). */
+export type ViewModelOptions = RenderHtmlOptions & { semanticSearch?: SemanticSearchOptions | undefined };
 
 export interface ResolvedOptions {
   title: string;
@@ -19,6 +25,8 @@ export interface ResolvedOptions {
   expandCategories: boolean;
   expandAdditionalInfo: boolean;
   theme: "light" | "dark" | "auto";
+  /** True when the interactive component was given `semanticSearch` (ranked results UI). */
+  semanticSearch: boolean;
 }
 
 export interface ValueVM {
@@ -34,6 +42,10 @@ export interface ConstraintVM {
 }
 
 export interface RowVM {
+  /** Index into `table.rows` (-1 if the row is not part of `table.rows`). */
+  index: number;
+  /** Title of the category the row belongs to. */
+  category: string;
   name: string;
   description: string;
   dataType: string;
@@ -44,6 +56,8 @@ export interface RowVM {
   constraints: ConstraintVM[];
   additionalInformation: JsonValue | null;
   searchText: string;
+  /** Lower-cased per-field text used by the ranked search. */
+  searchFields: SearchFields;
 }
 
 export interface CategoryVM {
@@ -71,7 +85,7 @@ export interface ViewModel {
   options: ResolvedOptions;
 }
 
-export function resolveOptions(options: RenderHtmlOptions, table: DataDictionaryTable): ResolvedOptions {
+export function resolveOptions(options: ViewModelOptions, table: DataDictionaryTable): ResolvedOptions {
   return {
     title: options.title ?? table.title ?? "Data dictionary",
     emptyCell: options.emptyCell ?? "—",
@@ -79,18 +93,22 @@ export function resolveOptions(options: RenderHtmlOptions, table: DataDictionary
     includeExport: options.includeExport ?? true,
     expandCategories: options.expandCategories ?? true,
     expandAdditionalInfo: options.expandAdditionalInfo ?? false,
-    theme: options.theme ?? "auto"
+    theme: options.theme ?? "auto",
+    semanticSearch: Boolean(options.semanticSearch)
   };
 }
 
-export function buildViewModel(table: DataDictionaryTable, options: RenderHtmlOptions = {}): ViewModel {
+export function buildViewModel(table: DataDictionaryTable, options: ViewModelOptions = {}): ViewModel {
   const resolved = resolveOptions(options, table);
+
+  // Rows are identified by object identity: categories hold the same row objects as table.rows.
+  const rowIndex = new Map<DataDictionaryRow, number>(table.rows.map((row, i) => [row, i]));
 
   const categories: CategoryVM[] = table.categories.map((category) => ({
     id: category.id,
     title: category.title,
     ...(category.description ? { description: category.description } : {}),
-    rows: category.rows.map(buildRowVM)
+    rows: category.rows.map((row) => buildRowVM(row, rowIndex.get(row) ?? -1, category.title))
   }));
 
   const rules: RuleVM[] = table.conditionalRules.map(buildRuleVM);
@@ -108,7 +126,7 @@ export function buildViewModel(table: DataDictionaryTable, options: RenderHtmlOp
   };
 }
 
-function buildRowVM(row: DataDictionaryTable["rows"][number]): RowVM {
+function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, category: string): RowVM {
   const measurements: ValueVM[] = [];
   const values: ValueVM[] = [];
   const sentinels: ValueVM[] = [];
@@ -125,7 +143,10 @@ function buildRowVM(row: DataDictionaryTable["rows"][number]): RowVM {
     conditional: c.keyword === "conditional" || c.keyword === "if/then" || c.keyword === "dependentRequired" || !!c.condition
   }));
 
+  const searchText = rowSearchText(row);
   return {
+    index,
+    category,
     name: row["Variable name"],
     description: row["Description"],
     dataType: row["Data type"],
@@ -135,7 +156,13 @@ function buildRowVM(row: DataDictionaryTable["rows"][number]): RowVM {
     sentinels,
     constraints,
     additionalInformation: row["Additional information"],
-    searchText: rowSearchText(row)
+    searchText,
+    searchFields: {
+      name: row["Variable name"].toLowerCase(),
+      description: row["Description"].toLowerCase(),
+      values: validValuesText(row["Valid values"]).toLowerCase(),
+      all: searchText
+    }
   };
 }
 

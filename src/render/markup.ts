@@ -8,13 +8,42 @@ import type { CategoryVM, ConstraintVM, RowVM, ValueVM, ViewModel } from "./view
 
 export function buildMarkup(vm: ViewModel): string {
   const o = vm.options;
+  const emptySemantic = o.semanticSearch ? ` <span data-dd-empty-semantic hidden>Looking for related variables…</span>` : "";
   return `
 <div class="dd-root" data-theme="${o.theme}" data-dd-root>
   ${header(vm)}
-  <div class="dd-empty" data-dd-empty hidden>No variables match “<span data-dd-empty-q></span>”.</div>
+  <div class="dd-empty" data-dd-empty hidden>No variables match “<span data-dd-empty-q></span>”.${emptySemantic}</div>
+  ${o.semanticSearch ? resultsSection() : ""}
   ${vm.categories.map((c) => category(c, vm)).join("\n")}
   ${footer(vm)}
 </div>`.trim();
+}
+
+/** Flat, ranked results table used while a query is active in semantic-search mode. */
+function resultsSection(): string {
+  return `
+  <section class="dd-results" data-dd-results hidden aria-label="Search results">
+    <div class="dd-table-wrap">
+      <table class="dd-table">
+        ${tableHead()}
+        <tbody data-dd-results-body></tbody>
+      </table>
+    </div>
+  </section>`;
+}
+
+function tableHead(): string {
+  return `<thead>
+          <tr>
+            <th class="dd-col-name" scope="col">Variable</th>
+            <th scope="col">Description</th>
+            <th scope="col">Data type</th>
+            <th scope="col">Format</th>
+            <th scope="col">Valid values</th>
+            <th scope="col">Constraints</th>
+            <th scope="col">Additional</th>
+          </tr>
+        </thead>`;
 }
 
 function header(vm: ViewModel): string {
@@ -41,6 +70,7 @@ function header(vm: ViewModel): string {
                placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
         <span class="dd-count" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
       </div>
+      ${o.semanticSearch ? `<span class="dd-semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
       <div class="dd-actions">${actions}</div>
     </div>
     ${rulesPanel(vm)}
@@ -85,17 +115,7 @@ function category(c: CategoryVM, vm: ViewModel): string {
     ${c.description ? `<p class="dd-category-desc">${multiline(c.description)}</p>` : ""}
     <div class="dd-table-wrap" data-dd-table-wrap>
       <table class="dd-table">
-        <thead>
-          <tr>
-            <th class="dd-col-name" scope="col">Variable</th>
-            <th scope="col">Description</th>
-            <th scope="col">Data type</th>
-            <th scope="col">Format</th>
-            <th scope="col">Valid values</th>
-            <th scope="col">Constraints</th>
-            <th scope="col">Additional</th>
-          </tr>
-        </thead>
+        ${tableHead()}
         <tbody>
           ${c.rows.map((row) => rowMarkup(row, vm)).join("\n")}
         </tbody>
@@ -107,9 +127,12 @@ function category(c: CategoryVM, vm: ViewModel): string {
 function rowMarkup(row: RowVM, vm: ViewModel): string {
   const empty = `<span class="dd-muted">${escapeHtml(vm.options.emptyCell)}</span>`;
   const mixed = /coded values/.test(row.dataType);
+  const semantic = vm.options.semanticSearch;
+  const indexAttr = semantic && row.index >= 0 ? ` data-dd-row-index="${row.index}"` : "";
+  const categoryTag = semantic ? `<span class="dd-row-cat">${escapeHtml(row.category)}</span>` : "";
   return `
-          <tr class="dd-row" data-dd-row data-search="${escapeHtml(row.searchText)}">
-            <th class="dd-col-name" scope="row"><code>${escapeHtml(row.name)}</code></th>
+          <tr class="dd-row" data-dd-row${indexAttr} data-search="${escapeHtml(row.searchText)}">
+            <th class="dd-col-name" scope="row"><code>${escapeHtml(row.name)}</code>${categoryTag}</th>
             <td class="dd-desc">${row.description ? multiline(row.description) : empty}</td>
             <td class="dd-type">${row.dataType ? `<span class="dd-badge" data-mixed="${mixed}">${escapeHtml(row.dataType)}</span>` : empty}</td>
             <td class="dd-format">${row.format ? multiline(row.format) : empty}</td>

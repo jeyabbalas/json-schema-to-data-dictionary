@@ -213,6 +213,9 @@ select {
 .opt { display: flex; flex-direction: column; gap: 5px; font-size: 0.88rem; color: var(--muted); }
 .opt > span { font-weight: 500; }
 .opt-check { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+.opt-note { color: var(--muted); font-size: 0.8em; }
+.semantic-hint { margin: -4px 0 0 24px; }
+.semantic-status { margin: -4px 0 0 24px; color: var(--accent); }
 
 /* ---------- Output toolbar + messages ---------- */
 .output-toolbar {

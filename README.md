@@ -11,7 +11,8 @@ dictionaries — it both documents *and* validates the data. But it is not reada
 experts. This library lets the schema stay authoritative while everyone sees the *view* they
 expect: data engineers read the schema, domain experts read the table.
 
-- **Zero runtime dependencies.** Ships ESM + types and a single browser bundle.
+- **Zero runtime dependencies.** Ships ESM + types and a single browser bundle. (Semantic
+  search is opt-in and uses an embedding runtime you load yourself.)
 - **Resolves `$ref` across documents** (file-position *and* `$id`-based), degrading gracefully.
 - **Understands the hard cases**: mixed measurement/categorical variables, sentinel/missing
   codes, and `if/then` **skip patterns** (structural missingness) — the bread and butter of
@@ -111,7 +112,8 @@ renderDataDictionary(container, table, options?);
 Mounts a `<json-data-dictionary>` web component. By default it uses a **Shadow DOM** so its
 styles never collide with your app. Features: instant search with highlighting + counts +
 empty state (`/` to focus, `Esc` to clear), collapsible category sections, a frozen variable
-column, collapsible JSON trees, and copy / download-CSV.
+column, collapsible JSON trees, copy / download-CSV, and optional
+[semantic search](#semantic-search-opt-in).
 
 Theme it from your page with CSS custom properties (they pierce the shadow boundary):
 
@@ -136,6 +138,67 @@ You can also use the element directly:
   document.querySelector("#dict").table = table; // assign the DataDictionaryTable
 </script>
 ```
+
+### Semantic search (opt-in)
+
+Keyword search is instant and needs nothing else. For power users, the interactive component
+can also surface **semantically related variables** — the tobacco rows for the query *smoking* —
+entirely in the browser, using a small text-embedding model that *you* load. The library stays
+dependency-free: it only needs an object implementing the `Embedder` contract, and ships a
+reference adapter for [Transformers.js](https://huggingface.co/docs/transformers.js).
+
+```ts
+import { renderDataDictionary, createTransformersEmbedder } from "json-schema-data-dictionary";
+
+// Defaults: Xenova/bge-small-en-v1.5 (33M params, 384-d, MIT, ~34 MB quantized), q8, WASM.
+const embedder = createTransformersEmbedder(() => import("@huggingface/transformers"));
+renderDataDictionary(container, table, { semanticSearch: { embedder } });
+```
+
+What happens:
+
+- Every row becomes short natural-language chunks (name + description; name + category labels)
+  and is embedded **once**. Vectors are cached in IndexedDB (`jsdd-semantic`) keyed by model +
+  text hash, so reloading the same schema is instant and only changed rows are re-embedded.
+  Transformers.js caches the model weights in the browser's Cache API.
+- While a query is active, the table becomes **one ranked results list**: every keyword match
+  (variable-name matches first, then description, then values), plus up to `maxRelated`
+  semantically related rows badged *related* (hover the name for the similarity score).
+  Clearing the box restores the category sections.
+- A status chip next to the search box reports model download, indexing and errors. Keyword
+  search keeps working throughout — and if anything fails.
+
+Run the model off the main thread by serving it from a Web Worker (this is what the demo does):
+
+```js
+// embed-worker.js — a classic worker so it can importScripts() the browser bundle
+importScripts("json-schema-data-dictionary.global.js");
+const { serveEmbedder, createTransformersEmbedder } = JsonSchemaDataDictionary;
+serveEmbedder(createTransformersEmbedder(() => import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0")));
+
+// main thread
+const embedder = await createWorkerEmbedder(new Worker("embed-worker.js"));
+renderDataDictionary(container, table, { semanticSearch: { embedder } });
+```
+
+`semanticSearch` options: `cache` (a `VectorCache`, or `false` for memory only), `maxRelated`
+(default 10), `minScore` (similarity floor; defaults to the model's), `minQueryLength` (3),
+`debounceMs` (250) and `onStatus(status)`. Scores are **mean-centred cosine similarities**:
+the index subtracts the corpus' mean embedding before comparing, so unrelated rows sit near 0
+and related ones well above it even for models whose raw scores cluster around 0.6 — which is
+what makes one floor (0.25) work across models.
+
+`createTransformersEmbedder(moduleOrLoader, { model, dtype, device, pooling, queryPrefix, documentPrefix, minScore, batchSize, pipelineOptions })`
+has verified defaults for `Xenova/bge-small-en-v1.5` (default) and `Xenova/all-MiniLM-L6-v2`
+(23 MB, Apache-2.0). Any other Transformers.js embedding model works if you pass `pooling`,
+prefixes and `minScore` explicitly. To not depend on a third-party Hub repo, mirror the model
+files (`config.json`, `tokenizer.json`, `tokenizer_config.json`, `special_tokens_map.json`,
+`onnx/model_quantized.onnx`) into your own Hugging Face account and set `model: "<account>/<repo>"`.
+
+Headless use: `createSemanticIndex(table, { embedder })` exposes `ready`, `status`, `subscribe()`
+and `search(query, { limit, minScore })` without the widget. The static `tableToHtml` output
+stays keyword-only. On first use the browser downloads the model weights from huggingface.co
+(and Transformers.js from the CDN you chose); nothing else leaves the browser.
 
 ### Static HTML string
 
@@ -177,6 +240,10 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 | `defineDataDictionaryElement(tag?)` | Register the `<json-data-dictionary>` custom element. |
 | `toPlainRows(table, options?)` / `tableToCsv(table, options?)` | Spreadsheet export. |
 | `buildViewModel(table, options?)` | The render-ready view model (for custom UIs). |
+| `createTransformersEmbedder(module, options?)` | `Embedder` adapter for Transformers.js (opt-in semantic search). |
+| `createSemanticIndex(table, options)` | Headless semantic index: `ready`, `status`, `search()`. |
+| `serveEmbedder(embedder)` / `createWorkerEmbedder(port)` | Run any embedder inside a Web Worker. |
+| `createIndexedDbVectorCache()` / `createMemoryVectorCache()` | Vector caches for the index. |
 | `analyzeProperty(schema, ctx)` / `SchemaRegistry` | Lower-level building blocks. |
 | `STRING_FORMATS`, `describeFormat`, `formatLabel` | The built-in format catalog. |
 
@@ -194,6 +261,7 @@ npm install
 npm run build      # tsup -> dist/ (ESM + .d.ts + browser bundle)
 npm test           # node:test over the fixtures in tests/fixtures
 npm run example    # writes examples/dictionary.html
+npm run demo       # builds the demo/ site; then `npm run demo:serve` (workers need http://)
 ```
 
 ## License

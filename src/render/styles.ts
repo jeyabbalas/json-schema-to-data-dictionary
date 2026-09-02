@@ -85,7 +85,7 @@ export const STYLES = `
   background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808a99' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
 }
 .dd-search-input:focus { border-color: var(--_accent); box-shadow: 0 0 0 3px var(--_accent-weak); }
-.dd-count { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: .8em; color: var(--_muted); pointer-events: none; }
+.dd-count { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: .8em; color: var(--_muted); pointer-events: none; white-space: nowrap; }
 
 .dd-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .dd-btn {
@@ -191,6 +191,19 @@ export const STYLES = `
 mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padding: 0 1px; }
 .dd-footer { margin-top: 12px; font-size: .8em; color: var(--_muted); }
 .dd-warning { color: var(--_sentinel); }
+
+/* Semantic search: ranked results list, "related" badge and status chip. */
+.dd-results { margin: 12px 0; }
+.dd-category .dd-row-cat { display: none; }
+.dd-results .dd-row-cat { display: block; margin-top: 3px; font-size: .76em; font-weight: 400; color: var(--_muted); }
+.dd-row[data-dd-match="related"] .dd-col-name::after {
+  content: "related"; display: inline-block; margin-top: 4px; padding: 1px 7px;
+  font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  border-radius: 999px; background: var(--_accent-weak); color: var(--_accent);
+}
+.dd-semantic-status { font-size: .8em; color: var(--_muted); white-space: nowrap; }
+.dd-semantic-status[data-state="error"] { color: var(--_sentinel); }
+.dd-semantic-status[data-state="ready"]::before { content: "✦ "; color: var(--_accent); }
 
 @media (max-width: 640px) {
   .dd-col-name { position: static; }

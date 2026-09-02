@@ -21,6 +21,16 @@
   var docsFromPreset = false;
   var lastTable = null;
 
+  // Semantic search (opt-in). The model runs in demo/embed-worker.js when Workers are
+  // available (not on file://), otherwise on the main thread. The embedder is created once
+  // and reused across re-renders; the library caches row embeddings in IndexedDB.
+  var SEMANTIC_KEY = "dd-demo:semantic";
+  var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+  var EMBEDDING_MODEL = "Xenova/bge-small-en-v1.5";
+  var semanticEmbedder = null;   // set once the embedder is ready and the box is still ticked
+  var semanticWorker = null;
+  var embedderPromise = null;
+
   // --- Messages -----------------------------------------------------------
   function clearMessages() { $("#messages").replaceChildren(); }
   function addMessage(type, text) {
@@ -276,13 +286,94 @@
     lastTable = table;
     (table.warnings || []).forEach(function (w) { addMessage("warning", w); });
 
-    API.renderDataDictionary(out, table, {
+    var options = {
       shadow: $("#shadow").checked,
       theme: $("#theme").value,
       expandCategories: $("#expand-categories").checked,
       expandAdditionalInfo: $("#expand-additional").checked
-    });
+    };
+    if (semanticEmbedder) options.semanticSearch = { embedder: semanticEmbedder, onStatus: showSemanticStatus };
+    API.renderDataDictionary(out, table, options);
     setExportsEnabled(true);
+  }
+
+  // --- Semantic search ----------------------------------------------------
+  function loadTransformers() {
+    return import(TRANSFORMERS_URL).then(function (transformers) {
+      transformers.env.allowLocalModels = false;
+      return transformers;
+    });
+  }
+
+  function createWorkerEmbedder() {
+    return new Promise(function (resolve, reject) {
+      var worker;
+      try { worker = new Worker("embed-worker.js"); } catch (err) { reject(err); return; }
+      var timer = setTimeout(function () { reject(new Error("worker did not respond")); }, 8000);
+      worker.addEventListener("error", function (e) {
+        clearTimeout(timer);
+        reject(new Error(e.message || "worker failed to start"));
+      });
+      API.createWorkerEmbedder(worker).then(
+        function (embedder) { clearTimeout(timer); semanticWorker = worker; resolve(embedder); },
+        function (err) { clearTimeout(timer); reject(err); }
+      );
+    }).catch(function (err) {
+      if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
+      throw err;
+    });
+  }
+
+  function getEmbedder() {
+    if (embedderPromise) return embedderPromise;
+    var canWorker = typeof Worker !== "undefined" && location.protocol !== "file:";
+    embedderPromise = (canWorker ? createWorkerEmbedder() : Promise.reject(new Error("workers unavailable")))
+      .catch(function () {
+        // Fallback: run the model on the main thread (also the file:// path).
+        return API.createTransformersEmbedder(loadTransformers, { model: EMBEDDING_MODEL });
+      });
+    return embedderPromise;
+  }
+
+  function showSemanticStatus(status) {
+    var el = $("#semantic-status");
+    if (!status) { el.hidden = true; el.textContent = ""; return; }
+    el.hidden = false;
+    if (status.state === "loading") {
+      el.textContent = status.progress == null ? "Loading model…" : "Loading model… " + Math.round(status.progress * 100) + "%";
+    } else if (status.state === "indexing") {
+      el.textContent = "Indexing variables… " + status.done + " / " + status.total;
+    } else if (status.state === "ready") {
+      el.textContent = "Ready — results now include related variables.";
+    } else {
+      el.textContent = "Unavailable: " + status.message;
+    }
+  }
+
+  function setSemantic(on) {
+    try { localStorage.setItem(SEMANTIC_KEY, on ? "1" : "0"); } catch (e) {}
+    if (!on) {
+      semanticEmbedder = null;
+      embedderPromise = null;
+      if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
+      showSemanticStatus(null);
+      render();
+      return;
+    }
+    showSemanticStatus({ state: "loading", progress: undefined });
+    getEmbedder().then(
+      function (embedder) {
+        if (!$("#semantic").checked) return; // unticked while starting
+        semanticEmbedder = embedder;
+        render();
+      },
+      function (err) {
+        embedderPromise = null;
+        $("#semantic").checked = false;
+        showSemanticStatus(null);
+        addMessage("error", "Couldn’t start semantic search: " + err.message);
+      }
+    );
   }
 
   // --- Export -------------------------------------------------------------
@@ -416,6 +507,7 @@
     ["#theme", "#shadow", "#expand-categories", "#expand-additional"].forEach(function (sel) {
       $(sel).addEventListener("change", function () { render(); });
     });
+    $("#semantic").addEventListener("change", function (e) { setSemantic(e.target.checked); });
 
     $("#download-html-btn").addEventListener("click", downloadHtml);
     $("#download-csv-btn").addEventListener("click", downloadCsv);
@@ -442,6 +534,13 @@
 
     if ((window.DEMO_PRESETS || []).length) loadPreset(0);
     else render(); // show the empty-state prompt
+
+    var savedSemantic = null;
+    try { savedSemantic = localStorage.getItem(SEMANTIC_KEY); } catch (e) {}
+    if (savedSemantic === "1") {
+      $("#semantic").checked = true;
+      setSemantic(true);
+    }
   }
 
   start();
