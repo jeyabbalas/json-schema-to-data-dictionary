@@ -6,7 +6,8 @@
  * (ESM only) is pulled in with a dynamic import() the first time the model is needed. Model
  * weights are fetched from the Hugging Face Hub and cached by the browser (Cache API).
  */
-importScripts("json-schema-data-dictionary.global.js");
+// The worker URL carries the deploy's ?v=<commit> query; reuse it for the bundle (cache-busting).
+importScripts("json-schema-data-dictionary.global.js" + self.location.search);
 
 var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
 var MODEL = "Xenova/bge-small-en-v1.5"; // 33M params, 384-d, MIT; ~34 MB quantized

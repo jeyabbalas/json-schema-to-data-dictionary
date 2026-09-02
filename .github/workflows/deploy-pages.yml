@@ -45,6 +45,12 @@ jobs:
           cp dist/json-schema-data-dictionary.global.js _site/
           cp dist/json-schema-data-dictionary.global.js.map _site/ 2>/dev/null || true
           cp node_modules/exceljs/dist/exceljs.min.js _site/
+          # Cache-bust the asset URLs. GitHub Pages serves everything with max-age=600, so
+          # browsers keep the previous scripts and styles for up to 10 minutes after a deploy,
+          # even across a normal reload. Versioned URLs make every deploy fetch fresh assets.
+          v=${GITHUB_SHA::7}
+          sed -i -E "s#(href|src)=\"([^\"?]+\.(css|js))\"#\1=\"\2?v=$v\"#g" _site/index.html
+          test "$(grep -c "?v=$v" _site/index.html)" -ge 5
 
       - uses: actions/configure-pages@v5
 

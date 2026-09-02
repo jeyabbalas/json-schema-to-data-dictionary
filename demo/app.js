@@ -26,6 +26,15 @@
   // and reused across re-renders; the library caches row embeddings in IndexedDB.
   var SEMANTIC_KEY = "dd-demo:semantic";
   var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+  // The Pages deploy appends ?v=<commit> to every asset URL (cache-busting). Forward it to
+  // the worker so a fresh app.js never pairs with a stale embed-worker.js.
+  var ASSET_QUERY = (function () {
+    try {
+      var src = document.currentScript && document.currentScript.src;
+      var m = src && /\?v=[^&#]+/.exec(src);
+      return m ? m[0] : "";
+    } catch (e) { return ""; }
+  })();
   var EMBEDDING_MODEL = "Xenova/bge-small-en-v1.5";
   var semanticEmbedder = null;   // set once the embedder is ready and the box is still ticked
   var semanticWorker = null;
@@ -308,7 +317,7 @@
   function createWorkerEmbedder() {
     return new Promise(function (resolve, reject) {
       var worker;
-      try { worker = new Worker("embed-worker.js"); } catch (err) { reject(err); return; }
+      try { worker = new Worker("embed-worker.js" + ASSET_QUERY); } catch (err) { reject(err); return; }
       var timer = setTimeout(function () { reject(new Error("worker did not respond")); }, 8000);
       worker.addEventListener("error", function (e) {
         clearTimeout(timer);
