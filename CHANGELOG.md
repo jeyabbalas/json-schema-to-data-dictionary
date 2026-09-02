@@ -18,8 +18,11 @@ All notable changes to this project are documented here. The format follows
   *related*; the category layout is restored when the box is cleared. A status chip
   reports model download, indexing and errors; keyword search keeps working throughout.
 - IndexedDB vector cache (`jsdd-semantic`) keyed by model and text hash, so
-  embeddings persist across sessions and only changed rows are re-embedded. Scores
-  are mean-centred cosine similarities with a model-agnostic default floor of 0.25.
+  embeddings persist across sessions and only changed rows are re-embedded. The
+  cache holds only the most recently indexed dictionary: indexing a different
+  schema deletes the previous one's vectors (`VectorCache.retainOnly`), so storage
+  never grows with the number of schemas opened. Scores are mean-centred cosine
+  similarities with a model-agnostic default floor of 0.25.
 - Headless API: `createSemanticIndex`, `buildEmbedChunks`, `rankResults`,
   `keywordScore`, `fuseRankings`, `createIndexedDbVectorCache`,
   `createMemoryVectorCache`, and the `Embedder`, `VectorCache`, `SemanticIndex`,

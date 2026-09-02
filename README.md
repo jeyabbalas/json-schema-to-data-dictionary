@@ -160,7 +160,9 @@ What happens:
 - Every row becomes short natural-language chunks (name + description; name + category labels)
   and is embedded **once**. Vectors are cached in IndexedDB (`jsdd-semantic`) keyed by model +
   text hash, so reloading the same schema is instant and only changed rows are re-embedded.
-  Transformers.js caches the model weights in the browser's Cache API.
+  The cache holds one dictionary at a time: indexing a different schema deletes the previous
+  one's vectors, so storage never grows with the number of schemas opened. Transformers.js
+  caches the model weights in the browser's Cache API.
 - While a query is active, the table becomes **one ranked results list**: every keyword match
   (variable-name matches first, then description, then values), plus up to `maxRelated`
   semantically related rows badged *related* (hover the name for the similarity score).
@@ -183,7 +185,9 @@ renderDataDictionary(container, table, { semanticSearch: { embedder } });
 
 `semanticSearch` options: `cache` (a `VectorCache`, or `false` for memory only), `maxRelated`
 (default 10), `minScore` (similarity floor; defaults to the model's), `minQueryLength` (3),
-`debounceMs` (250) and `onStatus(status)`. Scores are **mean-centred cosine similarities**:
+`debounceMs` (250) and `onStatus(status)`. When several widgets showing different dictionaries
+share a page, give each its own `createIndexedDbVectorCache({ dbName })`; through one shared
+cache they would evict each other's vectors. Scores are **mean-centred cosine similarities**:
 the index subtracts the corpus' mean embedding before comparing, so unrelated rows sit near 0
 and related ones well above it even for models whose raw scores cluster around 0.6 — which is
 what makes one floor (0.25) work across models.
@@ -243,7 +247,7 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 | `createTransformersEmbedder(module, options?)` | `Embedder` adapter for Transformers.js (opt-in semantic search). |
 | `createSemanticIndex(table, options)` | Headless semantic index: `ready`, `status`, `search()`. |
 | `serveEmbedder(embedder)` / `createWorkerEmbedder(port)` | Run any embedder inside a Web Worker. |
-| `createIndexedDbVectorCache()` / `createMemoryVectorCache()` | Vector caches for the index. |
+| `createIndexedDbVectorCache(options?)` / `createMemoryVectorCache()` | Vector caches for the index (`getMany`, `putMany`, `retainOnly`, `clear`). |
 | `analyzeProperty(schema, ctx)` / `SchemaRegistry` | Lower-level building blocks. |
 | `STRING_FORMATS`, `describeFormat`, `formatLabel` | The built-in format catalog. |
 

@@ -258,11 +258,14 @@ export interface RenderHtmlOptions {
  */
 export interface SemanticSearchOptions {
   embedder: Embedder;
-  /** Vector cache. Default: IndexedDB when available. `false` keeps vectors in memory only. */
+  /**
+   * Vector cache. Default: IndexedDB when available, holding only the most recently indexed
+   * dictionary. `false` keeps vectors in memory only.
+   */
   cache?: VectorCache | false | undefined;
   /** Maximum number of semantic-only ("related") rows added to the results. Default: 10. */
   maxRelated?: number | undefined;
-  /** Cosine floor for related rows. Default: the embedder's `minScore`, then 0.5. */
+  /** Cosine floor for related rows. Default: the embedder's `minScore`, then 0.25. */
   minScore?: number | undefined;
   /** Shortest query that triggers a semantic lookup. Default: 3. */
   minQueryLength?: number | undefined;

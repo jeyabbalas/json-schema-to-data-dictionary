@@ -112,7 +112,50 @@ test("createSemanticIndex: load failure becomes an error status", async () => {
   assert.match(index.status.message, /no model/);
 });
 
-test("IndexedDB cache: round trip, views, foreign values, clear", { skip: fakeIdb ? false : "fake-indexeddb not installed" }, async () => {
+test("memory cache: retainOnly keeps only the given keys", async () => {
+  const cache = createMemoryVectorCache();
+  await cache.putMany([["a", new Float32Array([1])], ["b", new Float32Array([2])]]);
+  await cache.retainOnly(["b", "missing"]);
+  assert.deepEqual([...(await cache.getMany(["a", "b"])).keys()], ["b"]);
+});
+
+test("createSemanticIndex: the cache holds only the most recently indexed dictionary", async () => {
+  const embedder = createFakeEmbedder();
+  const cache = createMemoryVectorCache();
+  const followUp = () => {
+    const t = syntheticTable();
+    for (const row of t.rows) row["Description"] = `Follow-up visit: ${row["Description"]}`;
+    return t;
+  };
+  const keysOf = (table) => [...new Set(buildEmbedChunks(table).map((c) => c.text))].map((t) => cacheKey(embedder.id, t));
+  const tableA = syntheticTable();
+  const tableB = followUp();
+
+  await createSemanticIndex(tableA, { embedder, cache }).ready;
+  assert.equal((await cache.getMany(keysOf(tableA))).size, keysOf(tableA).length, "A is cached");
+
+  await createSemanticIndex(tableB, { embedder, cache }).ready;
+  assert.equal((await cache.getMany(keysOf(tableB))).size, keysOf(tableB).length, "B is cached");
+  assert.equal((await cache.getMany(keysOf(tableA))).size, 0, "A's vectors are deleted once B is indexed");
+
+  // The same dictionary again (a re-render builds a new table object with identical texts):
+  // nothing is deleted and nothing is re-embedded, background sentences included.
+  const fresh = createFakeEmbedder();
+  await createSemanticIndex(followUp(), { embedder: fresh, cache }).ready;
+  assert.equal(fresh.calls.document, 0, "re-indexing the same dictionary is served entirely from the cache");
+
+  await createSemanticIndex(tableA, { embedder: fresh, cache }).ready;
+  assert.ok(fresh.calls.document > 0, "A is embedded again after B replaced it");
+  assert.equal((await cache.getMany(keysOf(tableB))).size, 0, "and B is gone in turn");
+
+  // A cache without retainOnly is left alone.
+  const bare = { getMany: async () => new Map(), putMany: async () => {}, clear: async () => {} };
+  const index = createSemanticIndex(tableA, { embedder, cache: bare });
+  await index.ready;
+  assert.equal(index.status.state, "ready");
+});
+
+test("IndexedDB cache: round trip, views, foreign values, retainOnly, clear", { skip: fakeIdb ? false : "fake-indexeddb not installed" }, async () => {
   const dbName = `jsdd-test-${Date.now()}`;
   const cache = createIndexedDbVectorCache({ dbName });
   const big = new Float32Array([9, 9, 4, 5, 6, 9]);
@@ -138,8 +181,21 @@ test("IndexedDB cache: round trip, views, foreign values, clear", { skip: fakeId
   });
   assert.equal((await cache.getMany(["x"])).has("x"), false, "foreign values are ignored");
 
+  await cache.retainOnly(["view", "missing"]);
+  const remaining = await new Promise((resolve, reject) => {
+    const req = indexedDB.open(dbName, 1);
+    req.onsuccess = () => {
+      const db = req.result;
+      const keysReq = db.transaction("vectors").objectStore("vectors").getAllKeys();
+      keysReq.onsuccess = () => { db.close(); resolve(keysReq.result); };
+      keysReq.onerror = () => reject(keysReq.error);
+    };
+    req.onerror = () => reject(req.error);
+  });
+  assert.deepEqual(remaining, ["view"], "retainOnly deletes every other key, foreign values included");
+
   await cache.clear();
-  assert.equal((await cache.getMany(["a"])).size, 0);
+  assert.equal((await cache.getMany(["view"])).size, 0);
 });
 
 const F = (name, description = "", values = "", extra = "") => ({

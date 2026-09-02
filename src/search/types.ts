@@ -25,10 +25,20 @@ export interface Embedder {
   dispose?(): void | Promise<void>;
 }
 
-/** Persists document vectors between sessions (IndexedDB by default). Best-effort. */
+/**
+ * Persists document vectors between sessions (IndexedDB by default). Best-effort: the index
+ * swallows every cache failure and simply re-embeds.
+ */
 export interface VectorCache {
   getMany(keys: readonly string[]): Promise<Map<string, Float32Array>>;
   putMany(entries: ReadonlyArray<readonly [key: string, vector: Float32Array]>): Promise<void>;
+  /**
+   * Delete every entry whose key is not in `keys`. The index calls this once a dictionary is
+   * fully cached, so the cache only ever holds the most recently indexed dictionary instead of
+   * accumulating one set of vectors per schema ever opened. Optional: a cache without it keeps
+   * everything.
+   */
+  retainOnly?(keys: readonly string[]): Promise<void>;
   clear(): Promise<void>;
 }
 
@@ -51,7 +61,7 @@ export type SemanticStatus =
 export interface SemanticSearchQuery {
   /** Maximum number of hits to return. */
   limit?: number | undefined;
-  /** Cosine floor; defaults to the embedder's `minScore`, then 0.5. */
+  /** Cosine floor; defaults to the embedder's `minScore`, then 0.25. */
   minScore?: number | undefined;
 }
 

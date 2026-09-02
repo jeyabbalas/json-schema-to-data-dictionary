@@ -1,6 +1,8 @@
 // Vector caches. Keys are content hashes (embedder id + template version + text hash), so
 // nothing ever needs explicit invalidation: a changed description or a different model simply
-// misses. Values are bare Float32Arrays — no schema text is persisted.
+// misses. Values are bare Float32Arrays — no schema text is persisted. After indexing, the
+// index prunes the cache down to the current dictionary's keys (`retainOnly`), so storage
+// never grows with the number of schemas a user has opened.
 
 import type { VectorCache } from "./types";
 import { cyrb53 } from "./hash";
@@ -23,6 +25,10 @@ export function createMemoryVectorCache(): VectorCache {
     },
     async putMany(entries) {
       for (const [key, vector] of entries) map.set(key, vector.slice());
+    },
+    async retainOnly(keys) {
+      const keep = new Set(keys);
+      for (const key of map.keys()) if (!keep.has(key)) map.delete(key);
     },
     async clear() {
       map.clear();
@@ -113,6 +119,16 @@ export function createIndexedDbVectorCache(options: IndexedDbVectorCacheOptions 
       // slice(): structured clone of a view would copy its whole underlying buffer.
       return transact("readwrite", (store) => {
         for (const [key, vector] of entries) store.put(vector.slice(), key);
+      });
+    },
+    retainOnly(keys) {
+      const keep = new Set<string>(keys);
+      // One transaction: read every key, delete the strangers (foreign, non-string keys too).
+      return transact("readwrite", (store) => {
+        const req = store.getAllKeys();
+        req.onsuccess = () => {
+          for (const key of req.result) if (typeof key !== "string" || !keep.has(key)) store.delete(key);
+        };
       });
     },
     clear() {

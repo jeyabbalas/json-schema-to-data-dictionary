@@ -133,6 +133,17 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
         /* best-effort */
       }
     }
+    // The cache holds one dictionary at a time: vectors of previously indexed schemas (or of an
+    // older text template / embedder) are deleted so storage does not grow without bound.
+    // Re-indexing the same dictionary yields the same keys, so nothing is lost or re-embedded.
+    if (disposed) throw disposedError();
+    if (cache.retainOnly) {
+      try {
+        await cache.retainOnly(keys);
+      } catch {
+        /* best-effort */
+      }
+    }
     setStatus({ state: "ready" });
   }
 
