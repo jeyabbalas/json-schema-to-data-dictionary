@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.4.0 - 2026-09-05
 
 ### Added
 
@@ -29,6 +29,9 @@ All notable changes to this project are documented here. The format follows
   classifier matched the value's prose `description`, so a substantive value documented as
   *"…not a missingness sentinel"* was filed under **special codes**. It now reads the label
   and the `$ref` name, falling back to the description only when there is no label.
+- **The data-type badge is a rectangle again.** A long type (`categorical (integer)`) wraps
+  to three lines in a narrow Data type column, and the pill radius rounded that block into a
+  circle; it is `6px` now, matching inline code chips.
 
 Between them these change which values render under **special codes** and which are indexed
 for semantic search. A coded value in a numeric field whose label the vocabulary does not
