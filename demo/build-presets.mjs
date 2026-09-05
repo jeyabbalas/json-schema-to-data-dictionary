@@ -19,9 +19,8 @@ const VECTORS_MANIFEST = join(HERE, "vectors", "manifest.json");
 // `documents[].path` becomes the synthetic retrieval URI (`https://demo.local/<path>`)
 // the library uses to resolve relative $refs, so for directory presets the path must
 // reproduce the on-disk layout (e.g. `categories/demographics.json`, `common/defs.json`).
-// `key` is a stable identifier: the demo's `?preset=<key>` URL override and its
-// client-side synthetic preset (`from: "bcrpp"`) refer to presets by it, so keep keys
-// unchanged when labels are reworded.
+// `key` is a stable identifier: the demo's `?preset=<key>` URL override refers to presets by
+// it, so keep keys unchanged when labels are reworded.
 const SOURCES = [
   {
     key: "covid",

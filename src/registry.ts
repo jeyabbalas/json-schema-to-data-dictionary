@@ -76,6 +76,13 @@ export class SchemaRegistry {
 
   /** Resolve a `$ref` against the retrieval base first, then the `$id` base. */
   resolve(ref: string, from: ResolutionBase): IndexedSchemaLocation | undefined {
+    const hit = this.tryResolve(ref, from);
+    if (!hit) this.warnings.push(`Could not resolve $ref ${JSON.stringify(ref)} from ${from.retrievalUri}.`);
+    return hit;
+  }
+
+  /** Like `resolve`, but silent: for speculative lookups such as ranking the root candidates. */
+  tryResolve(ref: string, from: ResolutionBase): IndexedSchemaLocation | undefined {
     const candidates = new Set<string>();
     for (const base of [from.retrievalUri, from.idBase]) {
       if (!base) continue;
@@ -87,7 +94,6 @@ export class SchemaRegistry {
       const hit = this.byUri.get(candidate);
       if (hit) return hit;
     }
-    this.warnings.push(`Could not resolve $ref ${JSON.stringify(ref)} from ${from.retrievalUri}.`);
     return undefined;
   }
 

@@ -10,6 +10,7 @@ import type {
   JsonSchemaObject,
   JsonValue,
   SchemaDocumentInput,
+  SchemaRootCandidate,
   SchemaToTableOptions,
   SourceInfo,
   ValidValue
@@ -114,6 +115,47 @@ function normalizeOptions(o: SchemaToTableOptions): Options {
   };
 }
 
+/**
+ * Rank the input documents by how likely each is to be the table's root.
+ *
+ * People routinely hand over a whole project folder, so the input mixes the table schema with
+ * the component schemas it `$ref`s, example data files, and occasionally several tables. The
+ * ranking prefers, in order: an array of records (a table), one that no other document `$ref`s
+ * into (a referenced document is a component), the one describing the most variables, and
+ * finally input order. Documents that do not read like a JSON Schema at all (a bare data array,
+ * a ledger of `{ violations: [...] }`) are left out entirely.
+ */
+export function findSchemaRoots(input: Array<JsonSchema | SchemaDocumentInput>): SchemaRootCandidate[] {
+  if (!Array.isArray(input) || input.length === 0) return [];
+  return rankRoots(new SchemaRegistry(input));
+}
+
+function rankRoots(registry: SchemaRegistry): SchemaRootCandidate[] {
+  const roots = registry.roots;
+  const referenced = referencedDocuments(registry);
+  const candidates: SchemaRootCandidate[] = [];
+  roots.forEach((root, index) => {
+    if (!looksLikeSchemaDocument(root.schema)) return;
+    const title = isSchemaObject(root.schema) && typeof root.schema.title === "string" ? root.schema.title.trim() : "";
+    candidates.push({
+      index,
+      uri: root.retrievalUri,
+      ...(root.name ? { name: root.name } : {}),
+      ...(title ? { title } : {}),
+      arrayLike: looksLikeArray(root.schema, registry.baseOf(root), registry, 4),
+      referenced: referenced.has(root.retrievalUri),
+      variableCount: countRowProperties(root, registry)
+    });
+  });
+  return candidates.sort(
+    (a, b) =>
+      Number(b.arrayLike) - Number(a.arrayLike) ||
+      Number(a.referenced) - Number(b.referenced) ||
+      b.variableCount - a.variableCount ||
+      a.index - b.index
+  );
+}
+
 function chooseRoot(registry: SchemaRegistry, options: SchemaToTableOptions, warnings: string[]): IndexedSchemaLocation {
   if (options.rootUri) {
     const loc = registry.get(options.rootUri);
@@ -124,12 +166,116 @@ function chooseRoot(registry: SchemaRegistry, options: SchemaToTableOptions, war
     const indexed = registry.roots[options.rootIndex];
     if (indexed) return indexed;
   }
-  for (const r of registry.roots) {
-    if (looksLikeArray(r.schema, registry.baseOf(r), registry, 4)) return r;
+
+  const ranked = rankRoots(registry);
+  const best = ranked[0];
+  if (best) {
+    const tables = ranked.filter((c) => c.arrayLike && !c.referenced);
+    if (tables.length > 1) {
+      const label = candidateLabeller(tables);
+      warnings.push(
+        `${tables.length} documents look like a table root; using ${label(best)}. ` +
+          `Pick another with rootUri or rootIndex: ${tables.slice(0, 8).map(label).join(", ")}${tables.length > 8 ? ", …" : ""}.`
+      );
+    }
+    return registry.roots[best.index] as IndexedSchemaLocation;
   }
+
   const first = registry.roots[0];
   if (!first) throw new Error("At least one JSON Schema document is required.");
   return first;
+}
+
+/** Name candidates by their `name`, falling back to the URI when two share one. */
+function candidateLabeller(candidates: readonly SchemaRootCandidate[]): (candidate: SchemaRootCandidate) => string {
+  const seen = new Map<string, number>();
+  for (const c of candidates) if (c.name) seen.set(c.name, (seen.get(c.name) ?? 0) + 1);
+  return (candidate) => (candidate.name && seen.get(candidate.name) === 1 ? candidate.name : candidate.uri);
+}
+
+/** Keywords that mark a document as a schema rather than data that happens to be JSON. */
+const SCHEMA_KEYWORDS = new Set([
+  "$schema",
+  "$id",
+  "$ref",
+  "$defs",
+  "definitions",
+  "type",
+  "properties",
+  "patternProperties",
+  "items",
+  "prefixItems",
+  "allOf",
+  "anyOf",
+  "oneOf",
+  "not",
+  "if",
+  "enum",
+  "const",
+  "required",
+  "additionalProperties",
+  "unevaluatedProperties",
+  "contains",
+  "$anchor"
+]);
+
+function looksLikeSchemaDocument(schema: JsonSchema): boolean {
+  if (!isSchemaObject(schema)) return false; // booleans and bare data arrays are never a table root
+  return Object.keys(schema).some((key) => SCHEMA_KEYWORDS.has(key));
+}
+
+/** Retrieval URIs that some OTHER document `$ref`s into — those are components, not roots. */
+function referencedDocuments(registry: SchemaRegistry): Set<string> {
+  const referenced = new Set<string>();
+  for (const root of registry.roots) {
+    const base = registry.baseOf(root);
+    for (const ref of collectRefs(root.schema)) {
+      const target = registry.tryResolve(ref, base);
+      if (target && target.retrievalUri !== root.retrievalUri) referenced.add(target.retrievalUri);
+    }
+  }
+  return referenced;
+}
+
+/** Every `$ref`/`$dynamicRef` string anywhere in a document (over-collecting is harmless here). */
+function collectRefs(schema: JsonSchema, out: Set<string> = new Set(), depth = 12): Set<string> {
+  if (depth < 0 || typeof schema !== "object" || schema === null) return out;
+  for (const value of Array.isArray(schema) ? schema : Object.values(schema)) {
+    if (typeof value === "object" && value !== null) collectRefs(value as JsonSchema, out, depth - 1);
+  }
+  if (!Array.isArray(schema)) {
+    for (const key of ["$ref", "$dynamicRef"]) {
+      const value = (schema as Record<string, unknown>)[key];
+      if (typeof value === "string" && value.trim()) out.add(value);
+    }
+  }
+  return out;
+}
+
+/** How many variables a document would contribute as the root (its row object's properties). */
+function countRowProperties(root: IndexedSchemaLocation, registry: SchemaRegistry): number {
+  const base = registry.baseOf(root);
+  const items = findItems(root.schema, base, registry, 6) ?? { schema: root.schema, base };
+  const row = deref(items.schema, items.base, registry, 6, []);
+  const names = new Set<string>();
+  const visit = (schema: JsonSchema, schemaBase: ResolutionBase, depth: number, seen: Set<string>): void => {
+    if (depth < 0 || !isSchemaObject(schema)) return;
+    if (isRecord(schema.properties)) for (const name of Object.keys(schema.properties)) names.add(name);
+    const ref = refKeyword(schema);
+    if (ref) {
+      const loc = registry.tryResolve(ref, schemaBase);
+      const key = loc ? `${loc.retrievalUri}#${loc.pointer}` : "";
+      if (loc && !seen.has(key)) {
+        seen.add(key);
+        visit(loc.schema, registry.baseOf(loc), depth - 1, seen);
+      }
+    }
+    for (const list of [schema.allOf, schema.anyOf, schema.oneOf]) {
+      if (Array.isArray(list)) for (const branch of list) visit(branch, schemaBase, depth - 1, seen);
+    }
+  };
+  visit(row.schema, row.base, 6, new Set());
+  return names.size;
 }
 
 function looksLikeArray(schema: JsonSchema, base: ResolutionBase, registry: SchemaRegistry, depth: number): boolean {
@@ -138,7 +284,7 @@ function looksLikeArray(schema: JsonSchema, base: ResolutionBase, registry: Sche
   if (schema.items !== undefined) return true;
   const ref = refKeyword(schema);
   if (ref) {
-    const loc = registry.resolve(ref, base);
+    const loc = registry.tryResolve(ref, base);
     if (loc) return looksLikeArray(loc.schema, registry.baseOf(loc), registry, depth - 1);
   }
   if (Array.isArray(schema.allOf)) return schema.allOf.some((b) => looksLikeArray(b, base, registry, depth - 1));

@@ -3,7 +3,7 @@
 // spreadsheet-like data dictionary and an embeddable, searchable HTML table.
 
 // --- Core extraction ---
-export { schemaDocumentsToTable } from "./extract";
+export { schemaDocumentsToTable, findSchemaRoots } from "./extract";
 export { analyzeProperty } from "./analyze";
 export { SchemaRegistry } from "./registry";
 
@@ -38,6 +38,7 @@ export type {
   JsonSchema,
   JsonSchemaObject,
   SchemaDocumentInput,
+  SchemaRootCandidate,
   SourceInfo,
   ValidValue,
   ValidValueKind,

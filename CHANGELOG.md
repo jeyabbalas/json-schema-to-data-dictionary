@@ -40,11 +40,19 @@ Production-grade search and rendering for large dictionaries (10,000 variables).
   labelled query set `tests/fixtures/search-eval.json` with real models (optional
   devDependency `@huggingface/transformers`) and `--calibrate` recommends `minScore`
   floors; a fake-embedder variant runs in `npm test`.
+- **Root-schema detection for whole folders.** `findSchemaRoots` ranks the input documents
+  by how likely each is to be the table's root: documents that do not read like a JSON
+  Schema (example data, ledgers) are excluded, an array of records wins over an object,
+  and a document another one `$ref`s into is treated as a component. Auto-detection no
+  longer depends on input order, and a table built from several candidate roots says so
+  in `warnings`.
 - Demo: embedding-model picker with licence and download size, device chip
-  ("WebGPU · fp16"), indexing ETA, a client-side synthetic 10,000-variable preset,
-  precomputed vectors for the BCRPP preset (`npm run demo:vectors`), a local server
+  ("WebGPU · fp16"), indexing ETA, precomputed vectors for the BCRPP preset (`npm run demo:vectors`), a local server
   that sends COOP/COEP (WASM threads; `COI=0` mimics GitHub Pages), and URL overrides
-  (`?preset=…&semantic=1&model=…&device=…`) for automation.
+  (`?preset=…&semantic=1&model=…&device=…`) for automation. Dropped folders may now sit
+  any number of directories above the schemas — every leading directory the selection
+  shares is stripped, so dropping `study/` behaves exactly like `study/json_schema/` —
+  and the root selector lists the detected table schemas first.
 
 ### Changed
 
@@ -85,6 +93,9 @@ Production-grade search and rendering for large dictionaries (10,000 variables).
   rows in place, and rows are materialised lazily, so DOM scraping of `[data-dd-row]`
   is no longer exhaustive — use `toPlainRows`. The static `tableToHtml` output is
   unchanged.
+- Root auto-detection ranks the candidates instead of taking the first array-like
+  document, so an input with several table schemas may resolve to a different root than
+  in 0.2.0. Pass `rootUri` or `rootIndex` to pin one.
 
 ## 0.2.0 - 2026-09-02
 

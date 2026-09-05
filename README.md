@@ -50,6 +50,26 @@ Pass schemas as bare objects or as `{ uri, name, schema }`. The `uri` is the doc
 retrieval location and is used as the base for resolving its relative `$ref`s — supply it
 (e.g. the file path or canonical URL) when your documents reference each other.
 
+### Finding the root
+
+You can hand over a whole folder — the table schema, the component schemas it `$ref`s,
+example data files, even several tables. `schemaDocumentsToTable` ranks the documents and
+uses the best one: files that do not read like a JSON Schema are ignored, an array of
+records beats an object, and a document another one `$ref`s into is a component rather
+than a root. When several documents could be the table, the choice is reported in
+`table.warnings`. `findSchemaRoots` returns the same ranking so you can offer it as a
+choice, and `rootUri` / `rootIndex` pin one explicitly:
+
+```ts
+import { findSchemaRoots, schemaDocumentsToTable } from "json-schema-data-dictionary";
+
+findSchemaRoots(documents);
+// [{ index: 3, uri: "…/derived_variables.schema.json", name: "derived_variables.schema.json",
+//    title: "BGS — Derived Variables table", arrayLike: true, referenced: false, variableCount: 60 }, …]
+
+schemaDocumentsToTable(documents, { rootIndex: 3 });
+```
+
 ## The output table
 
 Each variable becomes one row with these columns:
@@ -320,6 +340,7 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 | Export | Description |
 | --- | --- |
 | `schemaDocumentsToTable(input, options?)` | Build a `DataDictionaryTable` from schema documents. |
+| `findSchemaRoots(input)` | Rank the documents that could be the table's root (for a root picker). |
 | `renderDataDictionary(container, table, options?)` | Mount the interactive component; returns the element. |
 | `tableToHtml(table, options?)` | Static, self-contained HTML string. |
 | `defineDataDictionaryElement(tag?)` | Register the `<json-data-dictionary>` custom element. |

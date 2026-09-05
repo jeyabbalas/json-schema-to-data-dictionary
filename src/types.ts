@@ -207,6 +207,31 @@ export interface DataDictionaryTable {
   source?: SourceInfo | undefined;
 }
 
+/**
+ * A document that could be the root of the data dictionary, as ranked by `findSchemaRoots`.
+ *
+ * Users often hand the whole project folder to the tool, so the input mixes the table schema
+ * with the component schemas it `$ref`s, unrelated data files and sometimes several tables.
+ * A candidate is a document that reads like a JSON Schema; the ranking prefers an array of
+ * records (a table) that nothing else references.
+ */
+export interface SchemaRootCandidate {
+  /** Position in the input array (usable as `SchemaToTableOptions.rootIndex`). */
+  index: number;
+  /** Retrieval URI of the document (its `uri`, or a synthetic one). */
+  uri: string;
+  /** The document's `name`, when the input carried one. */
+  name?: string | undefined;
+  /** The schema's `title`, when it has one. */
+  title?: string | undefined;
+  /** The document describes an array of records — i.e. a table. */
+  arrayLike: boolean;
+  /** Another document `$ref`s into this one, so it is probably a component, not the root. */
+  referenced: boolean;
+  /** How many variables the row object would contribute (0 when it is not a table). */
+  variableCount: number;
+}
+
 export interface SchemaToTableOptions {
   /** Resolve the root table schema from this URI instead of auto-detecting it. */
   rootUri?: string | undefined;
