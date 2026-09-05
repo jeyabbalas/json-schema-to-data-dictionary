@@ -16,7 +16,9 @@ let counter = 0;
 
 /**
  * Render the table as a standalone, interactive HTML fragment (style + markup + script).
- * Wrap it in a full HTML document yourself, or drop it into an existing page.
+ * Wrap it in a full HTML document yourself, or drop it into an existing page. Every row is
+ * materialised (the inline script filters in place); the embedded CSV is JSON with `<`
+ * escaped, so a value can never close the `<script>`.
  */
 export function tableToHtml(table: DataDictionaryTable, options: RenderHtmlOptions = {}): string {
   const vm = buildViewModel(table, options);
@@ -26,7 +28,7 @@ export function tableToHtml(table: DataDictionaryTable, options: RenderHtmlOptio
 
   return [
     `<style>${STYLES}</style>`,
-    `<div class="dd-embed" id="${id}">${buildMarkup(vm)}</div>`,
+    `<div class="dd-embed" id="${id}">${buildMarkup(vm, "static")}</div>`,
     `<script>${inlineScript(id, csv, filename)}</script>`
   ].join("\n");
 }

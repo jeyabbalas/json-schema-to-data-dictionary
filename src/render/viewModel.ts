@@ -14,8 +14,12 @@ import type { SearchFields } from "../search/ranking";
 import { additionalInfoText, constraintsText, validValuesText } from "../serialize";
 import { displayValue } from "../utils";
 
-/** Render options plus the component-only semantic flag (the static HTML never sets it). */
-export type ViewModelOptions = RenderHtmlOptions & { semanticSearch?: SemanticSearchOptions | undefined };
+/** Render options plus the component-only settings (the static HTML never sets them). */
+export type ViewModelOptions = RenderHtmlOptions & {
+  semanticSearch?: SemanticSearchOptions | undefined;
+  pageSize?: number | undefined;
+  resultsPageSize?: number | undefined;
+};
 
 export interface ResolvedOptions {
   title: string;
@@ -25,8 +29,12 @@ export interface ResolvedOptions {
   expandCategories: boolean;
   expandAdditionalInfo: boolean;
   theme: "light" | "dark" | "auto";
-  /** True when the interactive component was given `semanticSearch` (ranked results UI). */
+  /** True when the interactive component was given `semanticSearch` (status chip shown). */
   semanticSearch: boolean;
+  /** Rows materialised per category page in the component (`Infinity` = every row up front). */
+  pageSize: number;
+  /** Result rows per page in the component's ranked results list. */
+  resultsPageSize: number;
 }
 
 export interface ValueVM {
@@ -94,8 +102,37 @@ export function resolveOptions(options: ViewModelOptions, table: DataDictionaryT
     expandCategories: options.expandCategories ?? true,
     expandAdditionalInfo: options.expandAdditionalInfo ?? false,
     theme: options.theme ?? "auto",
-    semanticSearch: Boolean(options.semanticSearch)
+    semanticSearch: Boolean(options.semanticSearch),
+    pageSize: positiveOrDefault(options.pageSize, 100),
+    resultsPageSize: positiveOrDefault(options.resultsPageSize, 100)
   };
+}
+
+/** `Infinity` passes through; anything else must be a positive number (floored), else the default. */
+function positiveOrDefault(value: number | undefined, fallback: number): number {
+  if (value === Infinity) return Infinity;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 1) return fallback;
+  return Math.floor(value);
+}
+
+const EMPTY_FIELDS: SearchFields = { name: "", description: "", values: "", all: "" };
+
+/** Per-row search fields positioned by `table.rows` index (empty fields for rows outside any category). */
+export function rowsByTableIndex(vm: ViewModel): SearchFields[] {
+  const rows: SearchFields[] = Array.from({ length: vm.variableCount }, () => EMPTY_FIELDS);
+  for (const category of vm.categories) {
+    for (const row of category.rows) if (row.index >= 0 && row.index < rows.length) rows[row.index] = row.searchFields;
+  }
+  return rows;
+}
+
+/** Row view models positioned by `table.rows` index (undefined for rows outside any category). */
+export function rowVMsByTableIndex(vm: ViewModel): Array<RowVM | undefined> {
+  const rows: Array<RowVM | undefined> = new Array<RowVM | undefined>(vm.variableCount).fill(undefined);
+  for (const category of vm.categories) {
+    for (const row of category.rows) if (row.index >= 0 && row.index < rows.length) rows[row.index] = row;
+  }
+  return rows;
 }
 
 export function buildViewModel(table: DataDictionaryTable, options: ViewModelOptions = {}): ViewModel {

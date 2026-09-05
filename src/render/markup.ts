@@ -1,33 +1,94 @@
-// Builds the inner HTML for the data dictionary. Shared by the static `tableToHtml`
-// string and the interactive web component, so both render identically. Every value
-// derived from the schema is HTML-escaped before interpolation.
+// Builds the inner HTML for the data dictionary. Shared by the static `tableToHtml` string
+// ("static" target: every row materialised, `data-search` blobs for the inline filter) and
+// the interactive web component ("component" target: an always-present results section,
+// row indexes and — for large dictionaries — only the first page of rows plus a sentinel
+// row per category that pages the rest in, see lazyRows.ts). Every value derived from the
+// schema is HTML-escaped before interpolation.
 
-import type { JsonValue } from "../types";
 import { escapeHtml } from "../utils";
-import type { CategoryVM, ConstraintVM, RowVM, ValueVM, ViewModel } from "./viewModel";
+import type { CategoryVM, ViewModel } from "./viewModel";
+import { jsonTree, multiline, rowMarkup } from "./rowMarkup";
+import type { RowMarkupOptions } from "./rowMarkup";
 
-export function buildMarkup(vm: ViewModel): string {
+export type MarkupTarget = "static" | "component";
+
+/** Row options of the static output: the inline script filters on `data-search`. */
+export const STATIC_ROW_OPTIONS: RowMarkupOptions = { searchAttr: true, rowIndex: false, categoryTag: false };
+/** Row options of the component's category sections (the results list adds the category tag). */
+export const COMPONENT_ROW_OPTIONS: RowMarkupOptions = { searchAttr: false, rowIndex: true, categoryTag: false };
+
+let counter = 0;
+
+export function buildMarkup(vm: ViewModel, target: MarkupTarget): string {
   const o = vm.options;
-  const emptySemantic = o.semanticSearch ? ` <span data-dd-empty-semantic hidden>Looking for related variables…</span>` : "";
+  const component = target === "component";
+  const uid = `dd${(counter += 1)}`;
+  const rowOptions = component ? COMPONENT_ROW_OPTIONS : STATIC_ROW_OPTIONS;
+  const pageSize = component ? o.pageSize : Infinity;
+  const pages = initialPages(vm, pageSize);
+  const emptySemantic = component ? ` <span data-dd-empty-semantic hidden>Looking for related variables…</span>` : "";
   return `
 <div class="dd-root" data-theme="${o.theme}" data-dd-root>
   ${header(vm)}
   <div class="dd-empty" data-dd-empty hidden>No variables match “<span data-dd-empty-q></span>”.${emptySemantic}</div>
-  ${o.semanticSearch ? resultsSection() : ""}
-  ${vm.categories.map((c) => category(c, vm)).join("\n")}
+  ${component ? resultsSection() : ""}
+  <div class="dd-categories" data-dd-categories>
+  ${vm.categories.map((c, i) => categorySection(c, i, vm, pages[i] ?? c.rows.length, pageSize, uid, rowOptions)).join("\n")}
+  </div>
   ${footer(vm)}
 </div>`.trim();
 }
 
-/** Flat, ranked results table used while a query is active in semantic-search mode. */
+/**
+ * Rows materialised up front per category: every row for small dictionaries (or when
+ * `pageSize` is `Infinity`), otherwise the first `pageSize` rows in category order — so the
+ * first paint is one page of rows plus cheap section headers; the rest arrive lazily.
+ */
+export function initialPages(vm: ViewModel, pageSize: number): number[] {
+  const total = vm.categories.reduce((n, c) => n + c.rows.length, 0);
+  if (!(total > 5 * pageSize)) return vm.categories.map((c) => c.rows.length);
+  let budget = pageSize;
+  return vm.categories.map((c) => {
+    const n = Math.min(budget, c.rows.length);
+    budget -= n;
+    return n;
+  });
+}
+
+/** Thousands-separated count for labels ("1,234"). */
+export function formatCount(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/** Label of a category's "Show more" button. */
+export function moreLabel(remaining: number, pageSize: number): string {
+  return `Show ${formatCount(Math.min(pageSize, remaining))} more · ${formatCount(remaining)} remaining`;
+}
+
+/** Sentinel row closing an incomplete category: observed for lazy paging, clickable as the fallback. */
+export function moreRowMarkup(next: number, total: number, pageSize: number): string {
+  return `<tr class="dd-more" data-dd-more><td colspan="7"><button class="dd-btn dd-more-btn" type="button" data-dd-more-btn>${moreLabel(total - next, pageSize)}</button></td></tr>`;
+}
+
+/** Column widths for `table-layout: fixed` (percentages live in the stylesheet). */
+export function colGroup(): string {
+  return `<colgroup><col class="dd-c-name"><col class="dd-c-desc"><col class="dd-c-type"><col class="dd-c-format"><col class="dd-c-values"><col class="dd-c-constraints"><col class="dd-c-additional"></colgroup>`;
+}
+
+/** Flat, ranked results table used while a query is active (component only). */
 function resultsSection(): string {
   return `
-  <section class="dd-results" data-dd-results hidden aria-label="Search results">
+  <section class="dd-results" data-dd-results hidden aria-label="Search results" aria-busy="false">
     <div class="dd-table-wrap">
       <table class="dd-table">
+        ${colGroup()}
         ${tableHead()}
         <tbody data-dd-results-body></tbody>
       </table>
+    </div>
+    <div class="dd-results-foot" data-dd-results-foot hidden>
+      <span class="dd-results-status" data-dd-results-status></span>
+      <button class="dd-btn" type="button" data-dd-results-more>Show more</button>
     </div>
   </section>`;
 }
@@ -68,7 +129,7 @@ function header(vm: ViewModel): string {
       <div class="dd-search">
         <input class="dd-search-input" type="search" inputmode="search" autocomplete="off"
                placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
-        <span class="dd-count" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
+        <span class="dd-count" role="status" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
       </div>
       ${o.semanticSearch ? `<span class="dd-semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
       <div class="dd-actions">${actions}</div>
@@ -103,80 +164,42 @@ function datasetInfoPanel(vm: ViewModel): string {
     </details>`;
 }
 
-function category(c: CategoryVM, vm: ViewModel): string {
+/**
+ * One category: the toggle, the description and a table holding the first `next` rows.
+ * `data-dd-next` / `data-total` track materialisation; a sentinel row follows while
+ * `next < total`.
+ */
+function categorySection(
+  c: CategoryVM,
+  i: number,
+  vm: ViewModel,
+  next: number,
+  pageSize: number,
+  uid: string,
+  rowOptions: RowMarkupOptions
+): string {
   const collapsed = !vm.options.expandCategories;
+  const total = c.rows.length;
+  const id = `${uid}-c${i}`;
+  const rows = c.rows.slice(0, next).map((row) => rowMarkup(row, vm, rowOptions)).join("\n");
   return `
-  <section class="dd-category" data-dd-category data-collapsed="${collapsed}">
-    <button class="dd-category-toggle" type="button" aria-expanded="${!collapsed}" data-dd-category-toggle>
+  <section class="dd-category" data-dd-category data-dd-cat="${i}" data-dd-next="${next}" data-total="${total}" data-collapsed="${collapsed}">
+    <button class="dd-category-toggle" type="button" aria-expanded="${!collapsed}" aria-controls="${id}" data-dd-category-toggle>
       <span class="dd-caret" aria-hidden="true">▾</span>
       <span class="dd-category-title">${escapeHtml(c.title)}</span>
-      <span class="dd-category-count" data-dd-cat-count data-total="${c.rows.length}">${c.rows.length}</span>
+      <span class="dd-category-count" data-dd-cat-count data-total="${total}">${total}</span>
     </button>
     ${c.description ? `<p class="dd-category-desc">${multiline(c.description)}</p>` : ""}
-    <div class="dd-table-wrap" data-dd-table-wrap>
+    <div class="dd-table-wrap" data-dd-table-wrap id="${id}">
       <table class="dd-table">
+        ${colGroup()}
         ${tableHead()}
-        <tbody>
-          ${c.rows.map((row) => rowMarkup(row, vm)).join("\n")}
+        <tbody data-dd-rows>
+          ${rows}${next < total ? moreRowMarkup(next, total, pageSize) : ""}
         </tbody>
       </table>
     </div>
   </section>`;
-}
-
-function rowMarkup(row: RowVM, vm: ViewModel): string {
-  const empty = `<span class="dd-muted">${escapeHtml(vm.options.emptyCell)}</span>`;
-  const mixed = /coded values/.test(row.dataType);
-  const semantic = vm.options.semanticSearch;
-  const indexAttr = semantic && row.index >= 0 ? ` data-dd-row-index="${row.index}"` : "";
-  const categoryTag = semantic ? `<span class="dd-row-cat">${escapeHtml(row.category)}</span>` : "";
-  return `
-          <tr class="dd-row" data-dd-row${indexAttr} data-search="${escapeHtml(row.searchText)}">
-            <th class="dd-col-name" scope="row"><code>${escapeHtml(row.name)}</code>${categoryTag}</th>
-            <td class="dd-desc">${row.description ? multiline(row.description) : empty}</td>
-            <td class="dd-type">${row.dataType ? `<span class="dd-badge" data-mixed="${mixed}">${escapeHtml(row.dataType)}</span>` : empty}</td>
-            <td class="dd-format">${row.format ? multiline(row.format) : empty}</td>
-            <td class="dd-values">${validValues(row) || empty}</td>
-            <td class="dd-constraints">${constraints(row.constraints) || empty}</td>
-            <td class="dd-additional">${row.additionalInformation === null ? empty : `<div class="dd-tree">${jsonTree(row.additionalInformation, vm.options.expandAdditionalInfo)}</div>`}</td>
-          </tr>`;
-}
-
-function validValues(row: RowVM): string {
-  if (row.measurements.length === 0 && row.values.length === 0 && row.sentinels.length === 0) return "";
-  const parts: string[] = [`<dl class="dd-vv">`];
-
-  for (const m of row.measurements) {
-    parts.push(
-      `<div class="dd-vv-row dd-measure"><dt><span class="dd-measure-label">${escapeHtml(m.display)}</span></dt><dd>${escapeHtml(m.description ?? "measured value")}</dd></div>`
-    );
-  }
-  for (const v of row.values) parts.push(valueRow(v, false));
-  if (row.sentinels.length) {
-    parts.push(`<div class="dd-vv-sep">special codes</div>`);
-    for (const v of row.sentinels) parts.push(valueRow(v, true));
-  }
-
-  parts.push(`</dl>`);
-  return parts.join("");
-}
-
-function valueRow(v: ValueVM, sentinel: boolean): string {
-  const text = v.label ?? v.description ?? "";
-  const when = v.condition ? ` <span class="dd-when">${escapeHtml(v.condition)}</span>` : "";
-  const dd = text || when ? `<dd>${escapeHtml(text)}${when}</dd>` : `<dd></dd>`;
-  return `<div class="dd-vv-row${sentinel ? " dd-sentinel" : ""}"><dt><code class="dd-code">${escapeHtml(v.display)}</code></dt>${dd}</div>`;
-}
-
-function constraints(items: ConstraintVM[]): string {
-  if (items.length === 0) return "";
-  const lis = items
-    .map((c) => {
-      const badge = c.conditional ? `<span class="dd-cond-badge">conditional</span>` : "";
-      return `<li class="${c.conditional ? "dd-conditional" : ""}"><span>${escapeHtml(c.text)}${badge}</span></li>`;
-    })
-    .join("");
-  return `<ul class="dd-constraints-list">${lis}</ul>`;
 }
 
 function footer(vm: ViewModel): string {
@@ -186,35 +209,4 @@ function footer(vm: ViewModel): string {
     <summary class="dd-warning">${vm.warnings.length} extraction warning${vm.warnings.length === 1 ? "" : "s"}</summary>
     <ul>${vm.warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
   </details>`;
-}
-
-// ---------------------------------------------------------------------------
-
-/** Render a JSON value as a collapsible tree (objects/arrays) or inline scalar. */
-export function jsonTree(value: JsonValue, open: boolean): string {
-  return node(value, open, 0);
-}
-
-function node(value: JsonValue, open: boolean, depth: number): string {
-  if (value === null) return `<span class="dd-num">null</span>`;
-  if (typeof value === "string") return `<span class="dd-str">${escapeHtml(JSON.stringify(value))}</span>`;
-  if (typeof value === "number" || typeof value === "boolean") return `<span class="dd-num">${escapeHtml(String(value))}</span>`;
-
-  const isArray = Array.isArray(value);
-  const entries: Array<[string, JsonValue]> = isArray
-    ? (value as JsonValue[]).map((v, i) => [String(i), v])
-    : Object.entries(value as Record<string, JsonValue>);
-
-  if (entries.length === 0) return `<span class="dd-num">${isArray ? "[]" : "{}"}</span>`;
-
-  const summary = isArray ? `Array (${entries.length})` : `Object (${entries.length})`;
-  const openAttr = open && depth < 1 ? " open" : "";
-  const lis = entries
-    .map(([key, val]) => `<li><span class="dd-key">${escapeHtml(key)}:</span> ${node(val, open && depth < 1, depth + 1)}</li>`)
-    .join("");
-  return `<details${openAttr}><summary>${summary}</summary><ul>${lis}</ul></details>`;
-}
-
-function multiline(text: string): string {
-  return escapeHtml(text).replaceAll("\n", "<br>");
 }

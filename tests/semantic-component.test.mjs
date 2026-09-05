@@ -35,8 +35,9 @@ function type(root, value) {
   input.value = value;
   input.dispatchEvent(new Event("input"));
 }
-const visibleRows = (root) => [...root.querySelectorAll("[data-dd-row]")].filter((r) => !r.hidden);
+const categoryRows = (root) => [...root.querySelectorAll("[data-dd-categories] [data-dd-row]")];
 const resultRows = (root) => [...root.querySelectorAll("[data-dd-results-body] [data-dd-row]")];
+const categoriesHidden = (root) => root.querySelector("[data-dd-categories]").hidden;
 const layout = (root) => [...root.querySelectorAll("[data-dd-category] tbody")].map((tb) => [...tb.children].map((r) => r.dataset.ddRowIndex));
 
 test("semantic mode: ranked results with exact + related rows, then restore", { skip }, async () => {
@@ -58,7 +59,8 @@ test("semantic mode: ranked results with exact + related rows, then restore", { 
   await until(() => resultRows(root).length > 0);
   let rows = resultRows(root);
   assert.deepEqual(rows.map((r) => [r.dataset.ddRowIndex, r.dataset.ddMatch]), [["0", "related"]]);
-  assert.ok([...root.querySelectorAll("[data-dd-category]")].every((c) => c.hidden), "categories are hidden while searching");
+  assert.equal(categoriesHidden(root), true, "categories are hidden while searching");
+  assert.deepEqual(layout(root), original, "rows never move: the results list is built from the view model");
   assert.equal(root.querySelector("[data-dd-results]").hidden, false);
   assert.equal(root.querySelector("[data-dd-empty]").hidden, true);
   assert.equal(root.querySelector("[data-dd-count]").textContent, "1 / 4 variables · 1 related");
@@ -84,9 +86,9 @@ test("semantic mode: ranked results with exact + related rows, then restore", { 
   type(root, "");
   assert.equal(resultRows(root).length, 0);
   assert.equal(root.querySelector("[data-dd-results]").hidden, true);
-  assert.deepEqual(layout(root), original, "rows return to their categories in the original order");
-  assert.ok([...root.querySelectorAll("[data-dd-category]")].every((c) => !c.hidden));
-  assert.equal(visibleRows(root).length, 4);
+  assert.deepEqual(layout(root), original, "the categories are untouched");
+  assert.equal(categoriesHidden(root), false);
+  assert.equal(categoryRows(root).length, 4);
   assert.equal(root.querySelector("[data-dd-count]").textContent, "4 variables");
   assert.equal(root.querySelector("[data-dd-match]"), null);
   assert.equal(root.querySelector("[data-dd-empty]").hidden, true);
@@ -123,7 +125,7 @@ test("semantic mode: index survives option re-renders, follows the table, and is
   el.options = {};
   assert.equal(el.semanticIndex, undefined, "removing the option drops the index");
   await assert.rejects(second.search("meno"), /disposed/);
-  assert.equal((el.shadowRoot ?? el).querySelector("[data-dd-results]"), null, "back to the plain markup");
+  assert.equal((el.shadowRoot ?? el).querySelector("[data-dd-semantic-status]"), null, "back to the plain markup");
 
   el.options = { semanticSearch: { embedder, cache: false } };
   const third = el.semanticIndex;
@@ -151,8 +153,13 @@ test("semantic mode: a load failure shows the error chip while keyword search ke
 
 test("semantic mode on the BCRPP fixture: related rows carry their category", { skip }, async () => {
   const table = schemaDocumentsToTable(loadDir("multiple_schema_2"));
-  const { el, root } = mount(table, { semanticSearch: { embedder: createFakeEmbedder(), cache: createMemoryVectorCache(), debounceMs: 0 } });
+  const { el, root } = mount(table, {
+    pageSize: Infinity,
+    semanticSearch: { embedder: createFakeEmbedder(), cache: createMemoryVectorCache(), debounceMs: 0 }
+  });
   await el.semanticIndex.ready;
+  const original = layout(root);
+  assert.equal(categoryRows(root).length, table.rows.length);
   type(root, "climacteric");
   await until(() => resultRows(root).length > 0);
   const rows = resultRows(root);
@@ -160,20 +167,30 @@ test("semantic mode on the BCRPP fixture: related rows carry their category", { 
   assert.ok(rows.length <= 10);
   assert.ok(rows.some((r) => /meno/.test(r.querySelector("code").textContent)), "menopause rows relate to 'climacteric'");
   assert.ok(rows.every((r) => r.querySelector(".dd-row-cat").textContent.length > 0));
+  assert.ok(rows.every((r) => /^Related · similarity 0\.\d\d$/.test(r.querySelector(".dd-col-name").title)));
+  assert.deepEqual(layout(root), original);
   type(root, "");
-  assert.equal(visibleRows(root).length, table.rows.length);
+  assert.equal(categoriesHidden(root), false);
+  assert.equal(categoryRows(root).length, table.rows.length);
+  assert.deepEqual(layout(root), original);
 });
 
-test("without semanticSearch the markup and behavior are unchanged", { skip }, () => {
+test("without semanticSearch: no status chip, the same ranked list, no related rows", { skip }, () => {
   const table = schemaDocumentsToTable(loadDir("multiple_schema_2"));
   const { root } = mount(table);
-  assert.equal(root.querySelector("[data-dd-results]"), null);
-  assert.equal(root.querySelector("[data-dd-semantic-status]"), null);
-  assert.equal(root.querySelector("[data-dd-row-index]"), null);
-  assert.equal(root.querySelector(".dd-row-cat"), null);
+  assert.equal(root.querySelector("[data-dd-semantic-status]"), null, "status chip absent without semantic search");
+  assert.equal(root.querySelector("[data-dd-results]").hidden, true);
+  assert.equal(root.querySelector("[data-dd-categories] .dd-row-cat"), null, "category rows carry no category tag");
+  assert.equal(root.querySelector("[data-dd-empty-semantic]").hidden, true);
   type(root, "meno_age");
-  assert.ok(visibleRows(root).length >= 1 && visibleRows(root).length < table.rows.length);
-  assert.ok(root.querySelector("[data-dd-category]:not([hidden])"), "in-place filtering keeps categories");
+  const rows = resultRows(root);
+  assert.ok(rows.length >= 1 && rows.length < table.rows.length);
+  assert.ok(rows.every((r) => r.dataset.ddMatch === "exact"));
+  assert.equal(root.querySelector("[data-dd-results]").hidden, false);
+  assert.equal(categoriesHidden(root), true);
+  assert.equal(root.querySelector("[data-dd-empty-semantic]").hidden, true, "never 'looking for related variables'");
+  type(root, "");
+  assert.equal(categoriesHidden(root), false);
 
   const html = tableToHtml(table);
   const markup = html.slice(html.indexOf("</style>")); // the shared stylesheet may mention the selectors

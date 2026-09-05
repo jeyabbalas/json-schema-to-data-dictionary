@@ -15,11 +15,13 @@ export { tableToHtml, STYLES } from "./render/html";
 export { renderDataDictionary, defineDataDictionaryElement, ELEMENT_TAG } from "./render/component";
 export { buildViewModel } from "./render/viewModel";
 
-// --- Semantic search (opt-in; bring your own Embedder) ---
+// --- Search: lexical (BM25F) index, hybrid engine, and semantic search (opt-in; bring your own Embedder) ---
+export { createSearchEngine } from "./search/engine";
+export { createLexicalIndex, lexicalDocumentFromRow, lexicalDocumentsFromTable, tokenize, stem, DEFAULT_STOP_WORDS } from "./search/lexical";
 export { createSemanticIndex, DEFAULT_MIN_SCORE } from "./search/semanticIndex";
-export { buildEmbedChunks, humanizeName, EMBED_TEXT_VERSION } from "./search/text";
+export { buildEmbedChunks, prepareTexts, humanizeName, EMBED_TEXT_VERSION } from "./search/text";
 export { cacheKey, createMemoryVectorCache, createIndexedDbVectorCache, createDefaultVectorCache } from "./search/cache";
-export { keywordScore, fuseRankings, rankResults } from "./search/ranking";
+export { keywordScore, fuseRankings, rankResults, rankHybrid } from "./search/ranking";
 export { createTransformersEmbedder, DEFAULT_EMBEDDING_MODEL, KNOWN_EMBEDDING_MODELS } from "./search/transformers";
 export { serveEmbedder, createWorkerEmbedder } from "./search/worker";
 
@@ -48,11 +50,35 @@ export type {
   RenderOptions,
   SemanticSearchOptions
 } from "./types";
-export type { Embedder, EmbedKind, VectorCache, SemanticHit, SemanticStatus, SemanticIndex, SemanticSearchQuery } from "./search/types";
+export type {
+  Embedder,
+  EmbedderInfo,
+  EmbedKind,
+  VectorCache,
+  SemanticHit,
+  SemanticStatus,
+  SemanticIndex,
+  SemanticSearchQuery,
+  LexicalDocument,
+  LexicalField,
+  LexicalMatch,
+  LexicalHit,
+  LexicalIndex,
+  LexicalIndexOptions,
+  LexicalSearchOptions,
+  LexicalSearchMode,
+  RankedResult,
+  FusionOptions,
+  RankHybridOptions,
+  SemanticResultState,
+  SearchResult,
+  SearchEngine,
+  SearchEngineOptions
+} from "./search/types";
 export type { SemanticIndexOptions } from "./search/semanticIndex";
-export type { EmbedChunk, EmbedChunkOptions } from "./search/text";
+export type { EmbedChunk, EmbedChunkOptions, PreparedTexts } from "./search/text";
 export type { IndexedDbVectorCacheOptions } from "./search/cache";
-export type { SearchFields, RankedResult } from "./search/ranking";
+export type { SearchFields } from "./search/ranking";
 export type { TransformersModuleLike, TransformersEmbedderOptions, KnownEmbeddingModel } from "./search/transformers";
 export type { EmbedderPort } from "./search/worker";
 export type { AnalyzeContext, PropertyAnalysis } from "./analyze";

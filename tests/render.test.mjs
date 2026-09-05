@@ -62,3 +62,29 @@ test("validValuesText: renders measurement + coded values", () => {
   assert.match(text, /measured value/);
   assert.match(text, /777/);
 });
+
+test("tableToHtml: fixed column layout, static sections, no component-only markup", () => {
+  const html = tableToHtml(table);
+  const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
+  assert.ok((markup.match(/<colgroup>/g) ?? []).length === table.categories.length, "one colgroup per category table");
+  assert.match(markup, /data-dd-categories/);
+  assert.match(markup, /data-dd-category data-dd-cat="0" data-dd-next="(\d+)" data-total="\1"/, "every row is materialised");
+  assert.match(markup, /aria-controls="dd\d+-c0"[^>]*data-dd-category-toggle/);
+  assert.equal((markup.match(/data-dd-row\b/g) ?? []).length, table.rows.length);
+  assert.doesNotMatch(markup, /data-dd-more|data-dd-results|data-dd-row-index|data-dd-match|class="dd-row-cat"/);
+  assert.match(markup, /data-search="/);
+});
+
+test("tableToHtml: a value cannot break out of the embedded script", () => {
+  const evil = {
+    ...table,
+    rows: [{ ...table.rows[0], "Description": 'Ends the script: </script><script>alert(1)</script> & <b>bold</b>' }],
+    categories: [{ ...table.categories[0], rows: [] }]
+  };
+  evil.categories[0].rows = evil.rows;
+  const html = tableToHtml(evil);
+  assert.equal((html.match(/<script/g) ?? []).length, 1, "the only <script is ours");
+  assert.equal((html.match(/<\/script/g) ?? []).length, 1, "the only </script is ours");
+  assert.match(html, /\\u003c\/script>\\u003cscript>alert\(1\)\\u003c\/script>/, "the CSV keeps the text, JSON-escaped");
+  assert.match(html, /&lt;b&gt;bold&lt;\/b&gt;/, "the cell shows the escaped text");
+});

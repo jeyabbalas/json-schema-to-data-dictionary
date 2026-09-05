@@ -7,3 +7,6 @@ demo/presets.js
 demo/json-schema-data-dictionary.global.js
 demo/json-schema-data-dictionary.global.js.map
 demo/exceljs.min.js
+# Generated demo vectors and the Node model cache used by scripts/
+demo/vectors/
+.cache/

@@ -1,13 +1,19 @@
-// Keyword scoring and hybrid ranking for the results list.
+// Ranking for the results list.
 //
-// The keyword *match set* is exactly the substring predicate the widget has always used
-// (`all.includes(q)`); scores only order matches. Results are grouped into buckets by where
-// the query matched (variable name > description > values > elsewhere), and semantic-only
-// "related" rows share the last bucket. Inside a bucket, reciprocal rank fusion (RRF) of the
-// keyword ranking and the semantic ranking decides the order — so semantically closer rows
-// float up without ever displacing a stronger keyword match.
+// `rankHybrid` (the 0.3 path) fuses the lexical BM25F hits with the semantic hits by weighted
+// reciprocal rank fusion — scale-free, since BM25F scores and mean-centred cosines have
+// unrelated ranges. Rows whose name equals the whole query form a tier of their own; every
+// other lexical match plus up to `maxRelated` semantic-only ("related") rows follow in fused
+// order. `matches` carries the fields and surface terms that explain a hit.
+//
+// The legacy path (`keywordScore`, `fuseRankings`, `rankResults`) keeps the 0.2 behaviour:
+// the keyword *match set* is exactly the substring predicate the widget has always used
+// (`all.includes(q)`), scores only order matches, and rows are bucketed by where the query
+// matched (variable name > description > values > elsewhere) before RRF orders each bucket.
 
-import type { SemanticHit } from "./types";
+import type { LexicalHit, LexicalMatch, RankHybridOptions, RankedResult, SemanticHit } from "./types";
+
+export type { RankedResult, RankHybridOptions, FusionOptions } from "./types";
 
 export interface SearchFields {
   /** Lower-cased variable name. */
@@ -18,16 +24,6 @@ export interface SearchFields {
   values: string;
   /** Lower-cased blob of every column (the widget's `data-search`). */
   all: string;
-}
-
-export interface RankedResult {
-  row: number;
-  /** Fused score (higher is better; only comparable within one query). */
-  score: number;
-  /** True for keyword matches, false for semantic-only ("related") rows. */
-  exact: boolean;
-  keywordScore: number;
-  semanticScore?: number | undefined;
 }
 
 /** 0 = no match; 6 exact name, 5 name prefix, 4 name contains, 3 description, 2 values, 1 elsewhere. */
@@ -79,13 +75,19 @@ export function rankResults(
   const semantic = (hits ?? []).filter((h) => kwScore.has(h.row) || related.has(h.row));
   const semScore = new Map(semantic.map((h) => [h.row, h.score]));
 
-  const results: RankedResult[] = fuseRankings([keyword, semantic]).map((f) => ({
-    row: f.row,
-    score: f.score,
-    exact: kwScore.has(f.row),
-    keywordScore: kwScore.get(f.row) ?? 0,
-    semanticScore: semScore.get(f.row)
-  }));
+  const results: RankedResult[] = fuseRankings([keyword, semantic]).map((f) => {
+    const kw = kwScore.get(f.row) ?? 0;
+    return {
+      row: f.row,
+      score: f.score,
+      exact: kwScore.has(f.row),
+      exactName: kw === 6,
+      keywordScore: kw,
+      lexicalScore: kw,
+      semanticScore: semScore.get(f.row),
+      matches: []
+    };
+  });
   results.sort((a, b) => bucket(a) - bucket(b) || b.score - a.score || b.keywordScore - a.keywordScore || a.row - b.row);
   return results;
 }
@@ -93,4 +95,81 @@ export function rankResults(
 /** 1 = exact name … 5 = values; 6 = matched elsewhere or related. */
 function bucket(r: RankedResult): number {
   return r.exact && r.keywordScore >= 2 ? 7 - r.keywordScore : 6;
+}
+
+/** Legacy 6..1 bucket of a lexical hit, derived from its flags and matched fields. */
+export function keywordBucket(hit: Pick<LexicalHit, "exactName" | "namePrefix" | "matches">): number {
+  if (hit.exactName) return 6;
+  if (hit.namePrefix) return 5;
+  let best = 1;
+  for (const m of hit.matches) {
+    if (m.field === "name") return 4;
+    if (m.field === "description") best = Math.max(best, 3);
+    else if (m.field === "values") best = Math.max(best, 2);
+  }
+  return best;
+}
+
+/**
+ * Fuse lexical hits (sorted as returned by the lexical index) with semantic hits (best first,
+ * above the floor). The semantic list is restricted to lexical rows plus the top `maxRelated`
+ * rows the lexical pass missed, so unrelated tail hits never dilute the fusion.
+ */
+export function rankHybrid(
+  lexical: readonly LexicalHit[],
+  semantic: readonly SemanticHit[] | undefined,
+  options: RankHybridOptions
+): RankedResult[] {
+  const k = options.k ?? 60;
+  const lexicalWeight = options.lexicalWeight ?? 1;
+  const semanticWeight = options.semanticWeight ?? 1;
+  const cap = Math.max(0, Math.floor(options.maxRelated));
+
+  const byRow = new Map<number, LexicalHit>();
+  const fused = new Map<number, number>();
+  lexical.forEach((hit, rank) => {
+    if (byRow.has(hit.row)) return;
+    byRow.set(hit.row, hit);
+    fused.set(hit.row, lexicalWeight / (k + rank + 1));
+  });
+
+  const semScore = new Map<number, number>();
+  let related = 0;
+  let rank = 0;
+  for (const hit of semantic ?? []) {
+    if (semScore.has(hit.row)) continue;
+    if (!byRow.has(hit.row)) {
+      if (related >= cap) continue;
+      related += 1;
+    }
+    semScore.set(hit.row, hit.score);
+    fused.set(hit.row, (fused.get(hit.row) ?? 0) + semanticWeight / (k + rank + 1));
+    rank += 1;
+  }
+
+  const results: RankedResult[] = [];
+  for (const [row, score] of fused) {
+    const hit = byRow.get(row);
+    const matches: LexicalMatch[] = hit ? hit.matches : [];
+    results.push({
+      row,
+      score,
+      exact: hit !== undefined,
+      exactName: hit?.exactName ?? false,
+      keywordScore: hit ? keywordBucket(hit) : 0,
+      lexicalScore: hit?.score ?? 0,
+      semanticScore: semScore.get(row),
+      matches
+    });
+  }
+  results.sort(
+    (a, b) =>
+      Number(b.exactName) - Number(a.exactName) ||
+      (a.exactName ? b.lexicalScore - a.lexicalScore : 0) ||
+      b.score - a.score ||
+      b.lexicalScore - a.lexicalScore ||
+      (b.semanticScore ?? -Infinity) - (a.semanticScore ?? -Infinity) ||
+      a.row - b.row
+  );
+  return results;
 }

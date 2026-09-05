@@ -4,18 +4,18 @@
 // The element class is created lazily so importing this module in a non-DOM environment
 // (Node, SSR) does not reference HTMLElement at evaluation time.
 
-import type { DataDictionaryTable, RenderOptions, SemanticSearchOptions } from "../types";
+import type { DataDictionaryTable, RenderOptions } from "../types";
 import type { Embedder, SemanticIndex } from "../search/types";
-import type { SearchFields } from "../search/ranking";
 import { createSemanticIndex } from "../search/semanticIndex";
 import { slugify } from "../utils";
 import { tableToCsv } from "../serialize";
-import { buildViewModel } from "./viewModel";
+import { buildViewModel, rowsByTableIndex } from "./viewModel";
 import type { ViewModel } from "./viewModel";
 import { buildMarkup } from "./markup";
 import { STYLES } from "./styles";
 import { attachBehavior } from "./behavior";
-import type { SemanticBehaviorOptions } from "./behavior";
+import { createSearchEngine } from "../search/engine";
+import type { SearchEngine } from "../search/types";
 
 export const ELEMENT_TAG = "json-data-dictionary";
 const GLOBAL_STYLE_ID = "json-data-dictionary-styles";
@@ -103,16 +103,34 @@ function getElementClass(): new () => DataDictionaryElement {
       state.index.dispose();
     }
 
+    /**
+     * The ONE place the search engine is built (one per render; disposed in `_cleanup`, the
+     * semantic index is not — it outlives re-renders).
+     */
+    private createEngine(table: DataDictionaryTable): SearchEngine {
+      const cfg = this._options.semanticSearch;
+      const index = this._semantic?.index;
+      return createSearchEngine(table, {
+        ...(cfg && index ? { semantic: index } : {}),
+        ...(cfg?.maxRelated !== undefined ? { maxRelated: cfg.maxRelated } : {}),
+        ...(cfg?.minScore !== undefined ? { minScore: cfg.minScore } : {}),
+        ...(cfg?.minQueryLength !== undefined ? { minQueryLength: cfg.minQueryLength } : {}),
+        ...(cfg?.debounceMs !== undefined ? { debounceMs: cfg.debounceMs } : {})
+      });
+    }
+
     private renderNow(): void {
       if (!this.isConnected || !this._table) return;
+      const table = this._table;
       this.syncSemanticIndex();
-      const vm = buildViewModel(this._table, this._options);
+      const vm = buildViewModel(table, this._options);
       const useShadow = this._options.shadow !== false;
-      const markup = buildMarkup(vm);
-      const csv = tableToCsv(this._table);
+      const markup = buildMarkup(vm, "component");
       const filename = `${slugify(vm.title)}.csv`;
-      const cfg = this._options.semanticSearch;
-      const semantic = this._semantic && cfg ? semanticBehavior(this._semantic.index, cfg, vm) : undefined;
+      // The CSV is only needed for copy/download: build it on first use, once per render.
+      let csvCache: string | undefined;
+      const csv = (): string => (csvCache ??= tableToCsv(table));
+      const engine = this.createEngine(table);
 
       this._cleanup?.();
 
@@ -126,7 +144,11 @@ function getElementClass(): new () => DataDictionaryElement {
         this.innerHTML = markup;
         container = this;
       }
-      this._cleanup = attachBehavior(container, { csv, filename, ...(semantic ? { semantic } : {}) });
+      const detach = attachBehavior(container, { vm, csv, filename, engine, semanticIndex: this._semantic?.index });
+      this._cleanup = () => {
+        detach();
+        engine.dispose();
+      };
     }
   }
 
@@ -159,23 +181,6 @@ export function renderDataDictionary(
   if (options.replace === false) container.appendChild(el);
   else container.replaceChildren(el);
   return el;
-}
-
-const EMPTY_FIELDS: SearchFields = { name: "", description: "", values: "", all: "" };
-
-function semanticBehavior(index: SemanticIndex, cfg: SemanticSearchOptions, vm: ViewModel): SemanticBehaviorOptions {
-  const rows: SearchFields[] = Array.from({ length: vm.variableCount }, () => EMPTY_FIELDS);
-  for (const category of vm.categories) {
-    for (const row of category.rows) if (row.index >= 0 && row.index < rows.length) rows[row.index] = row.searchFields;
-  }
-  return {
-    index,
-    rows,
-    maxRelated: cfg.maxRelated ?? 10,
-    minScore: cfg.minScore,
-    minQueryLength: cfg.minQueryLength ?? 3,
-    debounceMs: cfg.debounceMs ?? 250
-  };
 }
 
 function ensureGlobalStyles(doc: Document): void {

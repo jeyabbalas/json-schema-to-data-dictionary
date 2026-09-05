@@ -2,13 +2,16 @@
 // one identity chunk (name + description) and, when it has substantive categories, one or
 // more values chunks. A row's semantic score is the best of its chunks.
 //
-// Deliberately NOT embedded: constraints, "Additional information" JSON, sentinel/missing
-// codes and category titles — they make unrelated rows look alike.
+// Template v2: the identity chunk carries both the humanised and the raw name, so queries
+// typed as identifiers ("age_preg1") and as words ("age at first pregnancy") both land, and
+// drops regex formats (they make unrelated rows alike). Deliberately NOT embedded:
+// constraints, "Additional information" JSON, sentinel/missing codes and category titles —
+// the lexical index covers those.
 
 import type { DataDictionaryTable, ValidValue } from "../types";
 
 /** Bump whenever the chunk template changes; it is part of every cache key. */
-export const EMBED_TEXT_VERSION = 1;
+export const EMBED_TEXT_VERSION = 2;
 
 /**
  * Generic data-dictionary sentences embedded alongside every table. Their vectors (cached
@@ -43,6 +46,19 @@ export interface EmbedChunkOptions {
   maxChars?: number | undefined;
 }
 
+/** Everything the semantic index (and the snapshot builder) needs to embed a table. */
+export interface PreparedTexts {
+  chunks: EmbedChunk[];
+  /** Distinct texts to embed: the background sentences first, then row texts in first-use order. */
+  uniqueTexts: string[];
+  /** Per chunk: index into `uniqueTexts`. */
+  chunkText: number[];
+  /** Per chunk: index into `table.rows`. */
+  chunkRow: number[];
+  /** Number of leading `uniqueTexts` that are background sentences (0 for an empty table). */
+  backgroundCount: number;
+}
+
 /** `age_at_menarche` -> "age at menarche", `bodyMassIndex` -> "body Mass Index". */
 export function humanizeName(name: string): string {
   return name
@@ -59,13 +75,21 @@ export function buildEmbedChunks(table: DataDictionaryTable, options: EmbedChunk
   const chunks: EmbedChunk[] = [];
 
   table.rows.forEach((row, index) => {
-    const name = humanizeName(row["Variable name"]) || row["Variable name"];
+    const raw = clean(row["Variable name"], 200);
+    const name = humanizeName(raw) || raw;
+    const alias = raw && raw !== name ? ` (${raw})` : "";
     const description = clean(row["Description"], maxChars);
     const format = clean(row["Format"], 80);
     const dataType = clean(row["Data type"], 80);
 
-    let identity = description ? `${name}: ${description}` : dataType ? `${name} (${dataType})` : name;
-    if (description && format) identity += ` (${format})`;
+    let identity: string;
+    if (description) {
+      identity = `${name}${alias}: ${description}`;
+      // Regex formats ("Matches pattern ^...$") are noise to a language model.
+      if (format && !format.startsWith("Matches pattern")) identity += ` (${format})`;
+    } else {
+      identity = dataType ? `${name}${alias} (${dataType})` : `${name}${alias}`;
+    }
     chunks.push({ row: index, text: identity });
 
     const labels: string[] = [];
@@ -83,6 +107,32 @@ export function buildEmbedChunks(table: DataDictionaryTable, options: EmbedChunk
   });
 
   return chunks;
+}
+
+/**
+ * Chunks plus the interned list of distinct texts to embed. Identical texts (repeated
+ * question blocks, shared code lists) embed once; the background sentences come first so a
+ * partially built index estimates the mean direction from them before anything else.
+ */
+export function prepareTexts(table: DataDictionaryTable, options: EmbedChunkOptions = {}): PreparedTexts {
+  const chunks = buildEmbedChunks(table, options);
+  const uniqueTexts: string[] = [];
+  const textIndex = new Map<string, number>();
+  const intern = (text: string): number => {
+    let i = textIndex.get(text);
+    if (i === undefined) {
+      i = uniqueTexts.length;
+      uniqueTexts.push(text);
+      textIndex.set(text, i);
+    }
+    return i;
+  };
+  // An empty table embeds nothing at all (no background sentences either).
+  if (chunks.length > 0) for (const text of BACKGROUND_TEXTS) intern(text);
+  const backgroundCount = uniqueTexts.length;
+  const chunkText = chunks.map((c) => intern(c.text));
+  const chunkRow = chunks.map((c) => c.row);
+  return { chunks, uniqueTexts, chunkText, chunkRow, backgroundCount };
 }
 
 function clean(text: string | undefined, maxChars: number): string {

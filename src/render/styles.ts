@@ -116,7 +116,10 @@ export const STYLES = `
 
 .dd-empty { padding: 22px 14px; color: var(--_muted); text-align: center; border: 1px dashed var(--_border); border-radius: var(--_radius); margin: 12px 0; }
 
-.dd-category { margin: 16px 0; }
+/* Sections off screen skip layout and paint; the placeholder height keeps scrolling stable. */
+.dd-category { margin: 16px 0; content-visibility: auto; contain-intrinsic-size: auto 240px; }
+@media print { .dd-category { content-visibility: visible; contain-intrinsic-size: none; } }
+.dd-root [hidden] { display: none !important; }
 .dd-category-toggle {
   display: flex; align-items: center; gap: 9px; width: 100%;
   font: inherit; text-align: left; cursor: pointer;
@@ -132,29 +135,34 @@ export const STYLES = `
 .dd-category[data-collapsed="true"] .dd-table-wrap, .dd-category[data-collapsed="true"] .dd-category-desc { display: none; }
 
 .dd-table-wrap { overflow-x: auto; border: 1px solid var(--_border); border-radius: var(--_radius); box-shadow: var(--_shadow); }
-.dd-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 880px; }
+.dd-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 880px; table-layout: fixed; }
+.dd-table col.dd-c-name { width: 14%; }
+.dd-table col.dd-c-desc { width: 24%; }
+.dd-table col.dd-c-type { width: 10%; }
+.dd-table col.dd-c-format { width: 12%; }
+.dd-table col.dd-c-values { width: 18%; }
+.dd-table col.dd-c-constraints { width: 12%; }
+.dd-table col.dd-c-additional { width: 10%; }
 .dd-table thead th {
   position: sticky; top: 0; z-index: 3;
   background: var(--_surface); color: var(--_muted);
   font-weight: 600; font-size: .76rem; text-transform: uppercase; letter-spacing: .04em;
   text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--_border); white-space: nowrap;
 }
-.dd-table tbody td, .dd-table tbody th { padding: 10px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; text-align: left; font-weight: 400; }
+.dd-table tbody td, .dd-table tbody th { padding: 10px 12px; border-bottom: 1px solid var(--_border); vertical-align: top; text-align: left; font-weight: 400; overflow-wrap: anywhere; }
+.dd-row:focus-visible { outline: 2px solid var(--_accent); outline-offset: -2px; }
 .dd-table tbody tr:last-child td, .dd-table tbody tr:last-child th { border-bottom: none; }
 .dd-table tbody tr:hover td, .dd-table tbody tr:hover th { background: color-mix(in srgb, var(--_accent-weak) 45%, transparent); }
 
-.dd-col-name { position: sticky; left: 0; z-index: 2; background: var(--_bg); min-width: 12ch; }
+.dd-col-name { position: sticky; left: 0; z-index: 2; background: var(--_bg); }
 .dd-table thead .dd-col-name { z-index: 4; background: var(--_surface); }
 .dd-table tbody tr:hover .dd-col-name { background: color-mix(in srgb, var(--_accent-weak) 55%, var(--_bg)); }
 .dd-col-name code { font-family: var(--_mono); font-weight: 600; font-size: .9em; word-break: break-word; }
 
-.dd-desc { min-width: 18ch; max-width: 40ch; white-space: pre-line; }
-.dd-format { color: var(--_muted); min-width: 14ch; }
-.dd-values { min-width: 18ch; max-width: 36ch; }
-.dd-constraints { min-width: 14ch; max-width: 32ch; }
-.dd-additional { min-width: 10ch; }
+.dd-desc { white-space: pre-line; }
+.dd-format { color: var(--_muted); }
 
-.dd-badge { display: inline-block; font-family: var(--_mono); font-size: .82em; padding: 2px 8px; border-radius: 999px; background: var(--_accent-weak); color: var(--_accent); white-space: nowrap; }
+.dd-badge { display: inline-block; font-family: var(--_mono); font-size: .82em; padding: 2px 8px; border-radius: 999px; background: var(--_accent-weak); color: var(--_accent); }
 .dd-badge[data-mixed="true"] { background: var(--_sentinel-bg); color: var(--_sentinel); }
 
 .dd-vv { margin: 0; display: grid; gap: 3px; }
@@ -189,12 +197,16 @@ export const STYLES = `
 
 .dd-muted { color: var(--_muted); }
 mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+/* Lazy paging: the sentinel row of an incomplete category, and the results list's foot. */
+.dd-more td { text-align: center; padding: 8px 12px; border-bottom: none; }
+.dd-more-btn { font-size: .82em; }
+.dd-results-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding: 10px 0 2px; color: var(--_muted); font-size: .86em; }
 .dd-footer { margin-top: 12px; font-size: .8em; color: var(--_muted); }
 .dd-warning { color: var(--_sentinel); }
 
-/* Semantic search: ranked results list, "related" badge and status chip. */
+/* Ranked results list: category tag under the name, "related" badge, semantic status chip. */
 .dd-results { margin: 12px 0; }
-.dd-category .dd-row-cat { display: none; }
 .dd-results .dd-row-cat { display: block; margin-top: 3px; font-size: .76em; font-weight: 400; color: var(--_muted); }
 .dd-row[data-dd-match="related"] .dd-col-name::after {
   content: "related"; display: inline-block; margin-top: 4px; padding: 1px 7px;

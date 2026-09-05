@@ -32,3 +32,23 @@ export function findRow(table, name) {
 export function noUnresolved(table) {
   return !table.warnings.some((w) => /could not resolve/i.test(w));
 }
+
+/**
+ * A table `times` larger than `table`: every copy suffixes the variable names and the
+ * category ids/titles (copy 0 keeps the originals). Each cloned row object is shared between
+ * `rows` and its category, as buildViewModel identifies rows by object identity.
+ */
+export function cloneTable(table, times) {
+  const rows = [];
+  const categories = [];
+  for (let t = 0; t < times; t += 1) {
+    const suffix = t === 0 ? "" : `_${t}`;
+    const clones = new Map(table.rows.map((row) => [row, { ...row, "Variable name": row["Variable name"] + suffix }]));
+    const clone = (row) => clones.get(row) ?? { ...row, "Variable name": row["Variable name"] + suffix };
+    rows.push(...clones.values());
+    for (const cat of table.categories) {
+      categories.push({ ...cat, id: cat.id + suffix, title: suffix ? `${cat.title} ${t}` : cat.title, rows: cat.rows.map(clone) });
+    }
+  }
+  return { ...table, rows, categories };
+}

@@ -1,12 +1,20 @@
-// The semantic index: embeds every row's chunks (through the cache), keeps one flat
-// Float32Array matrix, and answers queries with brute-force cosine similarity. At data
-// dictionary scale (thousands of chunks × a few hundred dimensions) that is a few
-// milliseconds, so no approximate-nearest-neighbour structure is needed.
+// The semantic index: embeds every row's chunks (through the cache), keeps ONE raw
+// Float32Array matrix over the chunks and answers queries with brute-force mean-centred
+// cosine similarity. Centring happens algebraically at query time —
+//   score(c) = (qc · v_c − qc · μ) / ‖v_c − μ‖   with   qc = normalize(q − μ)
+// — which equals normalising centred copies up front but keeps a single copy of the matrix
+// and lets μ evolve while indexing. Vectors arrive progressively (cache first, then the
+// embedder: background sentences before anything, then the longest texts first), so
+// `search(q, { partial: true })` answers over the chunks embedded so far and `coverage` tells
+// how much of the index that is. At data dictionary scale (thousands of chunks × a few
+// hundred dimensions) a query is a few milliseconds, so no approximate-nearest-neighbour
+// structure is needed.
 
 import type { DataDictionaryTable } from "../types";
 import type { Embedder, SemanticHit, SemanticIndex, SemanticSearchQuery, SemanticStatus, VectorCache } from "./types";
-import { BACKGROUND_TEXTS, buildEmbedChunks } from "./text";
+import { prepareTexts } from "./text";
 import { cacheKey, createDefaultVectorCache, createMemoryVectorCache } from "./cache";
+import { createLru } from "./lru";
 
 export interface SemanticIndexOptions {
   embedder: Embedder;
@@ -14,24 +22,63 @@ export interface SemanticIndexOptions {
   cache?: VectorCache | false | undefined;
   /** Texts per `embed()` call while indexing. Default: 16. */
   batchSize?: number | undefined;
+  /**
+   * Keep only the first `dims` components of every document and query vector (Matryoshka
+   * models) and renormalise. Part of the cache namespace.
+   */
+  dims?: number | undefined;
+  /** Fresh vectors are written to the cache every `flushEvery` vectors (and at the end). Default: 2000. */
+  flushEvery?: number | undefined;
+  /**
+   * Precomputed vectors for this dictionary (a `.jsddvec` snapshot).
+   * TODO(snapshots): accepted but ignored until `snapshot.ts` lands in the next phase; the
+   * hook sits in `build()` right before the cache read.
+   */
+  snapshot?: unknown;
 }
 
 /** Default floor on the mean-centred cosine score (see {@link SemanticHit}). */
 export const DEFAULT_MIN_SCORE = 0.25;
 
+const QUERY_VECTOR_CACHE = 64;
+
 export function createSemanticIndex(table: DataDictionaryTable, options: SemanticIndexOptions): SemanticIndex {
   const { embedder } = options;
   const cache: VectorCache = options.cache === false ? createMemoryVectorCache() : (options.cache ?? createDefaultVectorCache());
-  const batchSize = Math.max(1, options.batchSize ?? 16);
+  const batchSize = Math.max(1, Math.floor(options.batchSize ?? 16));
+  const flushEvery = Math.max(1, Math.floor(options.flushEvery ?? 2000));
+  const dims = options.dims !== undefined && options.dims > 0 ? Math.floor(options.dims) : undefined;
   const listeners = new Set<(status: SemanticStatus) => void>();
+  const queryVectors = createLru<string, Promise<Float32Array>>(QUERY_VECTOR_CACHE);
 
   let status: SemanticStatus = { state: "loading", progress: undefined };
   let disposed = false;
-  let matrix: Float32Array | undefined;
-  let mean: Float32Array | undefined;
-  let dim = 0;
+  let loadedDone = false;
+
+  // Chunks and texts (fixed once loaded).
+  const rowCount = table.rows.length;
   let chunkRow: number[] = [];
-  let rejectReady: ((err: Error) => void) | undefined;
+  let chunkCount = 0;
+  let textChunks: number[][] = [];
+  let filled = new Uint8Array(0);
+  let textFilled = new Uint8Array(0);
+  let filledChunks = 0;
+
+  // Vectors: one raw matrix, a running sum for the mean, lazily refreshed μ and per-chunk norms.
+  let dim = 0;
+  let matrix: Float32Array | undefined;
+  let sum: Float64Array | undefined;
+  let sumCount = 0;
+  let meanVersion = 0;
+  let mu: Float64Array | undefined;
+  let muVersion = -1;
+  let norms: Float32Array | undefined;
+  let normsVersion = -1;
+
+  // Query scratch (rows), reused across searches.
+  const rowBest = new Float64Array(rowCount);
+  const rowSeen = new Uint8Array(rowCount);
+  const rowsTouched = new Int32Array(rowCount);
 
   const disposedError = (): Error => new Error("Semantic index disposed");
 
@@ -47,31 +94,78 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     }
   };
 
+  const coverage = (): number => {
+    if (!loadedDone) return 0;
+    return chunkCount === 0 ? 1 : filledChunks / chunkCount;
+  };
+
+  /** Truncate to `dims` (when set) and renormalise. */
+  const prepareVector = (v: Float32Array): Float32Array => {
+    if (dims === undefined || v.length <= dims) return v;
+    const t = v.slice(0, dims);
+    let s = 0;
+    for (let k = 0; k < t.length; k += 1) s += (t[k] as number) * (t[k] as number);
+    const inv = s > 0 ? 1 / Math.sqrt(s) : 0;
+    for (let k = 0; k < t.length; k += 1) t[k] = (t[k] as number) * inv;
+    return t;
+  };
+
+  const ensureDim = (v: Float32Array): void => {
+    if (dim === 0) {
+      if (v.length === 0) throw new Error("Embedder returned empty vectors");
+      dim = v.length;
+      matrix = new Float32Array(chunkCount * dim);
+      sum = new Float64Array(dim);
+    } else if (v.length !== dim) {
+      throw new Error("Embedding dimension mismatch — Embedder.id must be unique per model configuration");
+    }
+  };
+
+  /** Write one unique text's vector into every chunk that uses it and fold it into the mean. */
+  const fillText = (t: number, v: Float32Array): void => {
+    if (textFilled[t] === 1 || !matrix || !sum) return;
+    textFilled[t] = 1;
+    for (let k = 0; k < dim; k += 1) sum[k] = (sum[k] as number) + (v[k] as number);
+    sumCount += 1;
+    for (const ci of textChunks[t] ?? []) {
+      matrix.set(v, ci * dim);
+      filled[ci] = 1;
+      filledChunks += 1;
+    }
+    meanVersion += 1;
+  };
+
+  let resolveLoaded: () => void = () => {};
+  let rejectLoaded: (err: Error) => void = () => {};
+  const loaded = new Promise<void>((resolve, reject) => {
+    resolveLoaded = resolve;
+    rejectLoaded = reject;
+  });
+  loaded.catch(() => {
+    /* consumers observe `status`; avoid unhandled rejections */
+  });
+
   async function build(): Promise<void> {
     setStatus({ state: "loading", progress: undefined });
     if (embedder.load) await embedder.load((f) => setStatus({ state: "loading", progress: clamp01(f) }));
     if (disposed) throw disposedError();
 
-    const chunks = buildEmbedChunks(table);
-    chunkRow = chunks.map((c) => c.row);
+    const prepared = prepareTexts(table);
+    const { uniqueTexts, backgroundCount } = prepared;
+    const total = uniqueTexts.length;
+    chunkRow = prepared.chunkRow;
+    chunkCount = chunkRow.length;
+    textChunks = Array.from({ length: total }, () => []);
+    prepared.chunkText.forEach((t, ci) => (textChunks[t] as number[]).push(ci));
+    filled = new Uint8Array(chunkCount);
+    textFilled = new Uint8Array(total);
 
-    // Identical texts (repeated question blocks, shared code lists) embed once. The generic
-    // background sentences are embedded too (never searched) to anchor the mean vector.
-    const uniqueTexts: string[] = [];
-    const textIndex = new Map<string, number>();
-    const intern = (text: string): number => {
-      let i = textIndex.get(text);
-      if (i === undefined) {
-        i = uniqueTexts.length;
-        uniqueTexts.push(text);
-        textIndex.set(text, i);
-      }
-      return i;
-    };
-    const chunkText = chunks.map((c) => intern(c.text));
-    if (chunks.length > 0) for (const text of BACKGROUND_TEXTS) intern(text);
+    // Precision-independent namespace: q8/fp16/fp32 vectors of one model are interchangeable.
+    const space = `${embedder.spaceId ?? embedder.id}${dims !== undefined ? `|d${dims}` : ""}`;
+    const keys = uniqueTexts.map((t) => cacheKey(space, t));
 
-    const keys = uniqueTexts.map((t) => cacheKey(embedder.id, t));
+    // TODO(snapshots): fill vectors from `options.snapshot` here (by text key) before the cache.
+
     let cached = new Map<string, Float32Array>();
     try {
       cached = await cache.getMany(keys);
@@ -80,59 +174,66 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     }
     if (disposed) throw disposedError();
 
-    const vectors: Array<Float32Array | undefined> = keys.map((k) => cached.get(k));
     const missing: number[] = [];
-    vectors.forEach((v, i) => {
-      if (!v) missing.push(i);
-    });
-    const total = uniqueTexts.length;
-    let done = total - missing.length;
-    setStatus({ state: "indexing", done, total });
-
-    const fresh: Array<readonly [string, Float32Array]> = [];
-    for (let i = 0; i < missing.length; i += batchSize) {
-      if (disposed) throw disposedError();
-      const batch = missing.slice(i, i + batchSize);
-      const out = await embedder.embed(
-        batch.map((j) => uniqueTexts[j] as string),
-        "document"
-      );
-      if (out.length !== batch.length) throw new Error(`Embedder returned ${out.length} vectors for ${batch.length} texts`);
-      batch.forEach((j, k) => {
-        const v = out[k] as Float32Array;
-        vectors[j] = v;
-        fresh.push([keys[j] as string, v]);
-      });
-      done += batch.length;
-      setStatus({ state: "indexing", done, total });
-      await yieldToEventLoop();
+    for (let t = 0; t < total; t += 1) {
+      const raw = cached.get(keys[t] as string);
+      const v = raw ? prepareVector(raw) : undefined;
+      // A cached vector of another size is a stale entry: re-embed rather than fail.
+      if (v && v.length > 0 && (dim === 0 || v.length === dim)) {
+        ensureDim(v);
+        fillText(t, v);
+      } else {
+        missing.push(t);
+      }
     }
-    if (disposed) throw disposedError();
+    loadedDone = true;
+    setStatus({ state: "indexing", done: sumCount, total, coverage: coverage() });
+    resolveLoaded();
 
-    const first = vectors.find((v): v is Float32Array => v !== undefined);
-    dim = first ? first.length : 0;
-    if (total > 0 && dim === 0) throw new Error("Embedder returned empty vectors");
-    for (const v of vectors) {
-      if (!v || v.length !== dim) throw new Error("Embedding dimension mismatch — Embedder.id must be unique per model configuration");
-    }
+    // Background sentences first (they anchor the mean), then the longest texts first: batches
+    // of similar length waste the least padding.
+    const byLengthDesc = (a: number, b: number): number => (uniqueTexts[b] as string).length - (uniqueTexts[a] as string).length || a - b;
+    const order = [
+      ...missing.filter((t) => t < backgroundCount).sort(byLengthDesc),
+      ...missing.filter((t) => t >= backgroundCount).sort(byLengthDesc)
+    ];
 
-    // Embedding spaces are anisotropic (every vector shares a large common component, which
-    // is why unrelated texts still score 0.5+). Subtracting the mean over the corpus plus the
-    // background sentences and re-normalising spreads the scores: unrelated ≈ 0, related ≫ 0.
-    const mu = new Float32Array(dim);
-    for (const v of vectors as Float32Array[]) for (let k = 0; k < dim; k += 1) mu[k] = (mu[k] as number) + (v[k] as number) / vectors.length;
-    mean = mu;
-    const m = new Float32Array(chunks.length * dim);
-    chunks.forEach((_, ci) => centerInto(m, ci * dim, vectors[chunkText[ci] as number] as Float32Array, mu));
-    matrix = m;
-
-    if (fresh.length) {
+    let fresh: Array<readonly [string, Float32Array]> = [];
+    const flush = async (): Promise<void> => {
+      const batch = fresh;
+      fresh = [];
+      if (batch.length === 0) return;
       try {
-        await cache.putMany(fresh);
+        await cache.putMany(batch);
       } catch {
         /* best-effort */
       }
+    };
+
+    for (let i = 0; i < order.length; i += batchSize) {
+      if (disposed) throw disposedError();
+      const batch = order.slice(i, i + batchSize);
+      const out = await embedder.embed(
+        batch.map((t) => uniqueTexts[t] as string),
+        "document"
+      );
+      if (disposed) throw disposedError();
+      if (out.length !== batch.length) throw new Error(`Embedder returned ${out.length} vectors for ${batch.length} texts`);
+      batch.forEach((t, k) => {
+        const v = prepareVector(out[k] as Float32Array);
+        ensureDim(v);
+        fillText(t, v);
+        fresh.push([keys[t] as string, v]);
+      });
+      setStatus({ state: "indexing", done: sumCount, total, coverage: coverage() });
+      // Progress survives a closed tab: persist every `flushEvery` fresh vectors.
+      if (fresh.length >= flushEvery) await flush();
+      await yieldToEventLoop();
     }
+    if (disposed) throw disposedError();
+    if (total > 0 && dim === 0) throw new Error("Embedder returned empty vectors");
+
+    await flush();
     // The cache holds one dictionary at a time: vectors of previously indexed schemas (or of an
     // older text template / embedder) are deleted so storage does not grow without bound.
     // Re-indexing the same dictionary yields the same keys, so nothing is lost or re-embedded.
@@ -147,55 +248,138 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     setStatus({ state: "ready" });
   }
 
+  let rejectReady: ((err: Error) => void) | undefined;
   const ready = new Promise<void>((resolve, reject) => {
     rejectReady = reject;
     build().then(resolve, (err: unknown) => {
       if (!disposed) setStatus({ state: "error", message: errorMessage(err) });
-      reject(err instanceof Error ? err : new Error(errorMessage(err)));
+      const error = err instanceof Error ? err : new Error(errorMessage(err));
+      rejectLoaded(error);
+      reject(error);
     });
   });
   ready.catch(() => {
     /* consumers observe `status`; avoid unhandled rejections */
   });
 
+  /** Query vectors go through a small LRU so retyping a query never re-embeds it. */
+  const queryVector = (q: string): Promise<Float32Array> => {
+    const hit = queryVectors.get(q);
+    if (hit) return hit;
+    const p = embedder.embed([q], "query").then((out) => {
+      const v = out[0];
+      if (!v) throw new Error("Embedder returned no query vector");
+      return prepareVector(v);
+    });
+    queryVectors.set(q, p);
+    p.catch(() => queryVectors.delete(q));
+    return p;
+  };
+
+  /** μ and the per-chunk ‖v − μ‖ for the current mean (recomputed only when μ changed). */
+  const refreshMean = (m: Float32Array): void => {
+    if (!mu || muVersion !== meanVersion) {
+      mu = new Float64Array(dim);
+      const s = sum as Float64Array;
+      for (let k = 0; k < dim; k += 1) mu[k] = (s[k] as number) / sumCount;
+      muVersion = meanVersion;
+    }
+    if (!norms || normsVersion !== meanVersion) {
+      const n = norms ?? new Float32Array(chunkCount);
+      for (let ci = 0; ci < chunkCount; ci += 1) {
+        if (filled[ci] === 0) continue;
+        const off = ci * dim;
+        let acc = 0;
+        for (let k = 0; k < dim; k += 1) {
+          const x = (m[off + k] as number) - (mu[k] as number);
+          acc += x * x;
+        }
+        n[ci] = Math.sqrt(acc);
+      }
+      norms = n;
+      normsVersion = meanVersion;
+    }
+  };
+
   async function search(query: string, opts: SemanticSearchQuery = {}): Promise<SemanticHit[]> {
     if (disposed) throw disposedError();
-    await ready;
+    if (opts.partial) {
+      await loaded;
+      if (status.state === "error") throw new Error(status.message);
+    } else {
+      await ready;
+    }
     if (disposed) throw disposedError();
     const q = query.trim();
+    if (!q || chunkCount === 0 || filledChunks === 0 || dim === 0) return [];
+
+    const qv = await queryVector(q);
+    if (disposed) throw disposedError();
     const m = matrix;
-    if (!q || !m || dim === 0) return [];
+    if (!m || filledChunks === 0) return [];
+    if (qv.length !== dim) throw new Error("Query embedding dimension mismatch");
+    refreshMean(m);
+    const centre = mu as Float64Array;
+    const chunkNorm = norms as Float32Array;
 
-    const [qv] = await embedder.embed([q], "query");
-    if (!qv || qv.length !== dim) throw new Error("Query embedding dimension mismatch");
-    const qn = new Float32Array(dim);
-    centerInto(qn, 0, qv, mean as Float32Array);
+    // qc = normalize(q − μ); score(c) = (qc · v_c − qc · μ) / ‖v_c − μ‖.
+    const qc = new Float64Array(dim);
+    let qn = 0;
+    for (let k = 0; k < dim; k += 1) {
+      const x = (qv[k] as number) - (centre[k] as number);
+      qc[k] = x;
+      qn += x * x;
+    }
+    if (qn === 0) return [];
+    qn = Math.sqrt(qn);
+    let qmu = 0;
+    for (let k = 0; k < dim; k += 1) {
+      qc[k] = (qc[k] as number) / qn;
+      qmu += (qc[k] as number) * (centre[k] as number);
+    }
 
-    const best = new Map<number, number>();
-    const n = chunkRow.length;
-    for (let ci = 0; ci < n; ci += 1) {
+    let touched = 0;
+    for (let ci = 0; ci < chunkCount; ci += 1) {
+      if (filled[ci] === 0) continue;
+      const nrm = chunkNorm[ci] as number;
+      if (nrm === 0) continue;
       const off = ci * dim;
       let dot = 0;
-      for (let k = 0; k < dim; k += 1) dot += (m[off + k] as number) * (qn[k] as number);
+      for (let k = 0; k < dim; k += 1) dot += (qc[k] as number) * (m[off + k] as number);
+      const score = (dot - qmu) / nrm;
       const row = chunkRow[ci] as number;
-      const prev = best.get(row);
-      if (prev === undefined || dot > prev) best.set(row, dot);
+      if (rowSeen[row] === 0) {
+        rowSeen[row] = 1;
+        rowsTouched[touched++] = row;
+        rowBest[row] = score;
+      } else if (score > (rowBest[row] as number)) {
+        rowBest[row] = score;
+      }
     }
 
     const floor = opts.minScore ?? embedder.minScore ?? DEFAULT_MIN_SCORE;
     const hits: SemanticHit[] = [];
-    for (const [row, score] of best) if (score >= floor) hits.push({ row, score });
+    for (let i = 0; i < touched; i += 1) {
+      const row = rowsTouched[i] as number;
+      const score = rowBest[row] as number;
+      rowSeen[row] = 0;
+      if (score >= floor) hits.push({ row, score });
+    }
     hits.sort((a, b) => b.score - a.score || a.row - b.row);
     return opts.limit === undefined ? hits : hits.slice(0, Math.max(0, opts.limit));
   }
 
   return {
     ready,
+    loaded,
     get status() {
       return status;
     },
     get size() {
-      return chunkRow.length;
+      return chunkCount;
+    },
+    get coverage() {
+      return coverage();
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -208,23 +392,16 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
       if (disposed) return;
       disposed = true;
       matrix = undefined;
-      mean = undefined;
+      sum = undefined;
+      mu = undefined;
+      norms = undefined;
       listeners.clear();
-      rejectReady?.(disposedError());
+      queryVectors.clear();
+      const error = disposedError();
+      rejectLoaded(error);
+      rejectReady?.(error);
     }
   };
-}
-
-/** Writes normalize(v - mean) into `target` at `offset`. */
-function centerInto(target: Float32Array, offset: number, v: Float32Array, mean: Float32Array): void {
-  let sum = 0;
-  for (let k = 0; k < v.length; k += 1) {
-    const x = (v[k] as number) - (mean[k] as number);
-    target[offset + k] = x;
-    sum += x * x;
-  }
-  const inv = sum > 0 ? 1 / Math.sqrt(sum) : 0;
-  for (let k = 0; k < v.length; k += 1) target[offset + k] = (target[offset + k] as number) * inv;
 }
 
 function clamp01(x: number): number {

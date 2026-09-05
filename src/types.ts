@@ -283,4 +283,13 @@ export interface RenderOptions extends RenderHtmlOptions {
   replace?: boolean | undefined;
   /** Enable semantic search (switches the search UI to a ranked results list). */
   semanticSearch?: SemanticSearchOptions | undefined;
+  /**
+   * Rows materialised per category page. Dictionaries of up to 5 × `pageSize` rows render
+   * every row up front; larger ones render the first `pageSize` rows and page the rest in as
+   * their sections scroll into view (or via "Show more"). `Infinity` renders everything.
+   * Default: 100.
+   */
+  pageSize?: number | undefined;
+  /** Result rows shown per page while a query is active ("Show more" appends a page). Default: 100. */
+  resultsPageSize?: number | undefined;
 }
