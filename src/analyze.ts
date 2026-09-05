@@ -488,10 +488,8 @@ function dataTypeText(acc: Accumulator): string {
   if (coded.length >= 2 && coded.some((v) => v.kind !== "sentinel")) {
     return nn(`categorical (${baseTypeOfValues(coded, acc)})`);
   }
-  const substantive = coded;
-
   const scalarTypes = [...acc.jsonTypes].filter((t) => t !== "object" || !acc.hasObjectShape);
-  const types = scalarTypes.length ? scalarTypes : substantive.length ? [baseTypeOfValues(substantive, acc)] : [];
+  const types = scalarTypes.length ? scalarTypes : coded.length ? [baseTypeOfValues(coded, acc)] : [];
   if (acc.hasObjectShape && types.every((t) => t === "object")) return nn("object");
   if (types.length === 0) return acc.nullable ? "null" : "any";
   return nn([...new Set(types)].join(" or "));
