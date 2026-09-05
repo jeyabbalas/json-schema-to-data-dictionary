@@ -23,12 +23,23 @@ All notable changes to this project are documented here. The format follows
   with the same label could therefore come out `sentinel` in one variable and `value` in
   another. Both paths now classify through one function.
 - **"Do not know" is recognised.** The sentinel vocabulary matched `don't know` / `dont
-  know` but not `do not know`, `does not know` or `not known`; `suppressed`, `withheld`,
-  `redacted`, `not asked` and `not on the questionnaire` are recognised too.
+  know` but not `do not know`; `suppressed` and `not on the questionnaire` are recognised
+  too. The vocabulary stays deliberately small: every word in it has to survive appearing
+  as a *fragment* of a longer label, because coding lists put sentinel words inside real
+  categories — "Surgery (type not known)" is a reason periods stopped, not missing data.
+  `x-value-kind` is the answer for wording the vocabulary cannot safely infer.
 - **A description that mentions missingness no longer makes the value missing.** The
   classifier matched the value's prose `description`, so a substantive value documented as
   *"…not a missingness sentinel"* was filed under **special codes**. It now reads the label
   and the `$ref` name, falling back to the description only when there is no label.
+- **A field with no real categories is no longer typed `categorical`.** The check counted
+  sentinels as categories, so a sparse coding table that declares nothing but missing/NA
+  codes was badged `categorical (integer)` beside a values cell holding no categories. It
+  now reports the underlying type, and the **special codes** separator is only drawn when
+  there is something above it to separate.
+- **`x-value-kind` no longer leaks into dataset metadata.** It was excluded from the row-level
+  passthrough but not the category- and table-level one, so it could appear in **Additional
+  information** while having no effect there.
 - **The data-type badge is a rectangle again.** A long type (`categorical (integer)`) wraps
   to three lines in a narrow Data type column, and the pill radius rounded that block into a
   circle; it is `6px` now, matching inline code chips.
