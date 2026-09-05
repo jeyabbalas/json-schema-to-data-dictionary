@@ -20,9 +20,12 @@ export { createSearchEngine } from "./search/engine";
 export { createLexicalIndex, lexicalDocumentFromRow, lexicalDocumentsFromTable, tokenize, stem, DEFAULT_STOP_WORDS } from "./search/lexical";
 export { createSemanticIndex, DEFAULT_MIN_SCORE } from "./search/semanticIndex";
 export { buildEmbedChunks, prepareTexts, humanizeName, EMBED_TEXT_VERSION } from "./search/text";
-export { cacheKey, createMemoryVectorCache, createIndexedDbVectorCache, createDefaultVectorCache } from "./search/cache";
+export { cacheKey, textKey, createMemoryVectorCache, createIndexedDbVectorCache, createDefaultVectorCache } from "./search/cache";
+export { buildVectorSnapshot, encodeVectorSnapshot, decodeVectorSnapshot, loadVectorSnapshot } from "./search/snapshot";
 export { keywordScore, fuseRankings, rankResults, rankHybrid } from "./search/ranking";
 export { createTransformersEmbedder, DEFAULT_EMBEDDING_MODEL, KNOWN_EMBEDDING_MODELS } from "./search/transformers";
+export { detectWebGpu, resolveRuntime, isNodeRuntime, DEFAULT_DTYPES } from "./search/runtime";
+export { toFloat32, poolCls, poolMean, poolLastToken, takeSentenceEmbedding, truncateAndNormalize } from "./search/pooling";
 export { serveEmbedder, createWorkerEmbedder } from "./search/worker";
 
 // --- Formats catalog (useful for tooling / custom renderers) ---
@@ -78,8 +81,18 @@ export type {
 export type { SemanticIndexOptions } from "./search/semanticIndex";
 export type { EmbedChunk, EmbedChunkOptions, PreparedTexts } from "./search/text";
 export type { IndexedDbVectorCacheOptions } from "./search/cache";
+export type {
+  VectorSnapshot,
+  VectorSnapshotSource,
+  SnapshotQuantization,
+  SnapshotFetch,
+  BuildVectorSnapshotOptions,
+  EncodeVectorSnapshotOptions
+} from "./search/snapshot";
 export type { SearchFields } from "./search/ranking";
-export type { TransformersModuleLike, TransformersEmbedderOptions, KnownEmbeddingModel } from "./search/transformers";
+export type { TransformersModuleLike, TransformersEmbedderOptions, KnownEmbeddingModel, PoolingMode } from "./search/transformers";
+export type { WebGpuSupport, DtypeTable, ResolveRuntimeOptions, ResolvedRuntime } from "./search/runtime";
+export type { TensorLike } from "./search/pooling";
 export type { EmbedderPort } from "./search/worker";
 export type { AnalyzeContext, PropertyAnalysis } from "./analyze";
 export type { DataDictionaryElement } from "./render/component";

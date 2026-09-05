@@ -8,9 +8,9 @@
  *
  * Configuration travels in the worker URL's query string (stateless; one worker per model):
  *   v=<commit>               the deploy's cache-busting tag, reused for the bundle URL
- *   model=<id>               Hugging Face model id (default: MODEL below)
- *   device=auto|wasm|webgpu  execution device (default: wasm)
- *   dtype=<string>           quantisation, e.g. q8 / fp16 (default: q8)
+ *   model=<id>               Hugging Face model id (default: the library's DEFAULT_EMBEDDING_MODEL)
+ *   device=auto|wasm|webgpu  execution device (default: auto = WebGPU when available, else WASM)
+ *   dtype=<string>           quantisation, e.g. q8 / fp16 (default: auto = the library's per-device choice)
  *   nogpu=1                  test hook: hide WebGPU so the WASM path is exercised
  */
 var PARAMS = new URLSearchParams(self.location.search);
@@ -25,7 +25,6 @@ if (PARAMS.get("nogpu") === "1") {
 }
 
 var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
-var MODEL = "Xenova/bge-small-en-v1.5"; // 33M params, 384-d, MIT; ~34 MB quantized
 
 var API = self.JsonSchemaDataDictionary;
 
@@ -38,9 +37,9 @@ API.serveEmbedder(
       });
     },
     {
-      model: PARAMS.get("model") || MODEL,
-      dtype: PARAMS.get("dtype") || "q8",
-      device: PARAMS.get("device") || "wasm"
+      model: PARAMS.get("model") || API.DEFAULT_EMBEDDING_MODEL,
+      device: PARAMS.get("device") || "auto",
+      dtype: PARAMS.get("dtype") || "auto"
     }
   )
 );

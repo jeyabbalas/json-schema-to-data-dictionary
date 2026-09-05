@@ -8,6 +8,10 @@
  * with a synthetic uri of https://demo.local/<path> so that relative $refs between
  * documents resolve exactly as they would on disk.
  *
+ * Semantic search is opt-in: a model picker (DEMO_MODELS) feeds an embedding worker, and a
+ * preset that ships precomputed vectors (demo/vectors, see build-presets.mjs) is searchable
+ * without embedding anything in the browser.
+ *
  * Automation hooks: session-only URL overrides (see readOverrides) and window.ddDemo.
  */
 (function () {
@@ -22,6 +26,7 @@
   var docs = [];            // [{ path, schema }]
   var rootIndex = null;     // null = auto-detect; number = explicit root document
   var docsFromPreset = false;
+  var activePreset = null;  // the preset entry behind `docs` while docsFromPreset (carries `vectors`)
   var syntheticTimes = 0;   // > 0 while the synthetic stress-test preset is loaded: cloneTable() factor
   var lastTable = null;
   var lastRenderMs = null;  // wall time of the last renderDataDictionary() call (window.ddDemo.lastRenderMs)
@@ -31,8 +36,9 @@
 
   // Semantic search (opt-in). The model runs in demo/embed-worker.js when Workers are
   // available (not on file://), otherwise on the main thread. The embedder is created once
-  // and reused across re-renders; the library caches row embeddings in IndexedDB.
+  // per model and reused across re-renders; the library caches row embeddings in IndexedDB.
   var SEMANTIC_KEY = "dd-demo:semantic";
+  var MODEL_KEY = "dd-demo:model";
   var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
   // The Pages deploy appends ?v=<commit> to every asset URL (cache-busting). Forward it to
   // the worker so a fresh app.js never pairs with a stale embed-worker.js.
@@ -43,10 +49,31 @@
       return m ? m[0] : "";
     } catch (e) { return ""; }
   })();
-  var EMBEDDING_MODEL = "Xenova/bge-small-en-v1.5";
-  var semanticEmbedder = null;   // set once the embedder is ready and the box is still ticked
+  // Models offered by the picker (#semantic-model). Every id must be in the library's
+  // KNOWN_EMBEDDING_MODELS table (pooling, prefixes, per-device dtype, cosine floor); ids the
+  // running build doesn't know are dropped at start-up. `size` is the download per device.
+  var DEMO_MODELS = [
+    { id: "MongoDB/mdbr-leaf-ir", label: "LEAF-IR · 23M · Apache-2.0", size: "23 MB q8 / 46 MB fp16", isDefault: true },
+    { id: "Xenova/bge-small-en-v1.5", label: "BGE small v1.5 · 33M · MIT", size: "34 MB q8" },
+    { id: "Xenova/all-MiniLM-L6-v2", label: "all-MiniLM-L6-v2 · 23M · Apache-2.0", size: "22 MB q8" },
+    {
+      id: "jinaai/jina-embeddings-v5-text-nano-retrieval",
+      label: "Jina v5 nano retrieval · 239M · CC-BY-NC-4.0 · needs WebGPU",
+      size: "124 MB q4f16",
+      nonCommercial: true,
+      needsWebGPU: true,
+      notice: "Jina v5 nano is licensed CC-BY-NC-4.0: non-commercial use only."
+    }
+  ];
+  var MODELS = [];               // DEMO_MODELS cross-checked against the library at start-up
+  var selectedModel = null;      // the picker's (persisted) choice; the ?model= override wins over it
+  var semanticEmbedder = null;   // set once the embedder is loaded and the box is still ticked
   var semanticWorker = null;
   var embedderPromise = null;
+  var generation = 0;            // bumped per semantic start; resolutions of older starts are ignored
+  var lastSnapshot = null;       // decoded precomputed vectors given to the current render (ddDemo.snapshot)
+  var snapshots = {};            // vectors file -> { promise, done, value }: one fetch per file per session
+  var eta = null;                // { t0, done0 }: first indexing sample of the current run (ETA baseline)
 
   // --- Messages -----------------------------------------------------------
   function clearMessages() { $("#messages").replaceChildren(); }
@@ -124,6 +151,7 @@
     $("#preset-description").textContent = p.description || "";
     docs = source.documents.map(function (d) { return { path: d.path, schema: d.schema }; });
     docsFromPreset = true;
+    activePreset = p;
     syntheticTimes = p.times || 0;
     rootIndex = null;
     afterDocsChanged();
@@ -223,7 +251,7 @@
         return;
       }
       // Uploading replaces a preset, but multiple uploads accumulate into one set.
-      if (docsFromPreset) { docs = []; docsFromPreset = false; }
+      if (docsFromPreset) { docs = []; docsFromPreset = false; activePreset = null; }
       syntheticTimes = 0;
       parsed.forEach(function (d) {
         var idx = docs.findIndex(function (x) { return x.path === d.path; });
@@ -336,6 +364,7 @@
     docs = [];
     rootIndex = null;
     docsFromPreset = false;
+    activePreset = null;
     syntheticTimes = 0;
     afterDocsChanged();
   }
@@ -374,6 +403,7 @@
       out.replaceChildren();
       lastTable = null;
       lastRenderMs = null;
+      lastSnapshot = null;
       setExportsEnabled(false);
       addMessage("info", "Select an example or upload one or more JSON Schema files to begin.");
       return;
@@ -388,6 +418,7 @@
       out.replaceChildren();
       lastTable = null;
       lastRenderMs = null;
+      lastSnapshot = null;
       setExportsEnabled(false);
       addMessage("error", "Couldn’t build the data dictionary: " + err.message);
       return;
@@ -403,14 +434,124 @@
       expandCategories: $("#expand-categories").checked,
       expandAdditionalInfo: $("#expand-additional").checked
     };
-    if (semanticEmbedder) options.semanticSearch = { embedder: semanticEmbedder, onStatus: showSemanticStatus };
+    var semantic = semanticOptions();
+    if (semantic) options.semanticSearch = semantic;
     var t0 = performance.now();
     API.renderDataDictionary(out, table, options); // renders synchronously; painting is extra
     lastRenderMs = performance.now() - t0;
     setExportsEnabled(true);
   }
 
-  // --- Semantic search ----------------------------------------------------
+  // --- Semantic search: model picker -------------------------------------
+  function webGpuAvailable() {
+    return !OVERRIDES.nogpu && typeof navigator !== "undefined" && !!navigator.gpu;
+  }
+
+  function findModel(id) {
+    for (var i = 0; i < MODELS.length; i++) if (MODELS[i].id === id) return MODELS[i];
+    return null;
+  }
+
+  // Short display name: the label up to its first " · " (e.g. "LEAF-IR").
+  function modelName(id) {
+    var m = findModel(id);
+    return m ? m.label.split(" · ")[0] : id;
+  }
+
+  function defaultModelId() {
+    for (var i = 0; i < MODELS.length; i++) if (MODELS[i].isDefault) return MODELS[i].id;
+    if (findModel(API.DEFAULT_EMBEDDING_MODEL)) return API.DEFAULT_EMBEDDING_MODEL;
+    return MODELS.length ? MODELS[0].id : API.DEFAULT_EMBEDDING_MODEL || DEMO_MODELS[0].id;
+  }
+
+  // The model the embedder runs: the ?model= override for this session, else the picker's choice.
+  function effectiveModel() {
+    return OVERRIDES.model || selectedModel || defaultModelId();
+  }
+
+  // DEMO_MODELS minus the ids this build of the library doesn't know. A build without the
+  // known-models table can't be cross-checked, so it keeps them all.
+  function knownDemoModels() {
+    var known = API.KNOWN_EMBEDDING_MODELS;
+    if (!known) return DEMO_MODELS.slice();
+    return DEMO_MODELS.filter(function (m) {
+      if (known[m.id]) return true;
+      console.warn("[demo] Dropping " + m.id + " from the model picker: not in KNOWN_EMBEDDING_MODELS.");
+      return false;
+    });
+  }
+
+  function populateModelSelect() {
+    var sel = $("#semantic-model");
+    sel.replaceChildren();
+    MODELS.forEach(function (m) {
+      var opt = document.createElement("option");
+      opt.value = m.id;
+      var text = m.label + " (" + m.size + ")";
+      if (m.needsWebGPU && !webGpuAvailable()) {
+        opt.disabled = true;
+        text += " (WebGPU unavailable)";
+      }
+      opt.textContent = text;
+      sel.appendChild(opt);
+    });
+    // A ?model= id outside the table is still listed, so the picker shows what is running.
+    if (OVERRIDES.model && !findModel(OVERRIDES.model)) {
+      var extra = document.createElement("option");
+      extra.value = OVERRIDES.model;
+      extra.textContent = OVERRIDES.model + " (from URL)";
+      extra.dataset.fromUrl = "1";
+      sel.appendChild(extra);
+    }
+    sel.disabled = !sel.options.length;
+  }
+
+  // Reflect the effective model in the picker and in the licence notice.
+  function syncModelUi() {
+    var id = effectiveModel();
+    $("#semantic-model").value = id;
+    var m = findModel(id);
+    var notice = $("#semantic-notice");
+    var text = m && m.nonCommercial ? m.notice : "";
+    notice.hidden = !text;
+    notice.textContent = text;
+  }
+
+  // Start-up: cross-check the table, restore the saved choice (the URL override wins for the
+  // session and is never saved), and refuse a WebGPU-only model where there is no WebGPU.
+  function initModels() {
+    MODELS = knownDemoModels();
+    var saved = null;
+    try { saved = localStorage.getItem(MODEL_KEY); } catch (e) {}
+    selectedModel = findModel(saved) ? saved : defaultModelId();
+    populateModelSelect();
+    var m = findModel(effectiveModel());
+    if (m && m.needsWebGPU && !webGpuAvailable()) {
+      delete OVERRIDES.model;
+      selectedModel = defaultModelId();
+      addMessage("info", modelName(m.id) + " needs WebGPU, which this browser doesn’t expose; using " + modelName(selectedModel) + " instead.");
+    }
+    syncModelUi();
+  }
+
+  // From the picker (or ddDemo.setModel): save the choice and, when semantic search is on,
+  // restart it on the new model. Returns false for an id the picker doesn't offer.
+  function setModel(id) {
+    if (!findModel(id)) return false;
+    delete OVERRIDES.model; // an explicit choice replaces the session override
+    var extra = $("#semantic-model option[data-from-url]");
+    if (extra) extra.remove();
+    selectedModel = id;
+    try { localStorage.setItem(MODEL_KEY, id); } catch (e) {}
+    syncModelUi();
+    if ($("#semantic").checked) {
+      applySemantic(false); // drop the old worker and index; the table goes keyword-only meanwhile
+      setSemantic(true);    // new generation: whatever the old start still resolves is ignored
+    }
+    return true;
+  }
+
+  // --- Semantic search: embedder ------------------------------------------
   function loadTransformers() {
     // ?nogpu=1 (test hook): hide WebGPU before Transformers.js probes for it.
     if (OVERRIDES.nogpu) { try { delete Navigator.prototype.gpu; } catch (e) {} }
@@ -420,73 +561,208 @@
     });
   }
 
-  // Embedder options for the main-thread fallback: the URL overrides, else the library defaults.
+  // Embedder options for the main-thread fallback: the effective model, "auto" device unless
+  // overridden (WebGPU when present, else WASM), and the library's own dtype choice unless overridden.
   function embedderOptions() {
-    var opts = { model: OVERRIDES.model || EMBEDDING_MODEL };
-    if (OVERRIDES.device) opts.device = OVERRIDES.device;
+    var opts = { model: effectiveModel(), device: OVERRIDES.device || "auto" };
     if (OVERRIDES.dtype) opts.dtype = OVERRIDES.dtype;
     return opts;
   }
 
-  // Worker URL: the deploy's ?v=<commit> first, then the session overrides as query params
-  // (embed-worker.js reads model/device/dtype/nogpu from self.location.search).
+  // Worker URL: the deploy's ?v=<commit> first, then the configuration as query params
+  // (embed-worker.js reads model/device/dtype/nogpu from self.location.search). One worker per model.
   function workerUrl() {
-    var params = [];
-    ["model", "device", "dtype"].forEach(function (k) {
-      if (OVERRIDES[k]) params.push(k + "=" + encodeURIComponent(OVERRIDES[k]));
-    });
+    var params = [
+      "model=" + encodeURIComponent(effectiveModel()),
+      "device=" + encodeURIComponent(OVERRIDES.device || "auto")
+    ];
+    if (OVERRIDES.dtype) params.push("dtype=" + encodeURIComponent(OVERRIDES.dtype));
     if (OVERRIDES.nogpu) params.push("nogpu=1");
-    if (!params.length) return "embed-worker.js" + ASSET_QUERY;
     return "embed-worker.js" + (ASSET_QUERY ? ASSET_QUERY + "&" : "?") + params.join("&");
   }
 
-  function createWorkerEmbedder() {
+  // Start a worker for the current model. Resolves with its embedder proxy once the worker has
+  // described itself. The worker is tracked from creation, so stopping semantic search (or
+  // switching models) while it is still starting terminates it right away; a start that was
+  // superseded (generation moved on) terminates its worker itself when it finally resolves.
+  function createWorkerEmbedder(myGen) {
+    var worker;
+    try { worker = new Worker(workerUrl()); } catch (err) { return Promise.reject(err); }
+    semanticWorker = worker;
     return new Promise(function (resolve, reject) {
-      var worker;
-      try { worker = new Worker(workerUrl()); } catch (err) { reject(err); return; }
       var timer = setTimeout(function () { reject(new Error("worker did not respond")); }, 8000);
       worker.addEventListener("error", function (e) {
         clearTimeout(timer);
         reject(new Error(e.message || "worker failed to start"));
       });
       API.createWorkerEmbedder(worker).then(
-        function (embedder) { clearTimeout(timer); semanticWorker = worker; resolve(embedder); },
+        function (embedder) { clearTimeout(timer); resolve(embedder); },
         function (err) { clearTimeout(timer); reject(err); }
       );
-    }).catch(function (err) {
-      if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
-      throw err;
-    });
+    }).then(
+      function (embedder) {
+        if (myGen !== generation) { worker.terminate(); throw new Error("superseded"); }
+        return embedder;
+      },
+      function (err) {
+        worker.terminate();
+        if (semanticWorker === worker) semanticWorker = null; // the main-thread fallback takes over
+        throw err;
+      }
+    );
   }
 
-  function getEmbedder() {
+  // The loaded embedder for the current start: the worker, else the main thread. The model is
+  // downloaded and initialised here (progress + device chip), so the component's own load()
+  // call afterwards is a no-op.
+  function getEmbedder(myGen) {
     if (embedderPromise) return embedderPromise;
     var canWorker = typeof Worker !== "undefined" && location.protocol !== "file:";
-    embedderPromise = (canWorker ? createWorkerEmbedder() : Promise.reject(new Error("workers unavailable")))
-      .catch(function () {
+    embedderPromise = (canWorker ? createWorkerEmbedder(myGen) : Promise.reject(new Error("workers unavailable")))
+      .catch(function (err) {
+        if (myGen !== generation) throw err; // superseded: don't start a main-thread model for it
         // Fallback: run the model on the main thread (also the file:// path).
         return API.createTransformersEmbedder(loadTransformers, embedderOptions());
+      })
+      .then(function (embedder) {
+        if (myGen !== generation) throw new Error("superseded");
+        var onProgress = function (fraction) {
+          if (myGen === generation) showSemanticStatus({ state: "loading", progress: fraction });
+        };
+        return Promise.resolve(embedder.load ? embedder.load(onProgress) : undefined)
+          .then(function () { return embedder; });
       });
     return embedderPromise;
   }
 
-  function showSemanticStatus(status) {
+  // --- Semantic search: status, device chip, ETA ---------------------------
+  function setStatusText(text) {
     var el = $("#semantic-status");
-    if (!status) { el.hidden = true; el.textContent = ""; return; }
-    el.hidden = false;
+    el.hidden = !text;
+    el.textContent = text || "";
+  }
+
+  function showSemanticStatus(status) {
+    if (!status) { eta = null; setStatusText(""); return; }
     if (status.state === "loading") {
-      el.textContent = status.progress == null ? "Loading model…" : "Loading model… " + Math.round(status.progress * 100) + "%";
+      setStatusText(status.progress == null ? "Loading model…" : "Loading model… " + Math.round(status.progress * 100) + "%");
     } else if (status.state === "indexing") {
-      el.textContent = "Indexing variables… " + status.done + " / " + status.total;
+      setStatusText("Indexing… " + fmtCount(status.done) + " / " + fmtCount(status.total) + indexingEta(status));
     } else if (status.state === "ready") {
-      // The component's own chip ("Semantic search on") takes over from here.
-      el.hidden = true;
-      el.textContent = "";
+      eta = null;
+      setStatusText(""); // the component's own chip ("Semantic search on") takes over from here
     } else {
-      el.textContent = "Unavailable: " + status.message;
+      eta = null;
+      setStatusText("Unavailable: " + status.message);
     }
   }
 
+  // " · ≈ 2 min left" once ≥ 2 s and ≥ 32 texts have passed since this run's first sample.
+  function indexingEta(status) {
+    var now = performance.now();
+    if (!eta) { eta = { t0: now, done0: status.done }; return ""; }
+    var elapsed = now - eta.t0;
+    var embedded = status.done - eta.done0;
+    if (elapsed < 2000 || embedded < 32 || status.done >= status.total) return "";
+    return " · ≈ " + fmtDuration((status.total - status.done) * elapsed / embedded) + " left";
+  }
+
+  function fmtCount(n) { return Number(n).toLocaleString(); }
+
+  function fmtDuration(ms) {
+    var s = Math.max(1, Math.round(ms / 1000));
+    if (s < 60) return s + " s";
+    var min = Math.round(s / 60);
+    if (min < 60) return min + " min";
+    var h = Math.floor(min / 60);
+    return h + " h " + (min - h * 60) + " min";
+  }
+
+  var DEVICE_LABELS = { webgpu: "WebGPU", wasm: "WASM", cpu: "CPU" };
+
+  // "WebGPU · fp16" / "WASM · q8 · 4 threads" from embedder.info (known once load() is done).
+  function showDeviceInfo(info) {
+    var el = $("#semantic-device");
+    if (!info || !info.device) {
+      el.hidden = true;
+      el.textContent = "";
+      el.removeAttribute("data-device");
+      el.removeAttribute("title");
+      return;
+    }
+    var device = String(info.device).toLowerCase();
+    var parts = [DEVICE_LABELS[device] || info.device];
+    if (info.dtype) parts.push(info.dtype);
+    if (info.threads > 1) parts.push(info.threads + " threads");
+    el.textContent = parts.join(" · ");
+    el.setAttribute("data-device", device);
+    el.title = info.model || effectiveModel();
+    el.hidden = false;
+  }
+
+  // --- Semantic search: precomputed vectors ---------------------------------
+  // build-presets.mjs attaches `vectors` ([{ model, file, bytes, spaceId }]) to a preset when
+  // scripts/build-vectors.mjs has produced a snapshot for it. The entry for the running model is
+  // fetched once per session and handed to the component as `semanticSearch.snapshot`, so the
+  // dictionary is searchable without embedding anything in the browser. Never over file://
+  // (fetch is blocked there) and never for the synthetic preset.
+  function snapshotEntry() {
+    var p = docsFromPreset ? activePreset : null;
+    if (!p || p.times || !p.vectors || location.protocol === "file:") return null;
+    var model = effectiveModel();
+    for (var i = 0; i < p.vectors.length; i++) if (p.vectors[i].model === model) return p.vectors[i];
+    return null;
+  }
+
+  // Fetch + decode one vectors file (memoised). Failures are logged and leave `value` null.
+  function loadSnapshot(entry) {
+    var slot = snapshots[entry.file];
+    if (slot) return slot;
+    slot = snapshots[entry.file] = { promise: null, done: false, value: null, waiting: false };
+    slot.promise = fetch(entry.file + ASSET_QUERY)
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.arrayBuffer();
+      })
+      .then(function (bytes) {
+        if (typeof API.decodeVectorSnapshot !== "function") throw new Error("this build has no decodeVectorSnapshot()");
+        slot.value = API.decodeVectorSnapshot(bytes);
+      })
+      .catch(function (err) {
+        console.info("[demo] Precomputed vectors unavailable (" + entry.file + ": " + ((err && err.message) || err) + "); embedding in the browser instead.");
+        slot.value = null;
+      })
+      .then(function () { slot.done = true; return slot.value; });
+    return slot;
+  }
+
+  // semanticSearch options for this render: null while semantic search is off, or while the
+  // preset's precomputed vectors are still downloading (the render goes keyword-only for now
+  // and repeats once they land, so the index never starts embedding what the file provides).
+  function semanticOptions() {
+    if (!semanticEmbedder) return null;
+    var entry = snapshotEntry();
+    var slot = entry ? loadSnapshot(entry) : null;
+    if (slot && !slot.done) {
+      lastSnapshot = null;
+      setStatusText("Loading precomputed vectors…");
+      if (!slot.waiting) {
+        slot.waiting = true;
+        slot.promise.then(function () {
+          slot.waiting = false;
+          if (semanticEmbedder && snapshotEntry() === entry) render();
+        });
+      }
+      return null;
+    }
+    eta = null; // this render starts a new indexing run
+    lastSnapshot = slot ? slot.value : null;
+    var opts = { embedder: semanticEmbedder, onStatus: showSemanticStatus };
+    if (lastSnapshot) opts.snapshot = lastSnapshot;
+    return opts;
+  }
+
+  // --- Semantic search: start / stop ---------------------------------------
   // From the checkbox: remember the choice, then apply it.
   function setSemantic(on) {
     try { localStorage.setItem(SEMANTIC_KEY, on ? "1" : "0"); } catch (e) {}
@@ -496,27 +772,42 @@
   // Start or stop semantic search without touching the saved preference (start-up, ?semantic=).
   function applySemantic(on) {
     if (!on) {
-      semanticEmbedder = null;
-      embedderPromise = null;
-      if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
-      showSemanticStatus(null);
+      stopSemantic();
       render();
       return;
     }
+    var myGen = ++generation;
+    eta = null;
+    $("#semantic-hint").hidden = false;
     showSemanticStatus({ state: "loading", progress: undefined });
-    getEmbedder().then(
-      function (embedder) {
-        if (!$("#semantic").checked) return; // unticked while starting
-        semanticEmbedder = embedder;
+    var entry = snapshotEntry();
+    var vectors = entry ? loadSnapshot(entry).promise : Promise.resolve(null); // alongside the model download
+    Promise.all([getEmbedder(myGen), vectors]).then(
+      function (values) {
+        if (myGen !== generation || !$("#semantic").checked) return; // restarted or unticked while starting
+        semanticEmbedder = values[0];
+        showDeviceInfo(semanticEmbedder.info);
         render();
       },
       function (err) {
-        embedderPromise = null;
+        if (myGen !== generation) return; // a newer start owns the UI
+        stopSemantic();
         $("#semantic").checked = false;
-        showSemanticStatus(null);
         addMessage("error", "Couldn’t start semantic search: " + err.message);
       }
     );
+  }
+
+  // Drop the embedder (and its worker) and clear the semantic UI; the next start recreates them.
+  function stopSemantic() {
+    semanticEmbedder = null;
+    embedderPromise = null;
+    lastSnapshot = null;
+    eta = null;
+    if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
+    showSemanticStatus(null);
+    showDeviceInfo(null);
+    $("#semantic-hint").hidden = true;
   }
 
   // --- Export -------------------------------------------------------------
@@ -652,6 +943,9 @@
     });
     $("#shadow").addEventListener("change", function () { delete OVERRIDES.shadow; render(); });
     $("#semantic").addEventListener("change", function (e) { setSemantic(e.target.checked); });
+    $("#semantic-model").addEventListener("change", function (e) {
+      if (!setModel(e.target.value)) syncModelUi(); // unusable choice: snap back to what runs
+    });
 
     $("#download-html-btn").addEventListener("click", downloadHtml);
     $("#download-csv-btn").addEventListener("click", downloadCsv);
@@ -667,9 +961,9 @@
   // persisted:
   //   ?preset=<key|index>      load this preset instead of the first one (e.g. synthetic10k)
   //   ?semantic=1|0            force the semantic toggle on/off, ignoring the saved preference
-  //   ?model=<id>              embedding model id (forwarded to the worker)
-  //   ?device=auto|wasm|webgpu execution device (forwarded to the worker)
-  //   ?dtype=<string>          model quantisation, e.g. q8 / fp16 (forwarded to the worker)
+  //   ?model=<id>              embedding model id (wins over the picker's saved choice; not saved)
+  //   ?device=auto|wasm|webgpu execution device (default auto; forwarded to the worker)
+  //   ?dtype=<string>          model quantisation, e.g. q8 / fp16 (default: the library's per-device choice)
   //   ?nogpu=1                 hide WebGPU from Transformers.js (exercises the WASM path)
   //   ?shadow=0                render into light DOM ({ shadow: false })
   function readOverrides() {
@@ -697,7 +991,10 @@
     element: function () { return $("#output").firstElementChild; }, // the mounted <json-data-dictionary>
     embedder: function () { return semanticEmbedder; },
     worker: function () { return semanticWorker; },
-    model: function () { return OVERRIDES.model || EMBEDDING_MODEL; }, // effective embedding model id
+    models: function () { return MODELS.slice(); },   // picker entries (after the library cross-check)
+    model: effectiveModel,                            // effective embedding model id
+    setModel: setModel,                               // pick a model; restarts semantic search when on
+    snapshot: function () { return lastSnapshot; },   // decoded precomputed vectors in use, or null
     lastTable: function () { return lastTable; },
     get lastRenderMs() { return lastRenderMs; }
   };
@@ -725,6 +1022,8 @@
     } else {
       render(); // show the empty-state prompt
     }
+
+    initModels(); // after the first render: its clearMessages() would wipe the "needs WebGPU" note
 
     var savedSemantic = null;
     try { savedSemantic = localStorage.getItem(SEMANTIC_KEY); } catch (e) {}

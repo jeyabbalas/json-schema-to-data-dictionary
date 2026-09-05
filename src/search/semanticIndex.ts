@@ -3,17 +3,20 @@
 // cosine similarity. Centring happens algebraically at query time —
 //   score(c) = (qc · v_c − qc · μ) / ‖v_c − μ‖   with   qc = normalize(q − μ)
 // — which equals normalising centred copies up front but keeps a single copy of the matrix
-// and lets μ evolve while indexing. Vectors arrive progressively (cache first, then the
-// embedder: background sentences before anything, then the longest texts first), so
-// `search(q, { partial: true })` answers over the chunks embedded so far and `coverage` tells
-// how much of the index that is. At data dictionary scale (thousands of chunks × a few
-// hundred dimensions) a query is a few milliseconds, so no approximate-nearest-neighbour
-// structure is needed.
+// and lets μ evolve while indexing. Vectors arrive progressively (a precomputed snapshot
+// first, then the cache, then the embedder: background sentences before anything, then the
+// longest texts first), so `search(q, { partial: true })` answers over the chunks embedded so
+// far and `coverage` tells how much of the index that is. At data dictionary scale (thousands
+// of chunks × a few hundred dimensions) a query is a few milliseconds, so no
+// approximate-nearest-neighbour structure is needed.
 
 import type { DataDictionaryTable } from "../types";
 import type { Embedder, SemanticHit, SemanticIndex, SemanticSearchQuery, SemanticStatus, VectorCache } from "./types";
-import { prepareTexts } from "./text";
-import { cacheKey, createDefaultVectorCache, createMemoryVectorCache } from "./cache";
+import type { VectorSnapshot, VectorSnapshotSource } from "./snapshot";
+import { EMBED_TEXT_VERSION, prepareTexts } from "./text";
+import { cacheKey, createDefaultVectorCache, createMemoryVectorCache, textKey } from "./cache";
+import { loadVectorSnapshot } from "./snapshot";
+import { truncateAndNormalize } from "./pooling";
 import { createLru } from "./lru";
 
 export interface SemanticIndexOptions {
@@ -30,11 +33,12 @@ export interface SemanticIndexOptions {
   /** Fresh vectors are written to the cache every `flushEvery` vectors (and at the end). Default: 2000. */
   flushEvery?: number | undefined;
   /**
-   * Precomputed vectors for this dictionary (a `.jsddvec` snapshot).
-   * TODO(snapshots): accepted but ignored until `snapshot.ts` lands in the next phase; the
-   * hook sits in `build()` right before the cache read.
+   * Precomputed vectors for this dictionary: a `.jsddvec` snapshot as bytes, a decoded
+   * `VectorSnapshot`, or a URL to fetch. Texts found in it (by content key) are never sent
+   * to the embedder; a snapshot from another embedding space, text-template version or with
+   * too few dimensions is ignored with a `console.warn`, as is a failed load.
    */
-  snapshot?: unknown;
+  snapshot?: VectorSnapshotSource | undefined;
 }
 
 /** Default floor on the mean-centred cosine score (see {@link SemanticHit}). */
@@ -161,14 +165,43 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     textFilled = new Uint8Array(total);
 
     // Precision-independent namespace: q8/fp16/fp32 vectors of one model are interchangeable.
-    const space = `${embedder.spaceId ?? embedder.id}${dims !== undefined ? `|d${dims}` : ""}`;
+    const spaceId = embedder.spaceId ?? embedder.id;
+    const space = `${spaceId}${dims !== undefined ? `|d${dims}` : ""}`;
     const keys = uniqueTexts.map((t) => cacheKey(space, t));
 
-    // TODO(snapshots): fill vectors from `options.snapshot` here (by text key) before the cache.
+    // Precomputed vectors first: texts found in the snapshot (by content key) never reach the
+    // cache or the embedder. Larger vectors are truncated to the wanted size and renormalised.
+    if (options.snapshot !== undefined) {
+      try {
+        const snap = await loadVectorSnapshot(options.snapshot);
+        if (disposed) throw disposedError();
+        const wanted = dims ?? embedder.info?.dims;
+        const problem = snapshotProblem(snap, spaceId, wanted);
+        if (problem) {
+          console.warn(`[json-schema-data-dictionary] Ignoring the vector snapshot: ${problem}.`);
+        } else {
+          const at = new Map<string, number>();
+          snap.keys.forEach((k, i) => at.set(k, i));
+          const width = wanted !== undefined && snap.dims > wanted ? wanted : snap.dims;
+          for (let t = 0; t < total; t += 1) {
+            const i = at.get(textKey(uniqueTexts[t] as string));
+            if (i === undefined) continue;
+            const row = snap.matrix.subarray(i * snap.dims, (i + 1) * snap.dims);
+            const v = width < snap.dims ? truncateAndNormalize(row, width) : row;
+            ensureDim(v);
+            fillText(t, v);
+          }
+        }
+      } catch (err) {
+        if (disposed) throw err;
+        console.warn(`[json-schema-data-dictionary] Could not use the vector snapshot: ${errorMessage(err)}`);
+      }
+    }
 
     let cached = new Map<string, Float32Array>();
     try {
-      cached = await cache.getMany(keys);
+      const unfilled = keys.filter((_, t) => textFilled[t] === 0);
+      if (unfilled.length > 0) cached = await cache.getMany(unfilled);
     } catch {
       /* persistence is best-effort */
     }
@@ -176,6 +209,7 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
 
     const missing: number[] = [];
     for (let t = 0; t < total; t += 1) {
+      if (textFilled[t] === 1) continue; // served by the snapshot
       const raw = cached.get(keys[t] as string);
       const v = raw ? prepareVector(raw) : undefined;
       // A cached vector of another size is a stale entry: re-embed rather than fail.
@@ -402,6 +436,15 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
       rejectReady?.(error);
     }
   };
+}
+
+/** Why a snapshot cannot serve this index (undefined when it can). */
+function snapshotProblem(snap: VectorSnapshot, spaceId: string, wanted: number | undefined): string | undefined {
+  if (snap.version !== 1) return `unsupported version ${String(snap.version)}`;
+  if (snap.textVersion !== EMBED_TEXT_VERSION) return `it was built with text template v${snap.textVersion} (this build uses v${EMBED_TEXT_VERSION})`;
+  if (snap.spaceId !== spaceId) return `it belongs to embedding space "${snap.spaceId}" (this index uses "${spaceId}")`;
+  if (wanted !== undefined && snap.dims < wanted) return `it holds ${snap.dims}-d vectors (this index needs ${wanted}-d)`;
+  return undefined;
 }
 
 function clamp01(x: number): number {

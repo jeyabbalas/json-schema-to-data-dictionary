@@ -4,6 +4,88 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## 0.3.0 - 2026-09-05
+
+Production-grade search and rendering for large dictionaries (10,000 variables).
+
+### Added
+
+- **Hybrid search.** A tokenised BM25F lexical index (`createLexicalIndex`,
+  `lexicalDocumentsFromTable`) with as-you-type prefix matching, stemming, an
+  AND-then-OR policy for multi-word queries and a substring fallback, fused with the
+  semantic hits by reciprocal-rank fusion (`rankHybrid`); exact variable-name matches
+  always rank first. `createSearchEngine` exposes the whole pipeline headlessly:
+  a synchronous lexical `search()` plus semantic updates through `subscribe()`.
+- **Search while indexing.** The semantic index answers queries from the rows embedded
+  so far (`search(q, { partial: true })`, `loaded`, `coverage`, `indexing.coverage` in
+  the status) and the widget refreshes the list as indexing progresses.
+- **Precomputed vectors.** `buildVectorSnapshot` / `encodeVectorSnapshot` /
+  `decodeVectorSnapshot` / `loadVectorSnapshot` and the `semanticSearch.snapshot`
+  option: embed a dictionary once (`scripts/build-snapshot.mjs`, int8 or fp32,
+  optional Matryoshka `dims`) and ship the `.jsddvec` file next to the schema; the
+  browser then only embeds queries, and rows whose text changed are embedded live.
+- **Verified model table.** `MongoDB/mdbr-leaf-ir` (23M, Apache-2.0) is the new default;
+  `jinaai/jina-embeddings-v5-text-nano-retrieval` (239M, CC-BY-NC-4.0, WebGPU) is the
+  high-quality option; `Xenova/bge-small-en-v1.5` and `Xenova/all-MiniLM-L6-v2` stay.
+  `KNOWN_EMBEDDING_MODELS` carries pooling, prefixes, per-device dtypes, licence and
+  parameter counts.
+- **Transformers.js adapter** rebuilt on `AutoTokenizer` + `AutoModel`: `device: "auto"`
+  (WebGPU with WASM fallback; CPU under Node), `dtype: "auto"`, mask-aware
+  `last_token` pooling, `sentence_embedding` output support, `maxLength`, `dims`,
+  `Embedder.info` (resolved device/dtype) and `Embedder.spaceId` (precision-agnostic
+  identity used by the cache and snapshots). The worker RPC reports `info` after `load()`.
+- Rendering options `pageSize` (lazy row materialisation per category, default 100;
+  `Infinity` disables it) and `resultsPageSize` (results shown before *Show more*).
+- Evaluation harness: `npm run eval` scores lexical, semantic and hybrid ranking on the
+  labelled query set `tests/fixtures/search-eval.json` with real models (optional
+  devDependency `@huggingface/transformers`) and `--calibrate` recommends `minScore`
+  floors; a fake-embedder variant runs in `npm test`.
+- Demo: embedding-model picker with licence and download size, device chip
+  ("WebGPU · fp16"), indexing ETA, a client-side synthetic 10,000-variable preset,
+  precomputed vectors for the BCRPP preset (`npm run demo:vectors`), a local server
+  that sends COOP/COEP (WASM threads; `COI=0` mimics GitHub Pages), and URL overrides
+  (`?preset=…&semantic=1&model=…&device=…`) for automation.
+
+### Changed
+
+- The interactive component renders large dictionaries lazily and shows every query as
+  one ranked results list re-rendered from the view model with highlights baked in
+  (rows never move or toggle individually); `table-layout: fixed` with a shared column
+  grid and `content-visibility: auto` on category sections. Measured on 10,070
+  variables in 1,045 categories (Chrome 152): first paint 7.4 s → 0.3 s, DOM nodes
+  380,637 → 34,050, keystroke 0.4–1.1 s → 22–46 ms of script (about 160 ms to paint
+  a page of results), clearing the box 2.4–3.3 s → 8 ms, collapse/expand all 3.6 s →
+  20 ms; the JS heap grows by 3 MB instead of 54 MB.
+- Embedding chunks (template v2) include the raw variable name next to its humanised
+  form and omit regex formats; `EMBED_TEXT_VERSION` is 2.
+- The IndexedDB cache stores one record per dictionary (database version 2) instead of
+  one per text; length-sorted batches and progressive flushes make indexing resumable.
+- CSV export text is built on first use instead of on every render.
+
+### Fixed
+
+- Batched embeddings of last-token models (Jina) were computed on padding tokens for
+  every text shorter than the longest in the batch.
+- LEAF-IR's `sentence_embedding` output is used instead of a raw CLS vector.
+- The toolbar buttons (expand/collapse all, copy, download) were inert in 0.2.0 because
+  they read the wrong data attribute; `/` and `Esc` now work inside the Shadow DOM.
+- `</script` inside schema text no longer breaks the static HTML's inline script.
+
+### Breaking
+
+- `DEFAULT_EMBEDDING_MODEL` is `MongoDB/mdbr-leaf-ir`; `createTransformersEmbedder`
+  defaults to `device: "auto"` and `dtype: "auto"`, and `TransformersModuleLike` needs
+  `AutoTokenizer`/`AutoModel` instead of `pipeline` (`pipelineOptions` is a deprecated
+  alias of `modelOptions`). `Embedder.id` is final only after `load()`.
+- Cached vectors are re-embedded once (new text template, new cache layout); the old
+  per-text IndexedDB store is dropped.
+- `SemanticStatus` `indexing` gains a required `coverage`; `RankedResult` gains
+  `exactName`, `lexicalScore` and `matches`.
+- Keyword search in the component shows the ranked results list instead of filtering
+  rows in place, and rows are materialised lazily, so DOM scraping of `[data-dd-row]`
+  is no longer exhaustive — use `toPlainRows`. The static `tableToHtml` output is
+  unchanged.
+
 ## 0.2.0 - 2026-09-02
 
 ### Added

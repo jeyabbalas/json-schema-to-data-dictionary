@@ -14,7 +14,7 @@ try {
 
 const {
   schemaDocumentsToTable, buildEmbedChunks, prepareTexts, humanizeName, EMBED_TEXT_VERSION,
-  createSemanticIndex, createMemoryVectorCache, createIndexedDbVectorCache, cacheKey,
+  createSemanticIndex, createMemoryVectorCache, createIndexedDbVectorCache, cacheKey, textKey,
   keywordScore, fuseRankings, rankResults,
   serveEmbedder, createWorkerEmbedder,
   createTransformersEmbedder, KNOWN_EMBEDDING_MODELS, DEFAULT_EMBEDDING_MODEL
@@ -116,6 +116,8 @@ test("cacheKey embeds the template version and varies by id and text", () => {
   assert.match(cacheKey("m", "t"), new RegExp(`^m\\|v${EMBED_TEXT_VERSION}\\|`));
   assert.notEqual(cacheKey("m", "a"), cacheKey("m", "b"));
   assert.notEqual(cacheKey("m", "a"), cacheKey("n", "a"));
+  assert.equal(cacheKey("m", "t"), `m|v${EMBED_TEXT_VERSION}|${textKey("t")}`, "the text part is the snapshot's textKey");
+  assert.match(textKey("hello"), /:5$/);
 });
 
 test("createSemanticIndex: embeds through the cache and answers queries", async () => {
@@ -395,7 +397,7 @@ test("createSemanticIndex: the cache holds only the most recently indexed dictio
   assert.equal(index.status.state, "ready");
 });
 
-test("IndexedDB cache: round trip, views, foreign values, retainOnly, clear", { skip: fakeIdb ? false : "fake-indexeddb not installed" }, async () => {
+test("IndexedDB cache (v2 blob store): round trip, views, foreign record, retainOnly, clear", { skip: fakeIdb ? false : "fake-indexeddb not installed" }, async () => {
   const dbName = `jsdd-test-${Date.now()}`;
   const cache = createIndexedDbVectorCache({ dbName });
   const big = new Float32Array([9, 9, 4, 5, 6, 9]);
@@ -408,34 +410,47 @@ test("IndexedDB cache: round trip, views, foreign values, retainOnly, clear", { 
   assert.deepEqual([...got.get("view")], [4, 5, 6], "a view is stored as its own vector");
   assert.equal(got.has("missing"), false);
 
-  await new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
+  // One record ("current") in the `dictionaries` store holds the whole dictionary.
+  const readRecord = () => new Promise((resolve, reject) => {
+    const req = indexedDB.open(dbName, 2);
     req.onsuccess = () => {
       const db = req.result;
-      const tx = db.transaction("vectors", "readwrite");
-      tx.objectStore("vectors").put("not a vector", "x");
+      assert.deepEqual([...db.objectStoreNames], ["dictionaries"]);
+      const store = db.transaction("dictionaries").objectStore("dictionaries");
+      const keys = store.getAllKeys();
+      const get = store.get("current");
+      get.onsuccess = () => { db.close(); resolve({ keys: keys.result, record: get.result }); };
+      get.onerror = () => reject(get.error);
+    };
+    req.onerror = () => reject(req.error);
+  });
+  const first = await readRecord();
+  assert.deepEqual(first.keys, ["current"]);
+  assert.deepEqual({ ...first.record, matrix: first.record.matrix.byteLength }, { v: 2, dims: 3, keys: ["a", "view"], matrix: 24 });
+
+  // A foreign record shape is ignored (and replaced by the next write).
+  await new Promise((resolve, reject) => {
+    const req = indexedDB.open(dbName, 2);
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction("dictionaries", "readwrite");
+      tx.objectStore("dictionaries").put("not a record", "current");
       tx.oncomplete = () => { db.close(); resolve(); };
       tx.onerror = () => reject(tx.error);
     };
     req.onerror = () => reject(req.error);
   });
-  assert.equal((await cache.getMany(["x"])).has("x"), false, "foreign values are ignored");
+  const fresh = createIndexedDbVectorCache({ dbName });
+  assert.equal((await fresh.getMany(["a"])).size, 0, "foreign records are ignored");
+  await fresh.putMany([["a", new Float32Array([1, 2, 3])], ["view", new Float32Array([4, 5, 6])]]);
 
-  await cache.retainOnly(["view", "missing"]);
-  const remaining = await new Promise((resolve, reject) => {
-    const req = indexedDB.open(dbName, 1);
-    req.onsuccess = () => {
-      const db = req.result;
-      const keysReq = db.transaction("vectors").objectStore("vectors").getAllKeys();
-      keysReq.onsuccess = () => { db.close(); resolve(keysReq.result); };
-      keysReq.onerror = () => reject(keysReq.error);
-    };
-    req.onerror = () => reject(req.error);
-  });
-  assert.deepEqual(remaining, ["view"], "retainOnly deletes every other key, foreign values included");
+  await fresh.retainOnly(["view", "missing"]);
+  assert.deepEqual((await readRecord()).record.keys, ["view"], "retainOnly rewrites the record with the kept keys only");
+  assert.deepEqual([...(await fresh.getMany(["a", "view"])).keys()], ["view"]);
 
-  await cache.clear();
-  assert.equal((await cache.getMany(["view"])).size, 0);
+  await fresh.clear();
+  assert.deepEqual((await readRecord()).keys, [], "clear deletes the record");
+  assert.equal((await fresh.getMany(["view"])).size, 0);
 });
 
 const F = (name, description = "", values = "", extra = "") => ({
@@ -495,10 +510,13 @@ test("worker RPC: round trip over a MessageChannel", async () => {
     const remote = await createWorkerEmbedder(port2);
     assert.equal(remote.id, fake.id);
     assert.equal(remote.minScore, 0.42);
+    assert.equal(remote.spaceId, undefined, "the fake embedder declares no space id");
+    assert.equal(remote.info, undefined);
 
     const progress = [];
     await remote.load((p) => progress.push(p));
     assert.deepEqual(progress, [0.5, 1]);
+    assert.equal(remote.id, fake.id, "an identity that does not change on load stays");
 
     const [a, b] = await remote.embed(["tobacco use", "age"], "document");
     const [la, lb] = await fake.embed(["tobacco use", "age"], "document");
@@ -514,65 +532,98 @@ test("worker RPC: round trip over a MessageChannel", async () => {
   }
 });
 
-test("createTransformersEmbedder: option resolution, batching, prefixes, serial queue", async () => {
-  const seen = { pipelines: [], calls: [], disposed: false };
+test("createTransformersEmbedder: AutoTokenizer + AutoModel, runtime resolution, batching, prefixes, serial queue", async () => {
+  // Tokens are characters; int64 tensors, right padding; hidden states are [1,1,0,0] for real
+  // tokens and [50,0,0,0] for pads, so any pad leaking into the mean changes the direction.
+  const seen = { tokenizer: [], model: [], calls: [], disposed: false };
   let active = 0;
   let maxActive = 0;
+  const d = 4;
+  const tokenizer = (texts, options) => {
+    seen.calls.push({ texts: [...texts], options });
+    const S = Math.max(...texts.map((t) => t.length));
+    const ids = new BigInt64Array(texts.length * S);
+    const mask = new BigInt64Array(texts.length * S);
+    texts.forEach((t, b) => {
+      for (let i = 0; i < t.length; i += 1) {
+        ids[b * S + i] = BigInt(t.charCodeAt(i));
+        mask[b * S + i] = 1n;
+      }
+    });
+    return { input_ids: { data: ids, dims: [texts.length, S] }, attention_mask: { data: mask, dims: [texts.length, S] } };
+  };
+  const model = async (enc) => {
+    active += 1;
+    maxActive = Math.max(maxActive, active);
+    await new Promise((resolve) => setTimeout(resolve, 3));
+    active -= 1;
+    const [B, S] = enc.input_ids.dims;
+    const data = new Float32Array(B * S * d);
+    for (let b = 0; b < B; b += 1) {
+      for (let s = 0; s < S; s += 1) {
+        const real = Number(enc.attention_mask.data[b * S + s]) === 1;
+        data[(b * S + s) * d] = real ? 1 : 50;
+        data[(b * S + s) * d + 1] = real ? 1 : 0;
+      }
+    }
+    return { last_hidden_state: { data, dims: [B, S, d] } };
+  };
+  model.dispose = async () => { seen.disposed = true; };
   const stubModule = {
-    async pipeline(task, model, options) {
-      seen.pipelines.push({ task, model, options });
-      options.progress_callback({ status: "progress", file: "a", loaded: 50, total: 100 });
-      options.progress_callback({ status: "progress", file: "b", loaded: 100, total: 100 });
-      const extractor = async (texts, opts) => {
-        active += 1;
-        maxActive = Math.max(maxActive, active);
-        await new Promise((resolve) => setTimeout(resolve, 3));
-        active -= 1;
-        seen.calls.push({ texts, opts });
-        const d = 4;
-        const data = new Float32Array(texts.length * d);
-        texts.forEach((t, i) => { data[i * d] = t.length; data[i * d + 1] = 1; });
-        return { data, dims: [texts.length, d] };
-      };
-      extractor.dispose = async () => { seen.disposed = true; };
-      return extractor;
+    AutoTokenizer: { async from_pretrained(name, opts) { seen.tokenizer.push({ name, opts }); return tokenizer; } },
+    AutoModel: {
+      async from_pretrained(name, opts) {
+        seen.model.push({ name, opts });
+        opts.progress_callback({ status: "progress", file: "a", loaded: 50, total: 100 });
+        opts.progress_callback({ status: "progress", file: "b", loaded: 100, total: 100 });
+        return model;
+      }
     }
   };
 
-  const embedder = createTransformersEmbedder(() => Promise.resolve(stubModule), { batchSize: 2 });
-  assert.equal(embedder.id, `transformers:${DEFAULT_EMBEDDING_MODEL}:q8:cls:`);
-  assert.equal(embedder.minScore, KNOWN_EMBEDDING_MODELS[DEFAULT_EMBEDDING_MODEL].minScore);
+  const embedder = createTransformersEmbedder(() => Promise.resolve(stubModule), { model: "custom/model", pooling: "mean", minScore: 0.1, batchSize: 2 });
+  assert.equal(embedder.spaceId, "transformers:custom/model:mean:full:256:");
+  assert.equal(embedder.id, `${embedder.spaceId}:auto`, "the dtype is resolved by load()");
 
   const progress = [];
   await embedder.load((p) => progress.push(p));
   assert.equal(progress.at(-1), 1);
   assert.ok(progress.some((p) => p > 0 && p < 1));
+  assert.equal(embedder.id, `${embedder.spaceId}:fp32`, "auto under Node: cpu / fp32");
+  assert.deepEqual([embedder.info.device, embedder.info.dtype, embedder.info.pooling], ["cpu", "fp32", "mean"]);
+  assert.equal(seen.model[0].opts.device, "cpu");
+  assert.equal(seen.model[0].opts.dtype, "fp32");
+  assert.equal(seen.tokenizer[0].name, "custom/model");
 
-  const [v1, , v3] = await embedder.embed(["ab", "abc", "abcd"], "document");
-  assert.equal(v1.length, 4);
-  assert.equal(v1[0], 2);
-  assert.equal(v3[0], 4);
+  const vectors = await embedder.embed(["ab", "abc", "abcd"], "document");
+  assert.equal(vectors.length, 3);
+  assert.equal(vectors[0].length, d);
+  for (const v of vectors) {
+    assert.ok(Math.abs(v[0] - Math.SQRT1_2) < 1e-6 && Math.abs(v[1] - Math.SQRT1_2) < 1e-6, `mean over real tokens only, normalised: ${[...v]}`);
+  }
   assert.equal(seen.calls.length, 2, "3 texts with batchSize 2 -> 2 model calls");
-  assert.equal(seen.calls[0].opts.pooling, "cls");
-  assert.equal(seen.calls[0].opts.normalize, true);
+  assert.deepEqual(seen.calls[0].options, { padding: true, truncation: true, max_length: 256 });
 
   await Promise.all([embedder.embed(["x"], "query"), embedder.embed(["y"], "query")]);
   assert.equal(maxActive, 1, "embed calls never overlap");
-  assert.equal(seen.pipelines.length, 1, "the pipeline is created once");
-  assert.equal(seen.pipelines[0].task, "feature-extraction");
-  assert.equal(seen.pipelines[0].options.dtype, "q8");
-  assert.equal(seen.pipelines[0].options.device, "wasm");
+  assert.equal(seen.model.length, 1, "the model is created once");
 
   const custom = createTransformersEmbedder(stubModule, {
-    model: "custom/model", pooling: "mean", queryPrefix: "Q: ", documentPrefix: "D: ", minScore: 0.1, dtype: "fp32"
+    model: "custom/model", pooling: "cls", queryPrefix: "Q: ", documentPrefix: "D: ", minScore: 0.1, dtype: "fp16", device: "wasm"
   });
+  assert.equal(custom.id, "transformers:custom/model:cls:full:256:D: :fp16", "an explicit dtype is final up front");
+  assert.equal(custom.spaceId, "transformers:custom/model:cls:full:256:D: ");
   await custom.embed(["t"], "query");
   assert.deepEqual(seen.calls.at(-1).texts, ["Q: t"]);
-  assert.equal(seen.calls.at(-1).opts.pooling, "mean");
   await custom.embed(["t"], "document");
   assert.deepEqual(seen.calls.at(-1).texts, ["D: t"]);
-  assert.equal(custom.id, "transformers:custom/model:fp32:mean:D: ");
   assert.equal(custom.minScore, 0.1);
+  assert.deepEqual([seen.model.at(-1).opts.device, seen.model.at(-1).opts.dtype], ["wasm", "fp16"]);
+
+  assert.equal(DEFAULT_EMBEDDING_MODEL, "MongoDB/mdbr-leaf-ir");
+  const leaf = createTransformersEmbedder(stubModule);
+  assert.equal(leaf.minScore, KNOWN_EMBEDDING_MODELS[DEFAULT_EMBEDDING_MODEL].minScore);
+  assert.equal(leaf.spaceId, `transformers:${DEFAULT_EMBEDDING_MODEL}:sentence_embedding:full:256:`);
 
   await embedder.dispose();
   assert.equal(seen.disposed, true);

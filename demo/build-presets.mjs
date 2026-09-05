@@ -3,12 +3,17 @@
 // so the demo works both over file:// and on GitHub Pages.
 //
 // Run via `npm run demo:presets` (or `npm run demo`). Output is gitignored.
+//
+// When `npm run demo:vectors` (scripts/build-vectors.mjs) has produced precomputed vector
+// snapshots, demo/vectors/manifest.json maps preset keys to their files; each entry is attached
+// to its preset as `vectors` so app.js can hand the matching snapshot to the component.
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, dirname, basename, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURES = join(HERE, "..", "tests", "fixtures");
+const VECTORS_MANIFEST = join(HERE, "vectors", "manifest.json");
 
 // Each preset is either a single fixture file (`only`) or a whole directory tree.
 // `documents[].path` becomes the synthetic retrieval URI (`https://demo.local/<path>`)
@@ -66,6 +71,37 @@ function jsonFilesUnder(dir, only) {
 /** Normalise a filesystem path to POSIX separators for use as a synthetic URI path. */
 const toPosix = (p) => p.split(sep).join("/");
 
+/**
+ * Precomputed vectors per preset key: `{ "<key>": [{ model, file, bytes, spaceId }] }`, written
+ * by scripts/build-vectors.mjs. Absent (or unreadable) manifest: no preset gets `vectors`.
+ */
+function readVectorsManifest() {
+  let text;
+  try {
+    text = readFileSync(VECTORS_MANIFEST, "utf8");
+  } catch (err) {
+    if (err.code !== "ENOENT") console.warn(`Ignoring ${VECTORS_MANIFEST}: ${err.message}`);
+    return {};
+  }
+  try {
+    const manifest = JSON.parse(text);
+    return manifest && typeof manifest === "object" ? manifest : {};
+  } catch (err) {
+    console.warn(`Ignoring ${VECTORS_MANIFEST}: ${err.message}`);
+    return {};
+  }
+}
+
+/** The manifest's entries for one preset that name both a model and a file, or undefined. */
+function vectorsFor(manifest, key) {
+  const entries = Array.isArray(manifest[key])
+    ? manifest[key].filter((e) => e && typeof e.model === "string" && typeof e.file === "string")
+    : [];
+  return entries.length ? entries : undefined;
+}
+
+const vectorsManifest = readVectorsManifest();
+
 const presets = SOURCES.map((src) => {
   const root = join(FIXTURES, src.dir);
   const files = jsonFilesUnder(root, src.only);
@@ -76,7 +112,10 @@ const presets = SOURCES.map((src) => {
     path: src.only ? basename(p) : toPosix(relative(root, p)),
     schema: JSON.parse(readFileSync(p, "utf8"))
   }));
-  return { key: src.key, label: src.label, description: src.description, documents };
+  const preset = { key: src.key, label: src.label, description: src.description, documents };
+  const vectors = vectorsFor(vectorsManifest, src.key);
+  if (vectors) preset.vectors = vectors;
+  return preset;
 });
 
 const keys = presets.map((p) => p.key);
@@ -88,4 +127,8 @@ const out = banner + "window.DEMO_PRESETS = " + JSON.stringify(presets) + ";\n";
 writeFileSync(join(HERE, "presets.js"), out, "utf8");
 
 const docCount = presets.reduce((n, p) => n + p.documents.length, 0);
-console.log(`Wrote demo/presets.js (${presets.length} presets, ${docCount} documents).`);
+const withVectors = presets.filter((p) => p.vectors).map((p) => p.key);
+console.log(
+  `Wrote demo/presets.js (${presets.length} presets, ${docCount} documents` +
+    (withVectors.length ? `, precomputed vectors for: ${withVectors.join(", ")}).` : ", no precomputed vectors).")
+);

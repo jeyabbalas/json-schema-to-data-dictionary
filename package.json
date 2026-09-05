@@ -1,6 +1,6 @@
 {
   "name": "json-schema-data-dictionary",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Turn interlinked JSON Schema documents that describe a tabular JSON dataset into a flat, spreadsheet-like data dictionary and an embeddable, searchable HTML table.",
   "type": "module",
   "license": "MIT",
@@ -38,9 +38,11 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "prepublishOnly": "npm run typecheck && npm test",
     "example": "npm run build && node examples/generate.mjs",
+    "eval": "npm run build && node scripts/eval-search.mjs",
     "demo:presets": "node demo/build-presets.mjs",
     "demo:bundle": "npm run build && cp dist/json-schema-data-dictionary.global.js demo/ && cp node_modules/exceljs/dist/exceljs.min.js demo/",
-    "demo": "npm run demo:bundle && npm run demo:presets",
+    "demo:vectors": "node scripts/build-vectors.mjs",
+    "demo": "npm run demo:bundle && npm run demo:vectors && npm run demo:presets",
     "demo:serve": "node demo/serve.mjs"
   },
   "devDependencies": {
@@ -61,6 +63,12 @@
     "epidemiology",
     "metadata",
     "html-table",
-    "web-component"
+    "web-component",
+    "hybrid-search",
+    "bm25",
+    "vector-search",
+    "transformers.js",
+    "webgpu",
+    "onnx"
   ]
 }

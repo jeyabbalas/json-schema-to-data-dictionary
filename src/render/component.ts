@@ -25,6 +25,8 @@ export interface DataDictionaryElement extends HTMLElement {
   options: RenderOptions;
   /** The semantic index behind the search box, when `options.semanticSearch` is set. */
   readonly semanticIndex: SemanticIndex | undefined;
+  /** The hybrid search engine behind the search box (rebuilt on every render). */
+  readonly searchEngine: SearchEngine | undefined;
 }
 
 interface SemanticState {
@@ -45,9 +47,14 @@ function getElementClass(): new () => DataDictionaryElement {
     private _options: RenderOptions = {};
     private _cleanup: (() => void) | undefined;
     private _semantic: SemanticState | undefined;
+    private _engine: SearchEngine | undefined;
 
     get semanticIndex(): SemanticIndex | undefined {
       return this._semantic?.index;
+    }
+
+    get searchEngine(): SearchEngine | undefined {
+      return this._engine;
     }
 
     get table(): DataDictionaryTable | undefined {
@@ -86,7 +93,7 @@ function getElementClass(): new () => DataDictionaryElement {
       }
       if (!cfg || !this._table || this._semantic) return;
       try {
-        const index = createSemanticIndex(this._table, { embedder: cfg.embedder, cache: cfg.cache });
+        const index = createSemanticIndex(this._table, { embedder: cfg.embedder, cache: cfg.cache, dims: cfg.dims, snapshot: cfg.snapshot });
         const unsubscribe = cfg.onStatus ? index.subscribe(cfg.onStatus) : () => {};
         this._semantic = { table: this._table, embedder: cfg.embedder, index, unsubscribe };
         cfg.onStatus?.(index.status);
@@ -133,6 +140,7 @@ function getElementClass(): new () => DataDictionaryElement {
       const engine = this.createEngine(table);
 
       this._cleanup?.();
+      this._engine = engine;
 
       let container: ShadowRoot | HTMLElement;
       if (useShadow) {
@@ -148,6 +156,7 @@ function getElementClass(): new () => DataDictionaryElement {
       this._cleanup = () => {
         detach();
         engine.dispose();
+        if (this._engine === engine) this._engine = undefined;
       };
     }
   }

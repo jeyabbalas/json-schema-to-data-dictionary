@@ -4,6 +4,7 @@
 // as the spreadsheet column headers so `toPlainRows()` and CSV export are trivial.
 
 import type { Embedder, SemanticStatus, VectorCache } from "./search/types";
+import type { VectorSnapshot } from "./search/snapshot";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -273,6 +274,15 @@ export interface SemanticSearchOptions {
   debounceMs?: number | undefined;
   /** Observe model loading / indexing / readiness / errors. */
   onStatus?: ((status: SemanticStatus) => void) | undefined;
+  /**
+   * Precomputed vectors for this dictionary (a `.jsddvec` snapshot built with
+   * `buildVectorSnapshot`): bytes, a decoded `VectorSnapshot`, or a URL to fetch. Texts found
+   * in it are never embedded in the browser; a snapshot from another embedding space or
+   * text-template version is ignored with a warning.
+   */
+  snapshot?: VectorSnapshot | ArrayBuffer | Uint8Array | string | undefined;
+  /** Keep the first `dims` components of every vector (Matryoshka models) and renormalise. */
+  dims?: number | undefined;
 }
 
 /** Options for the interactive {@link renderDataDictionary} mount. */
@@ -290,6 +300,6 @@ export interface RenderOptions extends RenderHtmlOptions {
    * Default: 100.
    */
   pageSize?: number | undefined;
-  /** Result rows shown per page while a query is active ("Show more" appends a page). Default: 100. */
+  /** Result rows shown per page while a query is active ("Show more" appends a page). Default: 50. */
   resultsPageSize?: number | undefined;
 }

@@ -1,8 +1,8 @@
 name: Deploy demo to GitHub Pages
 
-# Builds the (gitignored) browser bundle + the fixture-derived presets in CI and
-# publishes the demo/ site. One-time setup: repo Settings → Pages → Build and
-# deployment → Source = "GitHub Actions".
+# Type-checks and tests, builds the (gitignored) browser bundle, the precomputed vector
+# snapshots and the fixture-derived presets in CI, then publishes the demo/ site. One-time
+# setup: repo Settings → Pages → Build and deployment → Source = "GitHub Actions".
 
 on:
   push:
@@ -32,8 +32,27 @@ jobs:
 
       - run: npm ci
 
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
       - name: Build library bundle
         run: npm run build
+
+      # Embedding the BCRPP fixture in Node takes a model download plus a minute of CPU; reuse
+      # the snapshots (and the Hub download cache) until the inputs that define them change.
+      - name: Cache precomputed vectors and the model download cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            demo/vectors
+            .cache/transformers
+          key: vectors-${{ hashFiles('tests/fixtures/multiple_schema_2/**', 'scripts/build-vectors.mjs', 'scripts/build-snapshot.mjs', 'src/search/text.ts', 'src/search/snapshot.ts') }}
+
+      - name: Precompute demo vectors
+        run: npm run demo:vectors
 
       - name: Generate demo presets from fixtures
         run: npm run demo:presets
@@ -42,6 +61,7 @@ jobs:
         run: |
           mkdir -p _site
           cp demo/index.html demo/styles.css demo/app.js demo/embed-worker.js demo/presets.js _site/
+          if [ -d demo/vectors ]; then cp -r demo/vectors _site/vectors; fi
           cp dist/json-schema-data-dictionary.global.js _site/
           cp dist/json-schema-data-dictionary.global.js.map _site/ 2>/dev/null || true
           cp node_modules/exceljs/dist/exceljs.min.js _site/

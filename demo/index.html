@@ -102,11 +102,13 @@
         <!-- Semantic search lives here (not in the collapsible sidebar) so it is always visible. -->
         <div class="semantic-control">
           <label class="semantic-toggle" for="semantic"
-                 title="Also finds related variables (“smoking” → the tobacco rows) and ranks results. Downloads a ~34 MB model from huggingface.co once; embeddings are cached in your browser.">
+                 title="Also finds related variables (“smoking” → the tobacco rows) and ranks results. Downloads the chosen model from huggingface.co once (22–124 MB, see the picker); embeddings are cached in your browser.">
             <input type="checkbox" id="semantic" />
             <span>Semantic search</span>
             <span class="opt-note">experimental</span>
           </label>
+          <select id="semantic-model" aria-label="Embedding model"></select>
+          <span id="semantic-device" class="semantic-device" hidden></span>
           <span id="semantic-status" class="semantic-status" role="status" hidden></span>
         </div>
         <div id="messages" class="messages" aria-live="polite"></div>
@@ -116,6 +118,10 @@
           <button id="download-excel-btn" type="button" class="btn" disabled>Download Excel</button>
         </div>
       </div>
+      <!-- Shown by app.js: the licence notice for the selected model, and (while semantic search
+           is on) what the “related” badge in the results means. -->
+      <p id="semantic-notice" class="hint semantic-notice" hidden></p>
+      <p id="semantic-hint" class="hint semantic-hint" hidden>Rows badged <em>related</em> were found by the embedding model, not by keyword.</p>
       <div id="output" class="dict-output"></div>
     </section>
   </main>

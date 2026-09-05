@@ -104,7 +104,7 @@ export function resolveOptions(options: ViewModelOptions, table: DataDictionaryT
     theme: options.theme ?? "auto",
     semanticSearch: Boolean(options.semanticSearch),
     pageSize: positiveOrDefault(options.pageSize, 100),
-    resultsPageSize: positiveOrDefault(options.resultsPageSize, 100)
+    resultsPageSize: positiveOrDefault(options.resultsPageSize, 50)
   };
 }
 
