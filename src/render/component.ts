@@ -9,7 +9,7 @@ import type { Embedder, SemanticIndex } from "../search/types";
 import { createSemanticIndex } from "../search/semanticIndex";
 import { slugify } from "../utils";
 import { tableToCsv } from "../serialize";
-import { buildViewModel, rowsByTableIndex } from "./viewModel";
+import { buildViewModel } from "./viewModel";
 import type { ViewModel } from "./viewModel";
 import { buildMarkup } from "./markup";
 import { STYLES } from "./styles";

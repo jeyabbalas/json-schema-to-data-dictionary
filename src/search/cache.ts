@@ -7,8 +7,9 @@
 // a 13k × 768-d dictionary is one ~40 MB structured clone (~30 ms) rather than 13k puts, and a
 // reload is one `get`. An in-memory mirror is loaded lazily on the first `getMany`; `putMany`
 // updates the mirror and coalesces writes (one serialised write per flush); `retainOnly`
-// prunes, writes and drops the mirror (the index holds its own copy by then). Vectors of a
-// different length replace the record outright: the cache holds one embedding space at a time.
+// prunes, writes and drops the mirror once every pending write has committed (the index holds
+// its own copy by then, and a `putMany` that landed meanwhile still gets persisted). Vectors of
+// a different length replace the record outright: the cache holds one embedding space at a time.
 // Opening a v1 database (per-vector `vectors` store) deletes that store — those vectors were
 // keyed by the v1 text template anyway.
 
@@ -198,7 +199,17 @@ export function createIndexedDbVectorCache(options: IndexedDbVectorCacheOptions 
 
   // One write per flush: the first putMany after a write schedules the next one; putMany calls
   // arriving before it starts are folded into it (the snapshot is taken when it runs).
+  // `retainOnly` asks for the mirror to be dropped afterwards; that happens only once no write
+  // is pending, so a putMany that landed on the mirror meanwhile is still persisted by its own
+  // write instead of that write finding no mirror.
   let pendingWrite: Promise<void> | undefined;
+  let dropRequested = false;
+  const dropIfIdle = (): void => {
+    if (dropRequested && !pendingWrite) {
+      mirror = undefined;
+      dropRequested = false;
+    }
+  };
   const scheduleWrite = (): Promise<void> => {
     pendingWrite ??= enqueue(async () => {
       pendingWrite = undefined;
@@ -209,7 +220,7 @@ export function createIndexedDbVectorCache(options: IndexedDbVectorCacheOptions 
         return;
       }
       await writeRecord({ v: 2, dims: m.dims, keys: m.keys.slice(), matrix: m.matrix.buffer as ArrayBuffer });
-    });
+    }).finally(dropIfIdle);
     return pendingWrite;
   };
 
@@ -288,8 +299,11 @@ export function createIndexedDbVectorCache(options: IndexedDbVectorCacheOptions 
         }
         // Unchanged since the last committed write: nothing to persist.
         const write = pruned || pendingWrite ? scheduleWrite() : Promise.resolve();
+        // Release the mirror (the index holds its own copy by then) — but never from under a
+        // write that a later putMany scheduled: that write releases it once it has committed.
         return write.finally(() => {
-          mirror = undefined;
+          dropRequested = true;
+          dropIfIdle();
         });
       });
     },

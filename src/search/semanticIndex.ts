@@ -149,6 +149,21 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     /* consumers observe `status`; avoid unhandled rejections */
   });
 
+  // Freshly embedded vectors waiting to be written to the cache. Flushed every `flushEvery`
+  // vectors, at the end, and on `dispose()` — so progress survives a closed tab and a disposed
+  // index alike (a re-created index for the same dictionary resumes from the cache).
+  let fresh: Array<readonly [string, Float32Array]> = [];
+  const flush = async (): Promise<void> => {
+    const batch = fresh;
+    fresh = [];
+    if (batch.length === 0) return;
+    try {
+      await cache.putMany(batch);
+    } catch {
+      /* best-effort */
+    }
+  };
+
   async function build(): Promise<void> {
     setStatus({ state: "loading", progress: undefined });
     if (embedder.load) await embedder.load((f) => setStatus({ state: "loading", progress: clamp01(f) }));
@@ -232,18 +247,6 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
       ...missing.filter((t) => t >= backgroundCount).sort(byLengthDesc)
     ];
 
-    let fresh: Array<readonly [string, Float32Array]> = [];
-    const flush = async (): Promise<void> => {
-      const batch = fresh;
-      fresh = [];
-      if (batch.length === 0) return;
-      try {
-        await cache.putMany(batch);
-      } catch {
-        /* best-effort */
-      }
-    };
-
     for (let i = 0; i < order.length; i += batchSize) {
       if (disposed) throw disposedError();
       const batch = order.slice(i, i + batchSize);
@@ -251,8 +254,17 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
         batch.map((t) => uniqueTexts[t] as string),
         "document"
       );
-      if (disposed) throw disposedError();
       if (out.length !== batch.length) throw new Error(`Embedder returned ${out.length} vectors for ${batch.length} texts`);
+      if (disposed) {
+        // Disposed while the batch was in flight: still persist it, so a re-created index picks
+        // it up from the cache instead of embedding it again.
+        for (let k = 0; k < batch.length; k += 1) {
+          const v = prepareVector(out[k] as Float32Array);
+          if (v.length > 0 && (dim === 0 || v.length === dim)) fresh.push([keys[batch[k] as number] as string, v]);
+        }
+        void flush();
+        throw disposedError();
+      }
       batch.forEach((t, k) => {
         const v = prepareVector(out[k] as Float32Array);
         ensureDim(v);
@@ -260,7 +272,7 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
         fresh.push([keys[t] as string, v]);
       });
       setStatus({ state: "indexing", done: sumCount, total, coverage: coverage() });
-      // Progress survives a closed tab: persist every `flushEvery` fresh vectors.
+      // Progress survives a closed tab: persist every `flushEvery` fresh vectors (and on dispose).
       if (fresh.length >= flushEvery) await flush();
       await yieldToEventLoop();
     }
@@ -425,6 +437,9 @@ export function createSemanticIndex(table: DataDictionaryTable, options: Semanti
     dispose() {
       if (disposed) return;
       disposed = true;
+      // Persist what was embedded since the last flush (best-effort): a re-created index for the
+      // same dictionary — e.g. a re-mounted component — resumes from the cache.
+      void flush();
       matrix = undefined;
       sum = undefined;
       mu = undefined;
