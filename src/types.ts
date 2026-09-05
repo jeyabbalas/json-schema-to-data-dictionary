@@ -46,6 +46,13 @@ export interface JsonSchemaObject {
   // Non-standard but ubiquitous; treated as first-class per project requirements.
   enumDescriptions?: string[] | Record<string, string>;
   "x-enumDescriptions"?: string[] | Record<string, string>;
+  /**
+   * Declares whether this schema's `const`/`enum` members are substantive answers ("value")
+   * or missing/NA codes ("sentinel"), overriding the wording-based guess. Readable on the
+   * subschema carrying the value (e.g. a shared `$defs` entry), on a `$ref` sibling -- which
+   * wins over the referenced default -- or on the property, as the default for its branches.
+   */
+  "x-value-kind"?: ValidValueKind;
 
   // Numeric
   multipleOf?: number;
@@ -123,7 +130,11 @@ export interface ValidValue {
   label?: string | undefined;
   /** Longer prose description of the value, when available. */
   description?: string | undefined;
-  /** Substantive category ("value"), a numeric/typed range ("measurement"), or a missing/NA code ("sentinel"). */
+  /**
+   * Substantive category ("value"), a numeric/typed range ("measurement"), or a missing/NA
+   * code ("sentinel"). Guessed from the value's label and the name of the `$ref` it came
+   * from; set `x-value-kind` in the schema to declare it instead.
+   */
   kind?: ValidValueKind | undefined;
   /** Skip-pattern / conditional context under which the value applies (e.g. "when meno_status = 2"). */
   condition?: string | undefined;

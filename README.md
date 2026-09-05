@@ -79,7 +79,7 @@ Each variable becomes one row with these columns:
 | **Variable name** | The property key. |
 | **Description** | `title` + `description` + `$comment` (the codebook text), following `$ref`s. |
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
-| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels). |
+| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. |
 | **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds, and **conditional** rules from skip patterns. |
 | **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a collapsible JSON tree. |
 
@@ -120,6 +120,26 @@ The measurement range goes to **Constraints**; the codes go to **Valid values**,
 from real categories, each carrying the condition that triggers it. `dependentRequired` and
 `dependentSchemas` are surfaced as conditional constraints too, and all `if/then` rules are
 collected into `table.conditionalRules` for a dataset-level *skip patterns* panel.
+
+### Saying which codes are special: `x-value-kind`
+
+Whether `-7` means *"none of the listed options apply"* (a real answer) or *"not recorded"* (a
+special code) is not something JSON Schema states, so it is guessed from the value's label and
+the name of the `$ref` it came from — plus the conventional `666`/`777`/`888`/`999` codes. When
+the wording does not give it away, say so:
+
+```jsonc
+"$defs": {
+  "dont_know":         { "const": -1, "title": "Do not know",       "x-value-kind": "sentinel" },
+  "none_of_the_above": { "const": -7, "title": "None of the above", "x-value-kind": "value" }
+}
+```
+
+`"sentinel"` files the value under **special codes** and keeps it out of the semantic index;
+`"value"` keeps it among the real categories. It is read from the subschema that carries the
+`const`/`enum` (typically a shared `$defs` entry), from a `$ref` sibling — which overrides the
+referenced default — or from the property itself, as the default for its branches. Unlike other
+`x-*` keywords it does not appear in **Additional information**.
 
 ## Rendering
 
@@ -358,7 +378,8 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 
 Supported keywords include the full draft 2020-12 vocabulary (and draft-07 spellings):
 `$ref`/`$dynamicRef`, `$id`/`$anchor`, `$defs`/`definitions`, `allOf`/`anyOf`/`oneOf`/`not`,
-`if`/`then`/`else`, `enum`/`const` (+ `enumDescriptions` / `x-enumDescriptions`), every
+`if`/`then`/`else`, `enum`/`const` (+ `enumDescriptions` / `x-enumDescriptions` /
+`x-value-kind`), every
 `format`, `contentEncoding`/`contentMediaType`, all numeric/string/array/object constraints,
 `required`/`dependentRequired`/`dependentSchemas`, and `patternProperties` /
 `additionalProperties`.
