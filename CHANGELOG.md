@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- **`x-value-kind`.** A schema can now declare whether a `const`/`enum` member is a
+  substantive answer (`"value"`) or a missing/NA code (`"sentinel"`) instead of leaving it
+  to be inferred from wording. Read from the subschema carrying the value (e.g. a shared
+  `$defs` entry), from a `$ref` sibling — which overrides the referenced default — or from
+  the property, as the default for its branches. It is consumed rather than passed through,
+  so it no longer shows up in **Additional information**.
+
+### Fixed
+
+- **A code no longer changes meaning because of its neighbours.** In a mixed union
+  (a measurement branch plus coded branches) every categorical value was force-tagged
+  `sentinel`, bypassing the classifier that a pure categorical union used. The same code
+  with the same label could therefore come out `sentinel` in one variable and `value` in
+  another. Both paths now classify through one function.
+- **"Do not know" is recognised.** The sentinel vocabulary matched `don't know` / `dont
+  know` but not `do not know`, `does not know` or `not known`; `suppressed`, `withheld`,
+  `redacted`, `not asked` and `not on the questionnaire` are recognised too.
+- **A description that mentions missingness no longer makes the value missing.** The
+  classifier matched the value's prose `description`, so a substantive value documented as
+  *"…not a missingness sentinel"* was filed under **special codes**. It now reads the label
+  and the `$ref` name, falling back to the description only when there is no label.
+
+Between them these change which values render under **special codes** and which are indexed
+for semantic search. A coded value in a numeric field whose label the vocabulary does not
+recognise is now shown as a real category rather than a special code — set `x-value-kind`
+where the wording is not decisive.
+
 ## 0.3.0 - 2026-09-05
 
 Production-grade search and rendering for large dictionaries (10,000 variables).
