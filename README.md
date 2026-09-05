@@ -247,10 +247,11 @@ What happens:
   API.
 - **Search works while indexing**: related rows come from the part of the dictionary embedded
   so far, the status chip shows the progress, and the list refreshes as more rows land.
-- Keyword and semantic rankings are fused with reciprocal-rank fusion: exact name matches
-  first, then keyword matches boosted by semantic closeness, then up to `maxRelated` rows the
-  model found on its own, badged *related* (hover the name for the similarity). Keyword search
-  keeps working throughout — and if anything fails.
+- Keyword and semantic rankings are fused with reciprocal-rank fusion: rows whose name equals
+  the query come first; every other keyword match and up to `maxRelated` rows the model found on
+  its own (badged *related*; hover the name for the similarity) follow in fused order, so a
+  keyword match the model also ranks highly moves up, and a strongly related row can sit above a
+  weak keyword match. Keyword search keeps working throughout — and if anything fails.
 
 `semanticSearch` options: `cache` (a `VectorCache`, or `false` for memory only), `snapshot`
 (precomputed vectors, see below), `dims` (Matryoshka truncation of the vectors), `maxRelated`

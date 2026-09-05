@@ -38,6 +38,7 @@ test("engine: synchronous lexical results without a semantic index", () => {
   assert.deepEqual(empty.results, []);
   assert.equal(empty.normalizedQuery, "");
   assert.equal(empty.semantic.state, "off");
+  assert.equal(engine.search("  Meno   Status ").normalizedQuery, "meno status", "trimmed, lower-cased, inner whitespace collapsed");
 
   const docs = lexicalDocumentsFromTable(syntheticTable());
   const fromDocs = createSearchEngine(docs, { lexical: createLexicalIndex(docs) });
@@ -170,9 +171,12 @@ test("engine: results LRU (32) and maxRelated", async () => {
   engine.search("meno");
   engine.search("MENO ");
   assert.equal(calls, 1, "the same normalised query is served from the results cache");
+  engine.search("meno status");
+  engine.search(" meno   status");
+  assert.equal(calls, 2, "inner whitespace is collapsed before the lookup");
   for (let i = 0; i < 32; i += 1) engine.search(`q${i}`);
   engine.search("meno");
-  assert.equal(calls, 34, "evicted after 32 other queries");
+  assert.equal(calls, 35, "evicted after 32 other queries");
   engine.dispose();
 
   const embedder = createFakeEmbedder();

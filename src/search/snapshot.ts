@@ -194,9 +194,10 @@ export function encodeVectorSnapshot(snapshot: VectorSnapshot, options: EncodeVe
 
 /** Parse a `.jsddvec` buffer. Throws on an unknown magic or version; int8 payloads are dequantised. */
 export function decodeVectorSnapshot(bytes: ArrayBuffer | Uint8Array): VectorSnapshot {
-  // Typed-array views need 4-byte alignment; copy an unaligned view once.
+  // Typed-array views need 4-byte alignment; copy an unaligned view once. `new Uint8Array(view)`
+  // always copies into a fresh buffer — `slice()` does not on a Node Buffer, which returns a view.
   let u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  if (u8.byteOffset % 4 !== 0) u8 = u8.slice();
+  if (u8.byteOffset % 4 !== 0) u8 = new Uint8Array(u8);
   if (u8.length < HEADER_OFFSET) throw new Error("Not a vector snapshot (truncated)");
   for (let i = 0; i < MAGIC.length; i += 1) {
     if (u8[i] !== MAGIC.charCodeAt(i)) throw new Error("Not a vector snapshot (bad magic)");

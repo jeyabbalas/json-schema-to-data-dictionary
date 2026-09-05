@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **Vectors written while the IndexedDB cache was pruning were silently dropped.** `retainOnly`
+  released its in-memory mirror as soon as its own write was done, so a `putMany` that had
+  landed on that mirror meanwhile scheduled a write that found nothing to persist — and still
+  resolved. Two indexes sharing the default cache (two components on a page, or a component
+  re-mounted as the previous index finished) hit this. The mirror is now released only once
+  every pending write has committed.
+- **Disposing a semantic index no longer discards the vectors embedded since the last flush**
+  (up to `flushEvery`, 2,000 by default, plus the batch in flight). A re-created index for the
+  same dictionary — a re-mounted component, which the demo does on every display-option change —
+  resumes from the cache instead of embedding those texts again.
+- **`decodeVectorSnapshot` accepts an unaligned Node `Buffer`.** The realignment used
+  `slice()`, which on a `Buffer` returns another view, so the typed-array view then threw a
+  `RangeError`.
+- `createSearchEngine` collapses inner whitespace in `normalizedQuery`, as documented, so
+  `smoking  status` and `smoking status` share one results-cache entry and one query embedding.
+- Demo: the WebGPU-only model is offered only when a WebGPU adapter can actually be acquired
+  (`detectWebGpu()`), not whenever `navigator.gpu` exists; without one the picker falls back to
+  the default model and says so.
+
 ## 0.4.0 - 2026-09-05
 
 ### Added

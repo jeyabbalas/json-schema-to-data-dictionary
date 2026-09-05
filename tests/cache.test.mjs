@@ -133,6 +133,22 @@ test("IndexedDB v2: retainOnly prunes the record, drops the mirror, and skips no
   assert.equal((await inspect(dbName)).count, 0, "retaining nothing deletes the record");
 });
 
+test("IndexedDB v2: a putMany that races retainOnly is still persisted", { skip }, async () => {
+  const dbName = freshDbName();
+  const cache = createIndexedDbVectorCache({ dbName });
+  await cache.putMany([["a", new Float32Array([1, 0])]]);
+  // retainOnly first: it releases the mirror once its (here: no-op) write is done, while the
+  // putMany landed on that same mirror and scheduled its own write.
+  await Promise.all([cache.retainOnly(["a"]), cache.putMany([["b", new Float32Array([0, 1])]])]);
+  assert.deepEqual([...(await createIndexedDbVectorCache({ dbName }).getMany(["a", "b"])).keys()], ["a", "b"], "b reached IndexedDB");
+  // The other order, then a prune racing a put.
+  await Promise.all([cache.putMany([["c", new Float32Array([1, 1])]]), cache.retainOnly(["a", "b", "c"])]);
+  await Promise.all([cache.retainOnly(["b", "c"]), cache.putMany([["d", new Float32Array([2, 2])]])]);
+  assert.deepEqual([...(await createIndexedDbVectorCache({ dbName }).getMany(["a", "b", "c", "d"])).keys()], ["b", "c", "d"]);
+  assert.deepEqual((await inspect(dbName)).record.keys, ["b", "c", "d"], "pruned and appended in one record");
+  assert.deepEqual([...(await cache.getMany(["d"])).get("d")], [2, 2], "the same instance sees it too (mirror reloaded)");
+});
+
 test("IndexedDB v2: clear deletes the record and the cache keeps working", { skip }, async () => {
   const dbName = freshDbName();
   const cache = createIndexedDbVectorCache({ dbName });

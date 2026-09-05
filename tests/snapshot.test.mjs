@@ -213,6 +213,13 @@ test("loadVectorSnapshot: object passthrough, bytes, unaligned views and URLs", 
   const unaligned = await loadVectorSnapshot(padded.subarray(1));
   assert.deepEqual([...unaligned.matrix], [...decodeVectorSnapshot(bytes).matrix], "an unaligned view is copied and decoded");
 
+  // A Node Buffer view at an odd offset: Buffer.prototype.slice() returns a view, not a copy.
+  const backing = Buffer.alloc(bytes.byteLength + 2);
+  Buffer.from(bytes).copy(backing, 2);
+  const buffered = backing.subarray(2);
+  assert.equal(buffered.byteOffset % 4, 2, "the fixture is unaligned");
+  assert.deepEqual([...decodeVectorSnapshot(buffered).matrix], [...decodeVectorSnapshot(bytes).matrix], "an unaligned Node Buffer decodes too");
+
   const requested = [];
   const fetchStub = async (url) => {
     requested.push(url);

@@ -12,11 +12,6 @@ export type Highlighter = (text: string) => string;
 /** The no-highlight highlighter: plain HTML escaping. */
 export const PLAIN: Highlighter = (text) => escapeHtml(text);
 
-/** Whitespace-separated query tokens, lower-cased, deduplicated, longest first. */
-export function queryTerms(query: string): string[] {
-  return uniqueLongestFirst(query.trim().toLowerCase().split(/\s+/));
-}
-
 /** A highlighter for `terms` (matched case-insensitively). No terms: plain escaping. */
 export function createHighlighter(terms: readonly string[]): Highlighter {
   const clean = uniqueLongestFirst(terms);

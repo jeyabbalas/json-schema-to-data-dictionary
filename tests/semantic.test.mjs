@@ -361,6 +361,36 @@ test("createSemanticIndex: progressive flushes (flushEvery) and a final put", as
   assert.equal((await inner.getMany(keys)).size, total);
 });
 
+test("createSemanticIndex: dispose flushes the vectors embedded so far, batch in flight included", async () => {
+  const inner = createMemoryVectorCache();
+  let put = 0;
+  const cache = {
+    getMany: (keys) => inner.getMany(keys),
+    putMany: (entries) => { put += entries.length; return inner.putMany(entries); },
+    retainOnly: (keys) => inner.retainOnly(keys),
+    clear: () => inner.clear()
+  };
+  const embedder = createFakeEmbedder({ delayMs: 2 });
+  const index = createSemanticIndex(bcrpp, { embedder, cache, batchSize: 4 }); // flushEvery default: nothing flushed before ready
+  await until(() => index.coverage > 0.3);
+  assert.equal(put, 0, "nothing persisted yet");
+  const embedded = embedder.calls.document;
+  index.dispose();
+  await tick(20);
+  assert.equal(put, embedded, "every text handed to the embedder (the batch in flight included) is persisted");
+  const keys = prepareTexts(bcrpp).uniqueTexts.map((t) => cacheKey(embedder.id, t));
+  assert.equal((await inner.getMany(keys)).size, put);
+
+  // A re-created index for the same dictionary resumes from the cache (`put` keeps counting
+  // the second index's own flush, so read it first).
+  const persisted = put;
+  const again = createFakeEmbedder();
+  const second = createSemanticIndex(bcrpp, { embedder: again, cache });
+  await second.ready;
+  assert.equal(again.calls.document, keys.length - persisted, "only the texts that were never persisted are embedded");
+  assert.ok(persisted > 0 && again.calls.document < keys.length);
+});
+
 test("createSemanticIndex: the cache holds only the most recently indexed dictionary", async () => {
   const embedder = createFakeEmbedder();
   const cache = createMemoryVectorCache();

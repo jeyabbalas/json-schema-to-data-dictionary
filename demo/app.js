@@ -73,6 +73,7 @@
   var lastSnapshot = null;       // decoded precomputed vectors given to the current render (ddDemo.snapshot)
   var snapshots = {};            // vectors file -> { promise, done, value }: one fetch per file per session
   var eta = null;                // { t0, done0 }: first indexing sample of the current run (ETA baseline)
+  var WEBGPU = false;            // a WebGPU adapter can be acquired (probed once in start(); see probeWebGpu)
 
   // --- Messages -----------------------------------------------------------
   function clearMessages() { $("#messages").replaceChildren(); }
@@ -426,8 +427,19 @@
   }
 
   // --- Semantic search: model picker -------------------------------------
+  // Usable WebGPU, as probed at start-up: `navigator.gpu` alone is not enough (Linux Chrome
+  // without flags and headless browsers expose it but hand out no adapter).
   function webGpuAvailable() {
-    return !OVERRIDES.nogpu && typeof navigator !== "undefined" && !!navigator.gpu;
+    return !OVERRIDES.nogpu && WEBGPU;
+  }
+
+  // Resolves with whether a WebGPU adapter can be acquired (the library's detectWebGpu probe).
+  // ?nogpu=1 skips it; a build without the probe falls back to the presence of navigator.gpu.
+  function probeWebGpu() {
+    if (OVERRIDES.nogpu) return Promise.resolve(false);
+    var present = typeof navigator !== "undefined" && !!navigator.gpu;
+    if (!present || typeof API.detectWebGpu !== "function") return Promise.resolve(present);
+    return API.detectWebGpu().then(function (r) { return !!(r && r.available); }, function () { return false; });
   }
 
   function findModel(id) {
@@ -663,7 +675,7 @@
 
   var DEVICE_LABELS = { webgpu: "WebGPU", wasm: "WASM", cpu: "CPU" };
 
-  // "WebGPU · fp16" / "WASM · q8 · 4 threads" from embedder.info (known once load() is done).
+  // "WebGPU · fp16" / "WASM · q8" from embedder.info (known once load() is done).
   function showDeviceInfo(info) {
     var el = $("#semantic-device");
     if (!info || !info.device) {
@@ -676,7 +688,6 @@
     var device = String(info.device).toLowerCase();
     var parts = [DEVICE_LABELS[device] || info.device];
     if (info.dtype) parts.push(info.dtype);
-    if (info.threads > 1) parts.push(info.threads + " threads");
     el.textContent = parts.join(" · ");
     el.setAttribute("data-device", device);
     el.title = info.model || effectiveModel();
@@ -1006,15 +1017,20 @@
       render(); // show the empty-state prompt
     }
 
-    initModels(); // after the first render: its clearMessages() would wipe the "needs WebGPU" note
+    // The model picker needs to know whether WebGPU is usable (a few ms), so it is built once
+    // the probe answers; semantic search then starts from the saved preference / URL override.
+    probeWebGpu().then(function (available) {
+      WEBGPU = available;
+      initModels(); // after the first render: its clearMessages() would wipe the "needs WebGPU" note
 
-    var savedSemantic = null;
-    try { savedSemantic = localStorage.getItem(SEMANTIC_KEY); } catch (e) {}
-    var wantSemantic = OVERRIDES.semantic !== undefined ? OVERRIDES.semantic : savedSemantic === "1";
-    if (wantSemantic) {
-      $("#semantic").checked = true;
-      applySemantic(true); // not persisted: a ?semantic=1 visit must not change the saved preference
-    }
+      var savedSemantic = null;
+      try { savedSemantic = localStorage.getItem(SEMANTIC_KEY); } catch (e) {}
+      var wantSemantic = OVERRIDES.semantic !== undefined ? OVERRIDES.semantic : savedSemantic === "1";
+      if (wantSemantic) {
+        $("#semantic").checked = true;
+        applySemantic(true); // not persisted: a ?semantic=1 visit must not change the saved preference
+      }
+    });
   }
 
   start();

@@ -70,7 +70,7 @@ export function createSearchEngine(
   let currentQ = "";
   let current: SearchResult | undefined;
 
-  const normalize = (raw: string): string => raw.trim().toLowerCase();
+  const normalize = (raw: string): string => raw.trim().toLowerCase().replace(/\s+/g, " ");
   const usable = (): boolean => semantic !== undefined && semantic.status.state !== "error";
   const eligible = (q: string): boolean => usable() && q.length >= minQueryLength && !NUMERIC_QUERY.test(q);
 
