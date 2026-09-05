@@ -52,7 +52,7 @@ export interface JsonSchemaObject {
    * subschema carrying the value (e.g. a shared `$defs` entry), on a `$ref` sibling -- which
    * wins over the referenced default -- or on the property, as the default for its branches.
    */
-  "x-value-kind"?: ValidValueKind;
+  "x-value-kind"?: DeclaredValueKind;
 
   // Numeric
   multipleOf?: number;
@@ -121,6 +121,12 @@ export interface SourceInfo {
 
 /** Classifies a valid value so the renderer can group substantive categories apart from special codes. */
 export type ValidValueKind = "value" | "measurement" | "sentinel";
+
+/**
+ * What `x-value-kind` may say. "measurement" is derived from a branch's range, never declared,
+ * so it is not offered here -- a schema that writes it is ignored.
+ */
+export type DeclaredValueKind = Exclude<ValidValueKind, "measurement">;
 
 /** One allowed value (or value range) for a variable. */
 export interface ValidValue {

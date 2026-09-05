@@ -42,6 +42,7 @@ export type {
   SourceInfo,
   ValidValue,
   ValidValueKind,
+  DeclaredValueKind,
   ConstraintItem,
   ConditionalEffect,
   ConditionalRule,

@@ -136,13 +136,22 @@ the wording does not give it away, say so:
 ```
 
 `"sentinel"` files the value under **special codes** and keeps it out of the semantic index;
-`"value"` keeps it among the real categories. The built-in vocabulary is deliberately small,
-because each word has to survive appearing inside a longer label — `Surgery (type not known)`
-is a reason periods stopped, not missing data — so reach for this keyword rather than expecting
-the wording to be read correctly. It is read from the subschema that carries the
-`const`/`enum` (typically a shared `$defs` entry), from a `$ref` sibling — which overrides the
-referenced default — or from the property itself, as the default for its branches. Unlike other
-`x-*` keywords it does not appear in **Additional information**.
+`"value"` keeps it among the real categories. Those two are the only accepted values —
+`"measurement"` is derived from a branch's range, never declared — and anything else is ignored.
+
+The built-in vocabulary is deliberately small, because each word has to survive appearing
+inside a longer label: `Surgery (type not known)` is a reason periods stopped, `Ovarian
+suppression` is a treatment, and sodium is spelled `Na`. So reach for this keyword rather than
+expecting wording to be read correctly — in particular when the label is a bare code and the
+meaning lives in the `description`, or when an `enumDescriptions` entry is a sentence rather
+than a name.
+
+The nearest declaration wins: on the `const`/`enum` itself, then on the union branch, then on
+the property. It is read through a `$ref` — so it belongs on the shared `$defs` entry that
+defines a code, where it covers every use at once — and a declaration alongside the `$ref`
+overrides what the referenced schema said. An `allOf` branch stamps only the values that branch
+contributes, never the property's, since `allOf` is unordered. Unlike other `x-*` keywords it
+does not appear in **Additional information**.
 
 ## Rendering
 
