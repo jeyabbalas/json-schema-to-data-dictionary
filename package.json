@@ -1,6 +1,6 @@
 {
   "name": "json-schema-data-dictionary",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Turn interlinked JSON Schema documents that describe a tabular JSON dataset into a flat, spreadsheet-like data dictionary and an embeddable, searchable HTML table.",
   "type": "module",
   "license": "MIT",
