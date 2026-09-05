@@ -60,7 +60,19 @@ function table(properties) {
 }
 
 const REF = (name) => ({ $ref: `../../common/defs.json#/$defs/${name}` });
-const kindOf = (row, value) => row["Valid values"].find((v) => v.value === value)?.kind;
+
+/**
+ * The kind of one value. Keyed on the JSON of the value rather than `===` so string consts,
+ * `null` and -0 are addressable, and asserting a single match rather than taking the first --
+ * a code surviving twice with contradictory kinds renders in both blocks, and `find` would
+ * hide exactly that.
+ */
+function kindOf(row, value) {
+  const key = JSON.stringify(value);
+  const hits = row["Valid values"].filter((v) => JSON.stringify(v.value) === key);
+  assert.equal(hits.length, 1, `expected exactly one ${key} in ${row["Variable name"]}, got ${hits.length}`);
+  return hits[0].kind;
+}
 
 test('"Do not know" is a sentinel however it is spelled', () => {
   const t = schemaDocumentsToTable(
@@ -90,11 +102,58 @@ test("a description that merely mentions missingness does not make the value a s
   assert.equal(kindOf(row, -1), "sentinel", "'Do not know' is not");
 });
 
-test('"Suppressed" is a sentinel on the strength of its label alone', () => {
+test("the vocabulary fires on an inline label, with no $ref name to fall back on", () => {
+  // The $ref path is easy to pass by accident -- "…/$defs/suppressed" contains "suppress" --
+  // so these consts are inline and deliberately unnamed.
   const t = schemaDocumentsToTable(
-    table({ income: { title: "Income band", oneOf: [{ const: 1, title: "Under 20k" }, REF("suppressed")] } })
+    table({
+      income: { title: "Income band", oneOf: [{ const: 1, title: "Under 20k" }, { const: -999, title: "Suppressed" }] },
+      unit: { title: "Unit", oneOf: [{ const: 1, title: "Metric" }, { const: -1, title: "Do not know" }] },
+      version: { title: "Version", oneOf: [{ const: 1, title: "Aqua" }, { const: -2, title: "Not on questionnaire" }] }
+    })
   );
-  assert.equal(kindOf(findRow(t, "income"), -999), "sentinel");
+  assert.equal(kindOf(findRow(t, "income"), -999), "sentinel", "Suppressed");
+  assert.equal(kindOf(findRow(t, "unit"), -1), "sentinel", "Do not know");
+  assert.equal(kindOf(findRow(t, "version"), -2), "sentinel", "Not on questionnaire");
+});
+
+test("a sentinel word inside a longer substantive label does not make it a code", () => {
+  // Drawn from BGS R0_MenopauseReason, a 19-level list of reasons periods stopped that
+  // carries its real sentinel separately. Six of its levels contain "not known".
+  const t = schemaDocumentsToTable(
+    table({
+      reason: {
+        title: "Reason periods stopped",
+        oneOf: [
+          { const: 1, title: "Natural" },
+          { const: 4, title: "Surgery (type not known)" },
+          { const: 6, title: "Does not know reason for stopping" },
+          { const: 8, title: "Not known: on HRT" },
+          { const: 17, title: "Status not known" },
+          REF("suppressed")
+        ]
+      },
+      immune: { title: "Immune status", oneOf: [{ const: 1, title: "Immunosuppressed" }, { const: 2, title: "Normal" }] }
+    })
+  );
+  const reason = findRow(t, "reason");
+  for (const code of [1, 4, 6, 8, 17]) assert.equal(kindOf(reason, code), "value", `code ${code} is a real category`);
+  assert.equal(kindOf(reason, -999), "sentinel", "the variable's actual sentinel still is one");
+  assert.equal(kindOf(findRow(t, "immune"), 1), "value", '"Immunosuppressed" is not "suppressed"');
+});
+
+test("a variable whose only values are codes is not categorical", () => {
+  // OFH's is_sparse_coding shape: the coding table documents only the special values.
+  const t = schemaDocumentsToTable(
+    table({
+      sparse: { title: "Days active", oneOf: [REF("dont_know"), REF("suppressed")] },
+      coded: { title: "Sex", oneOf: [{ const: 1, title: "Female" }, REF("dont_know"), REF("suppressed")] }
+    })
+  );
+  const sparse = findRow(t, "sparse");
+  assert.equal(sparse["Data type"], "integer", "no categories to be categorical about");
+  assert.ok(sparse["Valid values"].every((v) => v.kind === "sentinel"));
+  assert.match(findRow(t, "coded")["Data type"], /categorical/, "one real category is still categorical");
 });
 
 test("the same code is classified the same way in a mixed union and a pure categorical one", () => {
@@ -178,4 +237,15 @@ test("x-value-kind applies to a bare enum and never leaks into Additional inform
   assert.equal(kindOf(row, 7), "sentinel");
   assert.equal(kindOf(row, 8), "sentinel");
   assert.deepEqual(row["Additional information"], { "x-derivation": "kept" });
+});
+
+test("x-value-kind never surfaces as metadata, at row, category or table level", () => {
+  const docs = table({ flag: { title: "Flag", oneOf: [{ const: 1, title: "Yes" }, REF("dont_know")] } });
+  docs[1].schema["x-value-kind"] = "sentinel";
+  docs[1].schema["x-variable-group"] = "kept";
+  docs[2].schema["x-value-kind"] = "value";
+  const t = schemaDocumentsToTable(docs);
+  const seen = JSON.stringify([t.additionalInformation, t.categories.map((c) => c.additionalInformation)]);
+  assert.doesNotMatch(seen, /x-value-kind/, "consumed by the analyzer, not shown as dataset metadata");
+  assert.match(seen, /x-variable-group/, "other x-* keywords still come through");
 });

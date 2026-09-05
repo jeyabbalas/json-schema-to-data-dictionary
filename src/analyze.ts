@@ -91,8 +91,17 @@ interface InternalContext extends AnalyzeContext {
 // Matched against a value's label and the name of the `$ref` it came from -- both terse --
 // but never against its prose description, which can discuss missingness while describing a
 // value that is not itself missing. `x-value-kind` overrides this guess entirely.
+//
+// Every alternative here has to survive being a *fragment* of a longer label, because coding
+// lists put sentinel words inside substantive categories: "Surgery (type not known)" and
+// "Not known: on HRT" are reasons periods stopped, not missing data, in a list that carries
+// its real sentinel separately. So `not known` and `does not know` are deliberately absent --
+// they matched six such categories in one variable while gaining nothing a narrower spelling
+// did not already catch, and `\bsuppress` is anchored so "immunosuppressed" is not a code.
+// Add a word here only with a case that needs it; `x-value-kind` is the answer for wording
+// this cannot safely infer.
 const SENTINEL_WORDS =
-  /(missing|unknown|not\s*applicable|not\s*assessed|not\s*collected|not\s*asked|not\s*(?:on|in)\s*(?:the\s*)?(?:questionnaire|survey|form)|no\s*answer|no\s*response|refus|declin|do(?:n'?t|es\s*not|\s*not)[\s_]*know|not[\s_]*known|prefer[\s_]*not|suppress|withheld|redact|inapplicable|\bn\/?a\b|skipped?)/i;
+  /(missing|unknown|not\s*applicable|not\s*assessed|not\s*collected|not\s*(?:on|in)\s*(?:the\s*)?(?:questionnaire|survey|form)|no\s*answer|no\s*response|refus|declin|do(?:n'?t|\s*not)\s*know|prefer\s*not|\bsuppress|inapplicable|\bn\/?a\b|skipped?)/i;
 const CONVENTIONAL_SENTINEL_CODES = new Set<number>([666, 777, 888, 999, 6666, 7777, 8888, 9999]);
 
 const ANNOTATION_KEYS = new Set(["title", "description", "$comment"]);
@@ -472,8 +481,14 @@ function dataTypeText(acc: Accumulator): string {
   if (acc.hasArray) return nn(acc.arrayItemLabel ? `array of ${acc.arrayItemLabel}` : "array");
   if (acc.formats.size > 0) return nn([...acc.formats].map((f) => formatLabel(f)).join(" / "));
 
-  const substantive = acc.values.filter((v) => v.kind !== "measurement");
-  if (substantive.length >= 2) return nn(`categorical (${baseTypeOfValues(substantive, acc)})`);
+  // "categorical" claims the field is a coded enumeration, so it needs at least one real
+  // category: a sparse coding table that declares nothing but missing/NA codes is a plain
+  // typed field that happens to have special codes, not a categorical one.
+  const coded = acc.values.filter((v) => v.kind !== "measurement");
+  if (coded.length >= 2 && coded.some((v) => v.kind !== "sentinel")) {
+    return nn(`categorical (${baseTypeOfValues(coded, acc)})`);
+  }
+  const substantive = coded;
 
   const scalarTypes = [...acc.jsonTypes].filter((t) => t !== "object" || !acc.hasObjectShape);
   const types = scalarTypes.length ? scalarTypes : substantive.length ? [baseTypeOfValues(substantive, acc)] : [];

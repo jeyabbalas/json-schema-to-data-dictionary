@@ -136,7 +136,10 @@ the wording does not give it away, say so:
 ```
 
 `"sentinel"` files the value under **special codes** and keeps it out of the semantic index;
-`"value"` keeps it among the real categories. It is read from the subschema that carries the
+`"value"` keeps it among the real categories. The built-in vocabulary is deliberately small,
+because each word has to survive appearing inside a longer label — `Surgery (type not known)`
+is a reason periods stopped, not missing data — so reach for this keyword rather than expecting
+the wording to be read correctly. It is read from the subschema that carries the
 `const`/`enum` (typically a shared `$defs` entry), from a `$ref` sibling — which overrides the
 referenced default — or from the property itself, as the default for its branches. Unlike other
 `x-*` keywords it does not appear in **Additional information**.

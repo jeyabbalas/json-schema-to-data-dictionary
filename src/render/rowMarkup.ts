@@ -56,7 +56,10 @@ function validValues(row: RowVM, hl: Highlighter): string {
   }
   for (const v of row.values) parts.push(valueRow(v, false, hl));
   if (row.sentinels.length) {
-    parts.push(`<div class="dd-vv-sep">special codes</div>`);
+    // The separator divides real values from special codes, so it only earns its place when
+    // there is something above it -- a variable whose only declared values are sentinels
+    // (a sparse coding table) would otherwise open with a heading and nothing before it.
+    if (row.measurements.length || row.values.length) parts.push(`<div class="dd-vv-sep">special codes</div>`);
     for (const v of row.sentinels) parts.push(valueRow(v, true, hl));
   }
 

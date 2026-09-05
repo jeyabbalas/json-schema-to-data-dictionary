@@ -601,7 +601,11 @@ function schemaExtra(schema: JsonSchema): Record<string, unknown> | undefined {
   if (!isSchemaObject(schema)) return undefined;
   const out: Record<string, unknown> = {};
   for (const key of EXTRA_KEYS) if (Object.prototype.hasOwnProperty.call(schema, key)) out[key] = cloneJson(schema[key]);
-  for (const [key, value] of Object.entries(schema)) if (key.startsWith("x-")) out[key] = cloneJson(value);
+  // `x-value-kind` is consumed by the analyzer, not surfaced: it steers classification and
+  // would otherwise show up here as dataset metadata that does nothing.
+  for (const [key, value] of Object.entries(schema)) {
+    if (key.startsWith("x-") && key !== "x-value-kind") out[key] = cloneJson(value);
+  }
   const compact = compactObject(out);
   return Object.keys(compact).length > 0 ? compact : undefined;
 }
