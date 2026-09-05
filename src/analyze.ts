@@ -80,7 +80,7 @@ interface Accumulator {
   mixed: boolean;
   measurementBaseTypes: Set<string>;
   /** `x-value-kind`, when the schema declares it explicitly. */
-  valueKind?: ValidValueKind;
+  valueKind?: ValidValueKind | undefined;
 }
 
 interface InternalContext extends AnalyzeContext {
@@ -92,16 +92,45 @@ interface InternalContext extends AnalyzeContext {
 // but never against its prose description, which can discuss missingness while describing a
 // value that is not itself missing. `x-value-kind` overrides this guess entirely.
 //
-// Every alternative here has to survive being a *fragment* of a longer label, because coding
-// lists put sentinel words inside substantive categories: "Surgery (type not known)" and
-// "Not known: on HRT" are reasons periods stopped, not missing data, in a list that carries
-// its real sentinel separately. So `not known` and `does not know` are deliberately absent --
-// they matched six such categories in one variable while gaining nothing a narrower spelling
-// did not already catch, and `\bsuppress` is anchored so "immunosuppressed" is not a code.
-// Add a word here only with a case that needs it; `x-value-kind` is the answer for wording
-// this cannot safely infer.
+// Matched against `normalizeForMatch`ed text, so `dont_know`, `Dont-Know` and "don't know"
+// are one case and every alternative can be written with plain spaces.
+//
+// Every alternative has to survive being a *fragment* of a longer label, because coding lists
+// put sentinel words inside substantive categories: "Surgery (type not known)" and "Not known:
+// on HRT" are reasons periods stopped, in a list that carries its real sentinel separately. So
+// `not known` and `does not know` are deliberately absent -- they matched six such categories
+// in one variable while gaining nothing a narrower spelling did not already catch. The trailing
+// \b anchors matter for the same reason: "Ovarian suppression" is a therapy, "Not in formal
+// education" is an answer, and sodium is spelled Na. Add a word here only with a case that
+// needs it; `x-value-kind` is the answer for wording this cannot safely infer.
 const SENTINEL_WORDS =
-  /(missing|unknown|not\s*applicable|not\s*assessed|not\s*collected|not\s*(?:on|in)\s*(?:the\s*)?(?:questionnaire|survey|form)|no\s*answer|no\s*response|refus|declin|do(?:n'?t|\s*not)\s*know|prefer\s*not|\bsuppress|inapplicable|\bn\/?a\b|skipped?)/i;
+  /(missing|unknown|not applicable|not assessed|not collected|not (?:on|in) (?:the )?(?:questionnaire|survey|form)\b|no answer|no response|refus|declin|do(?:n'?t| not) know\b|prefer not|\bsuppressed\b|inapplicable|\bn\/a\b|skipped?)/;
+
+/**
+ * Fold the spellings a label or an identifier can take into one: case, curly apostrophes and
+ * `_`/`-` separators. Without it the vocabulary has to carry a separator convention per
+ * alternative, and `$defs/not_applicable` reads differently from "Not applicable".
+ */
+function normalizeForMatch(text: string): string {
+  return text.toLowerCase().replace(/[\u2018\u2019\u02bc]/g, "'").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * The def's name from a `$ref` -- the last pointer segment, never the path. Matching the whole
+ * URI means a file called `common/missing_codes.json` turns every value reached through it
+ * into a special code.
+ */
+function refDefName(ref: string): string {
+  const hash = ref.indexOf("#");
+  const segments = (hash === -1 ? "" : ref.slice(hash + 1)).split("/").filter(Boolean);
+  const last = segments[segments.length - 1];
+  if (last === undefined) return "";
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
 const CONVENTIONAL_SENTINEL_CODES = new Set<number>([666, 777, 888, 999, 6666, 7777, 8888, 9999]);
 
 const ANNOTATION_KEYS = new Set(["title", "description", "$comment"]);
@@ -192,6 +221,7 @@ function collect(schema: JsonSchema, ctx: InternalContext, acc: Accumulator): vo
   }
 
   // 2020-12 allows annotations/keywords alongside $ref; follow the ref then apply siblings.
+  const beforeRef = acc.values.length;
   const ref = refKeyword(schema);
   if (ref) {
     const loc = ctx.registry.resolve(ref, ctx.base);
@@ -213,7 +243,7 @@ function collect(schema: JsonSchema, ctx: InternalContext, acc: Accumulator): vo
   }
 
   collectAnnotations(schema, acc);
-  collectValueKind(schema, acc);
+  collectValueKind(schema, acc, beforeRef);
   collectTypes(schema, acc);
   collectFormatAndContent(schema, acc);
   collectEnumConst(schema, ctx, acc);
@@ -232,12 +262,19 @@ function collectAnnotations(schema: JsonSchemaObject, acc: Accumulator): void {
 /**
  * `x-value-kind` declares whether the schema's `const`/`enum` members are substantive answers
  * or missing/NA codes. It is read both from the subschema that carries the value (typically a
- * shared `$defs` entry) and from a `$ref` sibling, which -- being applied after the ref is
- * followed -- overrides the referenced default.
+ * shared `$defs` entry) and from a `$ref` sibling. The sibling is the more local of the two,
+ * so it re-stamps whatever the referenced schema contributed: `firstOwnValue` is where this
+ * schema's `$ref` started pushing.
  */
-function collectValueKind(schema: JsonSchemaObject, acc: Accumulator): void {
+function collectValueKind(schema: JsonSchemaObject, acc: Accumulator, firstOwnValue: number): void {
   const declared = schema["x-value-kind"];
-  if (declared === "value" || declared === "sentinel") acc.valueKind = declared;
+  if (declared !== "value" && declared !== "sentinel") return;
+  acc.valueKind = declared;
+  for (let i = firstOwnValue; i < acc.values.length; i += 1) {
+    const v = acc.values[i] as DraftValue;
+    v.kind = declared;
+    v.declaredKind = declared;
+  }
 }
 
 function collectTypes(schema: JsonSchemaObject, acc: Accumulator): void {
@@ -273,7 +310,7 @@ function collectEnumConst(schema: JsonSchemaObject, ctx: InternalContext, acc: A
         acc.nullable = true;
         continue;
       }
-      acc.values.push(makeValue(value, enumDescriptionFor(value, index, descriptions), undefined, ctx.source));
+      acc.values.push(declare(makeValue(value, enumDescriptionFor(value, index, descriptions), undefined, ctx.source), acc));
       acc.jsonTypes.add(jsonTypeOf(value));
     }
   }
@@ -284,10 +321,15 @@ function collectEnumConst(schema: JsonSchemaObject, ctx: InternalContext, acc: A
       // For a bare const the local title/description annotate the value itself.
       const label = typeof schema.title === "string" ? schema.title : undefined;
       const desc = typeof schema.description === "string" ? schema.description : undefined;
-      acc.values.push(makeValue(value, desc, label, ctx.source));
+      acc.values.push(declare(makeValue(value, desc, label, ctx.source), acc));
       acc.jsonTypes.add(jsonTypeOf(value));
     }
   }
+}
+
+/** Stamp the kind in effect where the value was declared, if the schema declared one. */
+function declare(v: ValidValue, acc: Accumulator): DraftValue {
+  return acc.valueKind ? { ...v, kind: acc.valueKind, declaredKind: acc.valueKind } : v;
 }
 
 function collectScalarConstraints(schema: JsonSchemaObject, acc: Accumulator): void {
@@ -299,9 +341,16 @@ function collectScalarConstraints(schema: JsonSchemaObject, acc: Accumulator): v
 }
 
 function collectComposition(schema: JsonSchemaObject, ctx: InternalContext, acc: Accumulator): void {
-  // allOf: a conjunction — merge every branch into this accumulator.
+  // allOf: a conjunction — merge every branch into this accumulator. A branch's own
+  // `x-value-kind` stamps the values that branch contributes, but must not become the
+  // property's default: allOf is unordered, so letting the last branch win would make the
+  // answer depend on how the array happens to be written.
   if (Array.isArray(schema.allOf)) {
-    for (const branch of schema.allOf) collect(branch, { ...ctx, depth: ctx.depth + 1 }, acc);
+    const outer = acc.valueKind;
+    for (const branch of schema.allOf) {
+      collect(branch, { ...ctx, depth: ctx.depth + 1 }, acc);
+      acc.valueKind = outer;
+    }
   }
 
   const union = schema.oneOf ?? schema.anyOf;
@@ -326,12 +375,15 @@ function handleUnion(branches: JsonSchema[], ctx: InternalContext, acc: Accumula
   // same code with the same label cannot come out `sentinel` in one field and `value` in another
   // just because the field happens to also carry a numeric range. An `x-value-kind` on the branch
   // wins; one on the property as a whole is the default for branches that declare none.
-  const classify = (v: ValidValue, branch: JsonSchema, declared: ValidValueKind | undefined): ValidValueKind => {
-    const explicit = declared ?? acc.valueKind;
+  const classify = (v: DraftValue, refName: string | undefined, declared: ValidValueKind | undefined): ValidValueKind => {
+    // Declared at the value itself (possibly in a union nested inside this one) beats the
+    // branch's declaration, which beats the property's, which beats the wording.
+    const explicit = v.declaredKind ?? declared ?? acc.valueKind;
     if (explicit) return explicit;
-    const refName = isSchemaObject(branch) ? refKeyword(branch) : undefined;
     return isSentinelValue(v, refName) ? "sentinel" : "value";
   };
+  // Once per branch, not once per value: a branch can carry a 200-member enum.
+  const refNameOf = (branch: JsonSchema): string | undefined => (isSchemaObject(branch) ? refKeyword(branch) : undefined);
 
   const measurements = analyzed.filter((b) => b.analysis.isMeasurement);
   const categoricals = analyzed.filter((b) => !b.analysis.isMeasurement);
@@ -356,13 +408,15 @@ function handleUnion(branches: JsonSchema[], ctx: InternalContext, acc: Accumula
       });
     }
     for (const c of categoricals) {
-      for (const v of c.analysis.values) acc.values.push({ ...v, kind: classify(v, c.branch, c.analysis.valueKind) });
+      const refName = refNameOf(c.branch);
+      for (const v of c.analysis.values) acc.values.push({ ...v, kind: classify(v, refName, c.analysis.valueKind) });
     }
   } else if (hasCategorical) {
     // Pure categorical: tag each value as substantive or sentinel.
     for (const c of categoricals) {
+      const refName = refNameOf(c.branch);
       for (const v of c.analysis.values) {
-        acc.values.push({ ...v, kind: classify(v, c.branch, c.analysis.valueKind) });
+        acc.values.push({ ...v, kind: classify(v, refName, c.analysis.valueKind) });
         acc.jsonTypes.add(jsonTypeOf(v.value));
       }
     }
@@ -452,9 +506,12 @@ function collectAdditional(schema: JsonSchemaObject, acc: Accumulator): void {
 // ---------------------------------------------------------------------------
 
 function materialize(acc: Accumulator): PropertyAnalysis {
-  // Values from a bare `const`/`enum` (no union) are untagged; a declared kind still applies.
-  if (acc.valueKind) {
-    for (const v of acc.values) if (v.kind === undefined) v.kind = acc.valueKind;
+  // Values from a bare `const`/`enum` never passed through a union, so nothing has classified
+  // them yet. Run the same rule here: a code should not mean one thing written as `enum` and
+  // another written as a `oneOf` of titled consts.
+  for (const v of acc.values as DraftValue[]) {
+    if (v.kind === undefined) v.kind = acc.valueKind ?? (isSentinelValue(v) ? "sentinel" : "value");
+    delete v.declaredKind;
   }
   return {
     dataType: dataTypeText(acc),
@@ -556,6 +613,15 @@ function buildConstraints(acc: Accumulator): ConstraintItem[] {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * A value while it is being built. `declaredKind` records that the kind came from an
+ * `x-value-kind` rather than from wording, so re-tagging passes leave it alone and grouping
+ * branches into a nested union cannot silently reverse the author. Stripped in `materialize`.
+ */
+interface DraftValue extends ValidValue {
+  declaredKind?: ValidValueKind;
+}
+
 function makeValue(value: JsonValue, description: string | undefined, label: string | undefined, source: SourceInfo | undefined): ValidValue {
   return {
     value,
@@ -577,12 +643,15 @@ function enumDescriptionFor(value: JsonValue, index: number, descriptions: JsonS
 }
 
 export function isSentinelValue(v: ValidValue, refName?: string): boolean {
-  if (refName && SENTINEL_WORDS.test(refName)) return true;
+  if (refName && SENTINEL_WORDS.test(normalizeForMatch(refDefName(refName)))) return true;
   // A label is a terse name for the value itself; a description is prose about it, and prose
-  // that merely mentions missingness is not evidence the value *is* missing. Read the
-  // description only when there is no label to read instead.
-  const text = v.label?.trim() ? v.label : (v.description ?? "");
-  if (text.trim() && SENTINEL_WORDS.test(text)) return true;
+  // that merely mentions missingness is not evidence the value *is* missing -- one of these
+  // descriptions reads "a substantive response, not a missingness sentinel". So read the
+  // description only when the label is not a name at all: codebooks that put the code in the
+  // title ("-3") and the meaning in the description have nothing else to go on.
+  const label = v.label?.trim() ?? "";
+  const text = /\p{L}/u.test(label) ? label : (v.description ?? "");
+  if (text.trim() && SENTINEL_WORDS.test(normalizeForMatch(text))) return true;
   if (typeof v.value === "number" && CONVENTIONAL_SENTINEL_CODES.has(v.value)) return true;
   return false;
 }

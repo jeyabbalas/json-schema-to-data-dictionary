@@ -24,7 +24,8 @@ const DEFS = {
           "The participant actively selected 'none of the listed options apply'. This is a substantive response, not a missingness sentinel."
       },
       suppressed: { const: -999, title: "Suppressed" },
-      not_on_questionnaire: { const: -2, title: "Not on questionnaire" }
+      not_on_questionnaire: { const: -2, title: "Not on questionnaire" },
+      not_applicable_code: { const: 9 }
     }
   }
 };
@@ -197,18 +198,133 @@ test("x-value-kind overrides the guess in both directions", () => {
 });
 
 test("x-value-kind is read through a $ref, and a sibling overrides the referenced default", () => {
+  // Each def declares the kind its *wording* would not produce, so deleting the setup flips
+  // both assertions -- otherwise the test passes whether or not the keyword is read at all.
   const defs = structuredClone(DEFS);
-  defs.schema.$defs.none_of_the_above["x-value-kind"] = "value";
-  defs.schema.$defs.dont_know["x-value-kind"] = "sentinel";
+  defs.schema.$defs.suppressed["x-value-kind"] = "value";
+  defs.schema.$defs.none_of_the_above["x-value-kind"] = "sentinel";
   const docs = table({
-    inherited: { title: "Inherited", oneOf: [{ const: 1, title: "Yes" }, REF("none_of_the_above"), REF("dont_know")] },
-    overridden: { title: "Overridden", oneOf: [{ const: 1, title: "Yes" }, { ...REF("dont_know"), "x-value-kind": "value" }] }
+    inherited: { title: "Inherited", oneOf: [{ const: 1, title: "Yes" }, REF("suppressed"), REF("none_of_the_above")] },
+    overridden: { title: "Overridden", oneOf: [{ const: 1, title: "Yes" }, { ...REF("suppressed"), "x-value-kind": "sentinel" }] }
   });
   const t = schemaDocumentsToTable([defs, ...docs.slice(1)]);
   const inherited = findRow(t, "inherited");
-  assert.equal(kindOf(inherited, -7), "value");
-  assert.equal(kindOf(inherited, -1), "sentinel");
-  assert.equal(kindOf(findRow(t, "overridden"), -1), "value", "the $ref sibling wins over the referenced default");
+  assert.equal(kindOf(inherited, -999), "value", 'declared "value" beats the word "Suppressed"');
+  assert.equal(kindOf(inherited, -7), "sentinel", 'declared "sentinel" beats wording that says otherwise');
+  assert.equal(kindOf(findRow(t, "overridden"), -999), "sentinel", "the $ref sibling wins over the referenced default");
+});
+
+test("a bare enum or const is classified like the oneOf spelling", () => {
+  const t = schemaDocumentsToTable(
+    table({
+      asEnum: { type: "integer", enum: [1, 2, 999], enumDescriptions: { 1: "Yes", 2: "No", 999: "Missing" } },
+      asUnion: { oneOf: [{ const: 1, title: "Yes" }, { const: 2, title: "No" }, { const: 999, title: "Missing" }] }
+    })
+  );
+  for (const name of ["asEnum", "asUnion"]) {
+    const row = findRow(t, name);
+    assert.equal(kindOf(row, 999), "sentinel", `${name}: 999 is a special code`);
+    assert.equal(kindOf(row, 1), "value", `${name}: 1 is a real answer`);
+  }
+});
+
+test("a $ref is read by its def name, not the file it lives in", () => {
+  // A file called common/missing_codes.json must not turn everything reached through it
+  // into a special code.
+  const defs = structuredClone(DEFS);
+  defs.uri = "https://demo.local/common/missing_codes.json";
+  defs.name = "missing_codes.json";
+  defs.schema.$id = "https://schemas.example/pilot/common/missing_codes.json";
+  defs.schema.$defs.yes = { const: 1, title: "Yes" };
+  defs.schema.$defs.no = { const: 2, title: "No" };
+  const docs = table({
+    answer: {
+      title: "Answer",
+      oneOf: [
+        { $ref: "../../common/missing_codes.json#/$defs/yes" },
+        { $ref: "../../common/missing_codes.json#/$defs/no" },
+        { $ref: "../../common/missing_codes.json#/$defs/suppressed" }
+      ]
+    }
+  });
+  const row = findRow(schemaDocumentsToTable([defs, ...docs.slice(1)]), "answer");
+  assert.equal(kindOf(row, 1), "value");
+  assert.equal(kindOf(row, 2), "value");
+  assert.equal(kindOf(row, -999), "sentinel", "the def that really is a code still is one");
+});
+
+test("a snake_case def name and a curly apostrophe are read like the prose spelling", () => {
+  const t = schemaDocumentsToTable(
+    table({
+      viaRef: { title: "Via ref", oneOf: [{ const: 1, title: "Yes" }, REF("not_applicable_code")] },
+      curly: { title: "Curly", oneOf: [{ const: 1, title: "Yes" }, { const: -1, title: "Don\u2019t know" }] }
+    })
+  );
+  assert.equal(kindOf(findRow(t, "viaRef"), 9), "sentinel", "not_applicable_code reads as 'not applicable'");
+  assert.equal(kindOf(findRow(t, "curly"), -1), "sentinel", "U+2019 is an apostrophe");
+});
+
+test("allOf does not decide the property's kind, and its order does not matter", () => {
+  const base = (kind) => ({ "x-value-kind": kind, type: "integer" });
+  const one = schemaDocumentsToTable(
+    table({ v: { title: "V", allOf: [base("sentinel"), base("value")], oneOf: [{ const: 1, title: "Yes" }] } })
+  );
+  const other = schemaDocumentsToTable(
+    table({ v: { title: "V", allOf: [base("value"), base("sentinel")], oneOf: [{ const: 1, title: "Yes" }] } })
+  );
+  assert.equal(kindOf(findRow(one, "v"), 1), kindOf(findRow(other, "v"), 1), "allOf is unordered; the answer must be too");
+  assert.equal(kindOf(findRow(one, "v"), 1), "value", "a shared base does not retag the property's own values");
+});
+
+test("grouping branches into a nested union keeps their declared kinds", () => {
+  const flat = schemaDocumentsToTable(
+    table({ v: { title: "V", oneOf: [{ const: 888, title: "Every day", "x-value-kind": "value" }, { const: 1, title: "Never" }] } })
+  );
+  const nested = schemaDocumentsToTable(
+    table({ v: { title: "V", oneOf: [{ oneOf: [{ const: 888, title: "Every day", "x-value-kind": "value" }] }, { const: 1, title: "Never" }] } })
+  );
+  assert.equal(kindOf(findRow(flat, "v"), 888), "value", "888 is a conventional code the author overrode");
+  assert.equal(kindOf(findRow(nested, "v"), 888), "value", "nesting must not reverse the declaration");
+});
+
+test("a sentinel word inside a clinical or educational term is not a code", () => {
+  const t = schemaDocumentsToTable(
+    table({
+      therapy: {
+        title: "Therapy",
+        oneOf: [{ const: 1, title: "Ovarian suppression" }, { const: 2, title: "Bone marrow suppression" }, { const: 3, title: "Suppressed" }]
+      },
+      status: {
+        title: "Status",
+        oneOf: [{ const: 1, title: "Not in formal education, employment or training" }, { const: 2, title: "Employed" }]
+      },
+      analyte: { title: "Analyte", oneOf: [{ const: 1, title: "Sodium (Na)" }, { const: 2, title: "N/A" }] }
+    })
+  );
+  const therapy = findRow(t, "therapy");
+  assert.equal(kindOf(therapy, 1), "value", "ovarian suppression is a treatment");
+  assert.equal(kindOf(therapy, 2), "value", "bone marrow suppression is a finding");
+  assert.equal(kindOf(therapy, 3), "sentinel", '"Suppressed" on its own still is a code');
+  assert.equal(kindOf(findRow(t, "status"), 1), "value", "NEET is an answer, not a missing form");
+  assert.equal(kindOf(findRow(t, "analyte"), 1), "value", "sodium is not N/A");
+  assert.equal(kindOf(findRow(t, "analyte"), 2), "sentinel");
+});
+
+test("a code in the title and the meaning in the description is still classified", () => {
+  const t = schemaDocumentsToTable(
+    table({
+      v: { title: "V", oneOf: [{ const: 1, title: "Yes" }, { const: -3, title: "-3", description: "Not applicable to this participant." }] },
+      w: {
+        title: "W",
+        oneOf: [
+          { const: 1, title: "None of the above", description: "A substantive response, not a missingness sentinel." },
+          { const: -3, title: "Prefer not to answer" }
+        ]
+      }
+    })
+  );
+  assert.equal(kindOf(findRow(t, "v"), -3), "sentinel", "a bare code for a title leaves only the description to read");
+  assert.equal(kindOf(findRow(t, "w"), 1), "value", "but a real label means the prose is not consulted");
 });
 
 test("a property-level x-value-kind is the default for its branches", () => {

@@ -32,6 +32,19 @@ All notable changes to this project are documented here. The format follows
   classifier matched the value's prose `description`, so a substantive value documented as
   *"…not a missingness sentinel"* was filed under **special codes**. It now reads the label
   and the `$ref` name, falling back to the description only when there is no label.
+- **A bare `enum`/`const` is classified like the `oneOf` spelling.** Values that never passed
+  through a union were left untagged, so `enum: [1, 2, 999]` rendered `999` as a real category
+  and embedded it for search while the equivalent `oneOf` of titled consts did not.
+- **A `$ref` is read by its def name, not its path.** The whole URI was matched, so a shared
+  file called `common/missing_codes.json` turned every value reached through it into a special
+  code. Identifier spellings (`dont_know`, `not_applicable`), kebab-case and the U+2019
+  apostrophe are now folded to one form before matching.
+- **`x-value-kind` precedence is well-defined.** The nearest declaration wins — value, then
+  branch, then property. Grouping branches into a nested union no longer discards a per-member
+  declaration; an `allOf` branch no longer retags the property's own values or lets array order
+  decide the answer; and a declaration beside a `$ref` overrides the referenced schema even when
+  that schema holds the union. The keyword's published type is now `"value" | "sentinel"`
+  (`DeclaredValueKind`) rather than the wider `ValidValueKind`.
 - **A field with no real categories is no longer typed `categorical`.** The check counted
   sentinels as categories, so a sparse coding table that declares nothing but missing/NA
   codes was badged `categorical (integer)` beside a values cell holding no categories. It
