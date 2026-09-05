@@ -36,7 +36,11 @@ jobs:
         run: npm run typecheck
 
       - name: Test
+        # Shared runners are ~3x slower than a laptop and node --test runs files in parallel;
+        # the perf-smoke budgets (tests/perf-smoke.test.mjs) scale with this factor.
         run: npm test
+        env:
+          DD_PERF_SCALE: "3"
 
       - name: Build library bundle
         run: npm run build
