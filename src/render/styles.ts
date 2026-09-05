@@ -162,7 +162,9 @@ export const STYLES = `
 .dd-desc { white-space: pre-line; }
 .dd-format { color: var(--_muted); }
 
-.dd-badge { display: inline-block; font-family: var(--_mono); font-size: .82em; padding: 2px 8px; border-radius: 999px; background: var(--_accent-weak); color: var(--_accent); }
+/* A rectangle, not a pill: a long data type ("categorical (integer)") wraps to three lines in
+   a narrow column, and a pill radius would round that block into a circle. */
+.dd-badge { display: inline-block; font-family: var(--_mono); font-size: .82em; padding: 2px 8px; border-radius: 6px; background: var(--_accent-weak); color: var(--_accent); }
 .dd-badge[data-mixed="true"] { background: var(--_sentinel-bg); color: var(--_sentinel); }
 
 .dd-vv { margin: 0; display: grid; gap: 3px; }
