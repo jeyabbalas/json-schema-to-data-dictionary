@@ -1,0 +1,659 @@
+{
+ "title": "COVID-19 Patient Surveillance Dataset",
+ "categories": [
+  {
+   "id": "general",
+   "title": "General",
+   "rows": [
+    "patient_id",
+    "enrollment_date",
+    "age",
+    "age_group",
+    "sex",
+    "bmi",
+    "vaccination_status",
+    "symptom_onset_date",
+    "hospitalized",
+    "icu_admission",
+    "days_hospitalized",
+    "outcome",
+    "comorbidities",
+    "ct_value",
+    "variant",
+    "zip_code",
+    "rural_urban"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "patient_id",
+   "category": "General",
+   "description": "Unique identifier for the patient",
+   "type": "string",
+   "format": "Matches pattern ^PAT-[0-9]{8}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "length",
+     "Exactly 12 character(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/patient_id"
+   }
+  },
+  {
+   "name": "enrollment_date",
+   "category": "General",
+   "description": "Date patient was enrolled in the study",
+   "type": "date (nullable)",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/enrollment_date"
+   }
+  },
+  {
+   "name": "age",
+   "category": "General",
+   "description": "Age of patient at enrollment in years",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 120",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/age"
+   }
+  },
+  {
+   "name": "age_group",
+   "category": "General",
+   "description": "Categorized age group for analysis",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "0-17",
+     "value",
+     null,
+     "Pediatric patients",
+     null
+    ],
+    [
+     "18-29",
+     "value",
+     null,
+     "Young adults",
+     null
+    ],
+    [
+     "30-39",
+     "value",
+     null,
+     "Adults in their thirties",
+     null
+    ],
+    [
+     "40-49",
+     "value",
+     null,
+     "Adults in their forties",
+     null
+    ],
+    [
+     "50-59",
+     "value",
+     null,
+     "Adults in their fifties",
+     null
+    ],
+    [
+     "60-69",
+     "value",
+     null,
+     "Adults in their sixties",
+     null
+    ],
+    [
+     "70-79",
+     "value",
+     null,
+     "Adults in their seventies",
+     null
+    ],
+    [
+     "80+",
+     "value",
+     null,
+     "Elderly patients",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/age_group"
+   }
+  },
+  {
+   "name": "sex",
+   "category": "General",
+   "description": "Biological sex at birth",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Male",
+     "value",
+     null,
+     "Male sex at birth",
+     null
+    ],
+    [
+     "Female",
+     "value",
+     null,
+     "Female sex at birth",
+     null
+    ],
+    [
+     "Other",
+     "value",
+     null,
+     "Other/Intersex",
+     null
+    ],
+    [
+     "Unknown",
+     "sentinel",
+     null,
+     "Not reported or unknown",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/sex"
+   }
+  },
+  {
+   "name": "bmi",
+   "category": "General",
+   "description": "Body Mass Index calculated as weight(kg)/height(m)²",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "10 ≤ value ≤ 70",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.1",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/bmi"
+   }
+  },
+  {
+   "name": "vaccination_status",
+   "category": "General",
+   "description": "COVID-19 vaccination status at time of infection",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Unvaccinated",
+     "value",
+     null,
+     "No COVID-19 vaccine doses received",
+     null
+    ],
+    [
+     "Partially",
+     "value",
+     null,
+     "1 dose of 2-dose series or <14 days after final dose",
+     null
+    ],
+    [
+     "Fully",
+     "value",
+     null,
+     "Completed primary series ≥14 days ago",
+     null
+    ],
+    [
+     "Boosted",
+     "value",
+     null,
+     "Received booster dose ≥14 days ago",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/vaccination_status"
+   }
+  },
+  {
+   "name": "symptom_onset_date",
+   "category": "General",
+   "description": "Date of first COVID-19 symptom appearance",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/symptom_onset_date"
+   }
+  },
+  {
+   "name": "hospitalized",
+   "category": "General",
+   "description": "Whether patient required hospitalization",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "When hospitalized is present, days_hospitalized is also required.",
+     "hospitalized is present"
+    ],
+    [
+     "conditional",
+     "Required when icu_admission is present.",
+     "icu_admission is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/hospitalized"
+   }
+  },
+  {
+   "name": "icu_admission",
+   "category": "General",
+   "description": "Whether patient required ICU level care",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "When icu_admission is present, hospitalized is also required.",
+     "icu_admission is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/icu_admission"
+   }
+  },
+  {
+   "name": "days_hospitalized",
+   "category": "General",
+   "description": "Total days in hospital (0 if not hospitalized)",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 365",
+     null
+    ],
+    [
+     "conditional",
+     "Required when hospitalized is present.",
+     "hospitalized is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/days_hospitalized"
+   }
+  },
+  {
+   "name": "outcome",
+   "category": "General",
+   "description": "Final outcome of COVID-19 infection",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Recovered",
+     "value",
+     null,
+     "Full recovery confirmed",
+     null
+    ],
+    [
+     "Death",
+     "value",
+     null,
+     "Death related to COVID-19",
+     null
+    ],
+    [
+     "Ongoing",
+     "value",
+     null,
+     "Still under treatment/observation",
+     null
+    ],
+    [
+     "Lost_to_followup",
+     "value",
+     null,
+     "Patient lost to follow-up",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/outcome"
+   }
+  },
+  {
+   "name": "comorbidities",
+   "category": "General",
+   "description": "List of pre-existing medical conditions",
+   "type": "array of categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Diabetes",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Hypertension",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Heart_Disease",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Lung_Disease",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Kidney_Disease",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Immunocompromised",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "Obesity",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "None",
+     "value",
+     null,
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "items",
+     "At least 1 item(s)",
+     null
+    ],
+    [
+     "uniqueItems",
+     "Items must be unique",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/comorbidities"
+   }
+  },
+  {
+   "name": "ct_value",
+   "category": "General",
+   "description": "Cycle threshold value from PCR test (lower = higher viral load)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 < value < 45",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/ct_value"
+   }
+  },
+  {
+   "name": "variant",
+   "category": "General",
+   "description": "SARS-CoV-2 variant identified through sequencing",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Alpha",
+     "value",
+     null,
+     "B.1.1.7 lineage",
+     null
+    ],
+    [
+     "Beta",
+     "value",
+     null,
+     "B.1.351 lineage",
+     null
+    ],
+    [
+     "Gamma",
+     "value",
+     null,
+     "P.1 lineage",
+     null
+    ],
+    [
+     "Delta",
+     "value",
+     null,
+     "B.1.617.2 lineage",
+     null
+    ],
+    [
+     "Omicron_BA1",
+     "value",
+     null,
+     "BA.1 sublineage",
+     null
+    ],
+    [
+     "Omicron_BA2",
+     "value",
+     null,
+     "BA.2 sublineage",
+     null
+    ],
+    [
+     "Omicron_BA5",
+     "value",
+     null,
+     "BA.5 sublineage",
+     null
+    ],
+    [
+     "Other",
+     "value",
+     null,
+     "Other variant detected",
+     null
+    ],
+    [
+     "Not_Sequenced",
+     "value",
+     null,
+     "Sample not sequenced",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/variant"
+   }
+  },
+  {
+   "name": "zip_code",
+   "category": "General",
+   "description": "5-digit ZIP code of patient residence",
+   "type": "string",
+   "format": "Matches pattern ^[0-9]{5}$",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/zip_code"
+   }
+  },
+  {
+   "name": "rural_urban",
+   "category": "General",
+   "description": "Rural-Urban Commuting Area classification",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Urban",
+     "value",
+     null,
+     "Metropolitan core area",
+     null
+    ],
+    [
+     "Suburban",
+     "value",
+     null,
+     "Micropolitan or large town area",
+     null
+    ],
+    [
+     "Rural",
+     "value",
+     null,
+     "Small town or rural area",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/covid-patient-dataset.json",
+    "pointer": "/properties/rural_urban"
+   }
+  }
+ ],
+ "conditionalRules": [],
+ "warnings": []
+}

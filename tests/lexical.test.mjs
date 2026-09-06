@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { performance } from "node:perf_hooks";
-import { loadDir, findRow } from "./_helpers.mjs";
+import { loadDir, findRow, nestedTable } from "./_helpers.mjs";
 
 const {
   schemaDocumentsToTable, buildViewModel,
@@ -270,4 +270,33 @@ test("timing: 10k-row synthetic table (build < 1 s, query < 50 ms; targets 100 m
   assert.ok(worst < 50, `worst query ${worst} ms`);
   assert.equal(bigIndex.search("smoking_status_c12")[0].row, big.rows.findIndex((r) => r["Variable name"] === "smoking_status_c12"));
   assert.ok(bigIndex.search("smoking_status_c12")[0].exactName);
+});
+
+test("createLexicalIndex: nested paths match by leaf, by parent, as a typed path and as words", () => {
+  assert.deepEqual(tokenize("visits[].date"), ["visits", "date"]);
+  assert.deepEqual(tokenize("genotype[0]"), ["genotype", "0"]);
+  const nested = nestedTable();
+  const nestedNames = nested.rows.map((r) => r["Variable name"]);
+  const nestedIndex = createLexicalIndex(lexicalDocumentsFromTable(nested));
+  const at = (hits, i) => nestedNames[hits[i].row];
+
+  let hits = nestedIndex.search("date");
+  assert.equal(at(hits, 0), "visits[].date");
+  assert.ok(hits[0].matches.some((m) => m.field === "name" && m.terms.includes("date")));
+
+  hits = nestedIndex.search("visits[].date");
+  assert.equal(at(hits, 0), "visits[].date");
+  assert.equal(hits[0].exactName, true);
+  assert.ok(hits[0].matches[0].terms.includes("visits[].date"), "the whole path is a term of the name field");
+  assert.equal(nestedIndex.search("visits date")[0].exactName, true, "the humanised path counts as an exact name");
+
+  hits = nestedIndex.search("visits");
+  const byName = new Map(hits.map((h) => [nestedNames[h.row], h]));
+  assert.equal(byName.get("visits").exactName, true);
+  for (const child of ["visits[].date", "visits[].weight", "visits[].labs[].name"]) {
+    assert.ok(byName.get(child), `${child} is a hit`);
+    assert.equal(byName.get(child).namePrefix, true);
+    assert.equal(byName.get(child).exactName, false);
+  }
+  assert.equal(at(nestedIndex.search("zip"), 0), "contact.address.zip");
 });

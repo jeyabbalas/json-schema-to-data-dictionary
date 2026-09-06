@@ -56,6 +56,7 @@ export function toPlainRows(table: DataDictionaryTable, options: PlainRowsOption
     };
     if (options.includeInternalColumns) {
       plain.Category = row.__category ?? empty;
+      plain.Parent = row.__parent ?? empty;
       plain.Source = row.__source ? stableStringify(row.__source) : empty;
     }
     return plain;

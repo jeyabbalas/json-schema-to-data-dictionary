@@ -6,6 +6,7 @@
 export { schemaDocumentsToTable, findSchemaRoots } from "./extract";
 export { analyzeProperty } from "./analyze";
 export { SchemaRegistry } from "./registry";
+export { formatVariablePath, sourceAt } from "./paths";
 
 // --- Serialization / export ---
 export { toPlainRows, tableToCsv, validValuesText, constraintsText, additionalInfoText } from "./serialize";
@@ -13,7 +14,7 @@ export { toPlainRows, tableToCsv, validValuesText, constraintsText, additionalIn
 // --- Rendering ---
 export { tableToHtml, STYLES } from "./render/html";
 export { renderDataDictionary, defineDataDictionaryElement, ELEMENT_TAG } from "./render/component";
-export { buildViewModel } from "./render/viewModel";
+export { buildViewModel, splitVariableName } from "./render/viewModel";
 
 // --- Search: lexical (BM25F) index, hybrid engine, and semantic search (opt-in; bring your own Embedder) ---
 export { createSearchEngine } from "./search/engine";
@@ -37,6 +38,7 @@ export type {
   JsonPrimitive,
   JsonSchema,
   JsonSchemaObject,
+  PathStep,
   SchemaDocumentInput,
   SchemaRootCandidate,
   SourceInfo,
@@ -96,7 +98,7 @@ export type { TransformersModuleLike, TransformersEmbedderOptions, KnownEmbeddin
 export type { WebGpuSupport, DtypeTable, ResolveRuntimeOptions, ResolvedRuntime } from "./search/runtime";
 export type { TensorLike } from "./search/pooling";
 export type { EmbedderPort } from "./search/worker";
-export type { AnalyzeContext, PropertyAnalysis } from "./analyze";
+export type { AnalyzeContext, PropertyAnalysis, PropertyShape, PropertyShapeKind, SchemaRef } from "./analyze";
 export type { DataDictionaryElement } from "./render/component";
 export type { ViewModel, CategoryVM, RowVM, ValueVM, ConstraintVM, RuleVM, ResolvedOptions } from "./render/viewModel";
 export type { FormatDescriptor } from "./formats";

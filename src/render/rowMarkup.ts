@@ -16,6 +16,11 @@ export interface RowMarkupOptions {
   rowIndex: boolean;
   /** Emit the category tag shown under the variable name in the results list. */
   categoryTag: boolean;
+  /**
+   * Emit `data-dd-depth` on nested rows (indentation and the tree glyph of the category
+   * tables). The results list shows rows out of context and leaves it off.
+   */
+  indent: boolean;
   /** Wraps query hits in `<mark class="dd-hit">`. Default: plain escaping. */
   highlight?: Highlighter | undefined;
   /** Results list only: keyword ("exact") or semantic-only ("related") match. */
@@ -33,9 +38,15 @@ export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): st
   const searchAttr = opts.searchAttr ? ` data-search="${escapeHtml(row.searchText)}"` : "";
   const titleAttr = opts.match === "related" ? ` title="Related · similarity ${(opts.similarity ?? 0).toFixed(2)}"` : "";
   const categoryTag = opts.categoryTag ? `<span class="dd-row-cat">${escapeHtml(row.category)}</span>` : "";
+  const depthAttr = opts.indent && row.depth > 0 ? ` data-dd-depth="${row.depth}"` : "";
+  // A nested field shows its parent path muted and its own name bold; both halves live inside
+  // the one <code>, so the cell still reads (and copies) as the full path.
+  const name = row.namePrefix
+    ? `<span class="dd-name-prefix">${hl(row.namePrefix)}</span><span class="dd-name-leaf">${hl(row.nameLeaf)}</span>`
+    : hl(row.name);
   return `
-          <tr class="dd-row" data-dd-row${indexAttr}${matchAttr}${searchAttr}>
-            <th class="dd-col-name" scope="row"${titleAttr}><code>${hl(row.name)}</code>${categoryTag}</th>
+          <tr class="dd-row" data-dd-row${indexAttr}${depthAttr}${matchAttr}${searchAttr}>
+            <th class="dd-col-name" scope="row"${titleAttr}><code>${name}</code>${categoryTag}</th>
             <td class="dd-desc">${row.description ? multiline(row.description, hl) : empty}</td>
             <td class="dd-type">${row.dataType ? `<span class="dd-badge" data-mixed="${mixed}">${hl(row.dataType)}</span>` : empty}</td>
             <td class="dd-format">${row.format ? multiline(row.format, hl) : empty}</td>

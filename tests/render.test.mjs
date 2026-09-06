@@ -47,6 +47,13 @@ test("toPlainRows: spreadsheet-ready", () => {
 test("toPlainRows: includes internal columns when asked", () => {
   const rows = toPlainRows(table, { includeInternalColumns: true });
   assert.ok("Category" in rows[0]);
+  assert.ok("Parent" in rows[0]);
+  assert.equal(rows[0].Parent, "", "top-level rows have no parent");
+});
+
+test("tableToHtml: a dictionary without nested rows renders no nested markup", () => {
+  const html = tableToHtml(table);
+  assert.doesNotMatch(html.slice(html.indexOf("</style>")), /data-dd-depth|dd-name-prefix|dd-name-leaf/);
 });
 
 test("tableToCsv: RFC-4180 header + quoting", () => {

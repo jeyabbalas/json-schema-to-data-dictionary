@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadDir, findRow } from "./_helpers.mjs";
+import { loadDir, findRow, nestedTable } from "./_helpers.mjs";
 import { createFakeEmbedder, syntheticTable } from "./_fakeEmbedder.mjs";
 
 // fake-indexeddb provides a pure-JS IndexedDB for the cache tests (skipped if absent).
@@ -35,6 +35,13 @@ test("humanizeName", () => {
   assert.equal(humanizeName("bodyMassIndex"), "body Mass Index");
   assert.equal(humanizeName("BMI"), "BMI");
   assert.equal(humanizeName("meno-age.v2"), "meno age v2");
+  // Nested paths: brackets, quotes and the map wildcard are separators; plain names are unchanged.
+  assert.equal(humanizeName("visits[].date"), "visits date");
+  assert.equal(humanizeName("visits[*].date"), "visits date");
+  assert.equal(humanizeName("genotype[0]"), "genotype 0");
+  assert.equal(humanizeName("biomarkers.*"), "biomarkers");
+  assert.equal(humanizeName('odd["a b"]'), "odd a b");
+  assert.equal(EMBED_TEXT_VERSION, 2, "the chunk template did not change for existing names");
 });
 
 test("buildEmbedChunks v2: identity chunk carries both names, drops regex formats; values chunks unchanged", () => {
@@ -657,4 +664,12 @@ test("createTransformersEmbedder: AutoTokenizer + AutoModel, runtime resolution,
 
   await embedder.dispose();
   assert.equal(seen.disposed, true);
+});
+
+test("buildEmbedChunks: a nested row embeds its humanised path with the raw path as alias", () => {
+  const chunks = buildEmbedChunks(nestedTable());
+  const table = nestedTable();
+  const row = table.rows.findIndex((r) => r["Variable name"] === "visits[].date");
+  const identity = chunks.find((c) => c.row === row);
+  assert.equal(identity.text, "visits date (visits[].date): Visit date");
 });

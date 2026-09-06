@@ -7,6 +7,10 @@
 // drops regex formats (they make unrelated rows alike). Deliberately NOT embedded:
 // constraints, "Additional information" JSON, sentinel/missing codes and category titles —
 // the lexical index covers those.
+//
+// The template is unchanged since 0.3: a nested field's path (`visits[].date`) humanises to
+// words like any other name ("visits date"), and names without brackets read exactly as they
+// did, so cached vectors and snapshots stay valid and EMBED_TEXT_VERSION stays at 2.
 
 import type { DataDictionaryTable, ValidValue } from "../types";
 
@@ -59,10 +63,10 @@ export interface PreparedTexts {
   backgroundCount: number;
 }
 
-/** `age_at_menarche` -> "age at menarche", `bodyMassIndex` -> "body Mass Index". */
+/** `age_at_menarche` -> "age at menarche", `bodyMassIndex` -> "body Mass Index", `visits[].date` -> "visits date". */
 export function humanizeName(name: string): string {
   return name
-    .replace(/[_\-.]+/g, " ")
+    .replace(/[_\-.[\]*"]+/g, " ")
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
     .replace(/\s+/g, " ")

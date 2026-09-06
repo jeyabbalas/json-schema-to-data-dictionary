@@ -52,3 +52,107 @@ export function cloneTable(table, times) {
   }
   return { ...table, rows, categories };
 }
+
+/**
+ * A compact, JSON-stable projection of everything a consumer sees in a table: row names,
+ * categories, columns, value kinds/labels/conditions, constraint texts, provenance pointers and
+ * the conditional rules. The golden files under fixtures/golden/ hold this projection for the
+ * scalar-only fixtures, so a change to the extractor that alters their output fails loudly.
+ */
+export function projectTable(table) {
+  return {
+    title: table.title ?? null,
+    categories: table.categories.map((c) => ({ id: c.id, title: c.title, rows: c.rows.map((r) => r["Variable name"]) })),
+    rows: table.rows.map((r) => ({
+      name: r["Variable name"],
+      category: r.__category ?? null,
+      description: r["Description"],
+      type: r["Data type"],
+      format: r["Format"],
+      values: r["Valid values"].map((v) => [v.value, v.kind ?? null, v.label ?? null, v.description ?? null, v.condition ?? null]),
+      constraints: r["Constraints"].map((c) => [c.keyword, c.text, c.condition ?? null]),
+      additional: r["Additional information"],
+      source: r.__source ? { uri: r.__source.uri, pointer: r.__source.pointer ?? null } : null
+    })),
+    conditionalRules: table.conditionalRules,
+    warnings: table.warnings
+  };
+}
+
+/**
+ * A hand-built table with nested rows (no schema parsing): a `visits` array of objects two
+ * levels deep, a hoisted array of numbers, a tuple, a nested object chain and an open map. The
+ * `<b>note</b>` leaf checks escaping; "zip" occurs in exactly one row.
+ */
+export function nestedTable() {
+  const row = (name, extra = {}) => ({
+    "Variable name": name,
+    "Description": "",
+    "Data type": "string",
+    "Format": "",
+    "Valid values": [],
+    "Constraints": [],
+    "Additional information": null,
+    __depth: 0,
+    ...extra
+  });
+  const nested = (name, parent, depth, extra = {}) => row(name, { __parent: parent, __depth: depth, ...extra });
+  const visits = [
+    row("visits", { "Data type": "array of object", "Description": "Clinic visits attended", "Constraints": [{ keyword: "properties", text: "Fields: date, weight, labs, <b>note</b>" }] }),
+    nested("visits[].date", "visits", 1, { "Data type": "date", "Description": "Visit date" }),
+    nested("visits[].weight", "visits", 1, { "Data type": "number", "Description": "Weight in kilograms" }),
+    nested("visits[].labs", "visits", 1, { "Data type": "array of object" }),
+    nested("visits[].labs[].name", "visits[].labs", 2, { "Description": "Assay name" }),
+    nested("visits[].<b>note</b>", "visits", 1, { "Description": "Free-text note" }),
+    row("weights", {
+      "Data type": "array of number + coded values",
+      "Description": "Self-reported weight at each visit",
+      "Valid values": [{ value: null, kind: "measurement", label: "20–300" }, { value: 888, kind: "sentinel", label: "Missing" }],
+      "Constraints": [{ keyword: "items", text: "1–12 items" }, { keyword: "range", text: "Each item: 20 ≤ value ≤ 300" }]
+    }),
+    row("genotype", { "Data type": "array", "Constraints": [{ keyword: "prefixItems", text: "Exactly 2 item(s)" }] }),
+    nested("genotype[0]", "genotype", 1, { "Data type": "categorical (string)", "Description": "First allele" })
+  ];
+  const contact = [
+    row("contact", { "Data type": "object" }),
+    nested("contact.address", "contact", 1, { "Data type": "object" }),
+    nested("contact.address.zip", "contact.address", 2, { "Description": "Postal code" }),
+    row("biomarkers", { "Data type": "object", "Description": "Assay concentrations" }),
+    nested("biomarkers.*", "biomarkers", 1, { "Data type": "number" }),
+    nested("biomarkers./^il_[0-9]+$/", "biomarkers", 1, { "Data type": "number", "Description": "Interleukin level" })
+  ];
+  const rows = [...visits, ...contact];
+  return {
+    title: "Nested",
+    rows,
+    categories: [
+      { id: "visits", title: "Visits", rows: visits },
+      { id: "contact", title: "Contact", rows: contact }
+    ],
+    conditionalRules: [],
+    warnings: []
+  };
+}
+
+/** One 130-row category whose `visits` group of 20 nested rows straddles a 20-row page boundary. */
+export function nestedBigTable() {
+  const row = (name, extra = {}) => ({
+    "Variable name": name,
+    "Description": `Synthetic ${name}`,
+    "Data type": "integer",
+    "Format": "",
+    "Valid values": [],
+    "Constraints": [],
+    "Additional information": null,
+    __depth: 0,
+    ...extra
+  });
+  const pad = (i) => String(i).padStart(3, "0");
+  const rows = [
+    ...Array.from({ length: 90 }, (_, i) => row(`var_${pad(i)}`)),
+    row("visits", { "Data type": "array of object" }),
+    ...Array.from({ length: 20 }, (_, i) => row(`visits[].f${String(i).padStart(2, "0")}`, { __parent: "visits", __depth: 1 })),
+    ...Array.from({ length: 19 }, (_, i) => row(`var_${pad(90 + i)}`))
+  ];
+  return { title: "Big nested", rows, categories: [{ id: "all", title: "All", rows }], conditionalRules: [], warnings: [] };
+}
