@@ -256,11 +256,17 @@ const HANDLED_KEYS = new Set([
   ...ANNOTATION_KEYS
 ]);
 
-/** Constraints of an item that describe its own container, kept verbatim when hoisted. */
-const ITEM_PASSTHROUGH_KEYWORDS = new Set(["properties", "additionalProperties", "unevaluatedProperties", "propertyNames", "prefixItems"]);
+/**
+ * Constraints of an item that describe its own fields, kept verbatim when hoisted: "Fields:
+ * date, weight" reads right on an array of objects. Item counts are not among them -- "Exactly
+ * 2 item(s)" of a `[systolic, diastolic]` pair says nothing about the readings array itself.
+ */
+const ITEM_PASSTHROUGH_KEYWORDS = new Set(["properties", "additionalProperties", "unevaluatedProperties", "propertyNames"]);
 
 /** Prefix of a hoisted item constraint. */
 const ITEM_PREFIX = "Each item: ";
+/** Prefix of a constraint an array item had itself hoisted from *its* items (an array of arrays). */
+const INNER_ITEM_PREFIX = "Each inner item: ";
 
 /** Names listed in a "Fields: …" constraint before the rest is summarised as a count. */
 const MAX_LISTED_FIELDS = 20;
@@ -928,8 +934,11 @@ function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined):
     const a = acc.array;
     const positions = acc.shape.prefixItems.length;
     if (positions > 0 && acc.shape.itemsClosed) {
-      // A closed tuple: the positions are the whole array.
-      const text = a.minItems !== undefined && a.minItems < positions ? `${a.minItems}–${positions} items` : `Exactly ${positions} item(s)`;
+      // A closed tuple: the positions are the whole array. Only `minItems` makes them all
+      // mandatory -- without it a shorter array (or an empty one) is valid.
+      const max = Math.min(positions, a.maxItems ?? positions);
+      const min = Math.min(a.minItems ?? 0, max);
+      const text = min === max ? `Exactly ${max} item(s)` : min === 0 ? `Up to ${max} item(s)` : `${min}–${max} items`;
       out.push({ keyword: "prefixItems", value: positions, text });
     } else {
       if (positions > 0) out.push({ keyword: "prefixItems", value: positions, text: `First ${positions} item(s) are positional` });
@@ -958,13 +967,15 @@ function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined):
   }
 
   // What the item schema says about one element. Constraints that describe the item's own
-  // container ("Fields: date, weight" of an array of objects) read right as they are; the
-  // rest apply per element. Rules an array item already hoisted from *its* items ("Each item:
-  // value ≥ 0" of an array of arrays) belong to the `name[]` row, not to a doubled prefix.
+  // fields ("Fields: date, weight" of an array of objects) read right as they are; the rest
+  // apply per element. A rule an array item had itself hoisted from *its* items ("Each item:
+  // value ≥ 0" of an array of arrays) is kept too, one level further in, so the row says it
+  // even when no `name[]` row is emitted (`expandNested: false`).
   if (item) {
     for (const c of item.constraints) {
-      if (ITEM_PASSTHROUGH_KEYWORDS.has(c.keyword)) out.push(c);
-      else if (!c.text.startsWith(ITEM_PREFIX)) out.push({ ...c, text: `${ITEM_PREFIX}${c.text}` });
+      if (ITEM_PASSTHROUGH_KEYWORDS.has(c.keyword) || c.text.startsWith(INNER_ITEM_PREFIX)) out.push(c);
+      else if (c.text.startsWith(ITEM_PREFIX)) out.push({ ...c, text: `${INNER_ITEM_PREFIX}${c.text.slice(ITEM_PREFIX.length)}` });
+      else out.push({ ...c, text: `${ITEM_PREFIX}${c.text}` });
     }
   }
 

@@ -272,16 +272,19 @@ test("tuples: one row per position", () => {
   assert.equal(findRow(t, "open")["Data type"], "array of number");
   assert.deepEqual(texts(findRow(t, "open")), ["First 1 item(s) are positional"]);
   assert.ok(findRow(t, "open[0]"));
-  assert.deepEqual(texts(findRow(t, "d7")), ["Exactly 2 item(s)"]);
+  assert.deepEqual(texts(findRow(t, "d7")), ["Up to 2 item(s)"], "without minItems a shorter array is valid");
   assert.equal(findRow(t, "d7")["Additional information"], null, "additionalItems is consumed, not passed through");
   assert.equal(findRow(t, "d7[1]")["Data type"], "integer");
   assert.equal(findRow(t, "d7[1]").__source.pointer, "/properties/d7/items/1");
   assert.deepEqual(texts(findRow(t, "partial")), ["1–2 items"]);
+  const exact = build({ pair: { type: "array", prefixItems: [{ type: "string" }, { type: "string" }], items: false, minItems: 2, maxItems: 2 } });
+  assert.deepEqual(texts(findRow(exact, "pair")), ["Exactly 2 item(s)"]);
 });
 
 test("an array of arrays gets a `name[]` row for the inner array", () => {
   const readings = findRow(T, "bp_readings");
   assert.equal(readings["Data type"], "array of array");
+  assert.deepEqual(texts(readings), ["Each item: Exactly 2 item(s)"], "the pair's item count is the item's, not the array's");
   const inner = findRow(T, "bp_readings[]");
   assert.equal(inner.__parent, "bp_readings");
   assert.equal(inner.__depth, 1);
@@ -293,9 +296,12 @@ test("an array of arrays gets a `name[]` row for the inner array", () => {
 
   const t = build({ matrix: { type: "array", items: { type: "array", items: { type: "number", minimum: 0 } } } });
   assert.equal(findRow(t, "matrix")["Data type"], "array of array of number");
-  assert.deepEqual(texts(findRow(t, "matrix")), [], "the inner element rule is on the matrix[] row, not doubled on the parent");
+  assert.deepEqual(texts(findRow(t, "matrix")), ["Each inner item: value ≥ 0"], "the inner element rule is kept on the parent, one level further in");
   assert.deepEqual(texts(findRow(t, "matrix[]")), ["Each item: value ≥ 0"]);
   assert.equal(findRow(t, "matrix[]")["Data type"], "array of number");
+  const flat = build({ matrix: { type: "array", items: { type: "array", items: { type: "number", minimum: 0 }, minItems: 2 } } }, {}, {}, { expandNested: false });
+  assert.deepEqual(texts(findRow(flat, "matrix")), ["Each item: At least 2 item(s)", "Each inner item: value ≥ 0"], "nothing is lost without the matrix[] row");
+  assert.equal(findRow(flat, "matrix[]"), undefined);
 });
 
 test("a union of shapes lists every type and the fields of its object branch", () => {
@@ -308,7 +314,40 @@ test("a union of shapes lists every type and the fields of its object branch", (
     assert.deepEqual(row["Constraints"].find((c) => c.keyword === "oneOf"), { keyword: "oneOf", value: 1, text: "In variant 2 of contact" });
     assert.equal(row.__parent, "contact");
   }
-  assert.equal(findRow(T, "contact.email")["Constraints"].find((c) => c.keyword === "required"), undefined, "a branch's required is conditional, never merged");
+  assert.deepEqual(
+    findRow(T, "contact.email")["Constraints"].find((c) => c.keyword === "required"),
+    { keyword: "required", value: true, text: "Required in variant 2 of contact" },
+    "a branch's required holds in that variant only, and says so"
+  );
+  assert.equal(findRow(T, "contact.phone")["Constraints"].find((c) => c.keyword === "required"), undefined);
+
+  // The object's own `required` applies to every field, whichever branch declares it.
+  const t = build({
+    c: { type: "object", required: ["id"], oneOf: [{ properties: { id: { type: "string" }, a: { type: "string" } } }, { properties: { id: { type: "integer" }, b: { type: "string" } }, required: ["b"] }] }
+  });
+  assert.deepEqual(names(t), ["c", "c.id", "c.a", "c.b"]);
+  assert.deepEqual(texts(findRow(t, "c.id")), ["Required within c", "In variant 1 of c", "In variant 2 of c"]);
+  assert.equal(findRow(t, "c.id")["Data type"], "string or integer", "a field declared by two branches is one row");
+  assert.deepEqual(texts(findRow(t, "c.a")), ["In variant 1 of c"]);
+  assert.deepEqual(texts(findRow(t, "c.b")), ["Required in variant 2 of c", "In variant 2 of c"]);
+});
+
+test("open content that says nothing gets no row: `additionalProperties: true` inside an object, as at the top level", () => {
+  const t = build({
+    m: { type: "object", properties: { a: { type: "string" } }, additionalProperties: true },
+    u: { type: "object", properties: { a: { type: "string" } }, unevaluatedProperties: true },
+    open: { type: "object", additionalProperties: true },
+    typed: { type: "object", additionalProperties: { type: "number" } }
+  });
+  assert.deepEqual(names(t), ["m", "m.a", "u", "u.a", "open", "typed", "typed.*"]);
+  assert.equal(findRow(t, "typed.*")["Data type"], "number");
+});
+
+test("property names that could read as syntax are quoted in the path", () => {
+  const t = build({ o: { type: "object", properties: { "a.b": { type: "string" }, "x]y": { type: "string" }, "/re/": { type: "string" }, "with space": { type: "string" }, "a/b": { type: "string" }, plain_1: { type: "string" } } } });
+  assert.deepEqual(names(t), ["o", 'o["a.b"]', 'o["x]y"]', 'o["/re/"]', 'o["with space"]', "o.a/b", "o.plain_1"]);
+  assert.deepEqual(findRow(t, 'o["/re/"]').__path, [{ kind: "property", name: "o" }, { kind: "property", name: "/re/" }]);
+  assert.equal(findRow(t, 'o["/re/"]').__source.pointer, "/properties/o/properties/~1re~1");
 });
 
 test("unions of plain typed branches are typed (no more `any`)", () => {

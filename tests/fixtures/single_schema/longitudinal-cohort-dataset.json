@@ -70,7 +70,8 @@
           { "type": "string", "title": "Allele 1", "enum": ["A", "C", "G", "T"] },
           { "type": "string", "title": "Allele 2", "enum": ["A", "C", "G", "T"] }
         ],
-        "items": false
+        "items": false,
+        "minItems": 2
       },
       "bp_readings": {
         "type": "array",
@@ -82,7 +83,8 @@
             { "type": "integer", "title": "Systolic (mmHg)", "minimum": 50, "maximum": 300 },
             { "type": "integer", "title": "Diastolic (mmHg)", "minimum": 20, "maximum": 200 }
           ],
-          "items": false
+          "items": false,
+          "minItems": 2
         }
       },
       "biomarkers": {

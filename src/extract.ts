@@ -55,6 +55,8 @@ interface Frame {
 interface Enclosing {
   /** Property names the enclosing object requires. */
   required: ReadonlySet<string>;
+  /** Names the `oneOf`/`anyOf` branch a field came from requires (mandatory in that variant only). */
+  variantRequired?: ReadonlySet<string> | undefined;
   /** Variable name of the enclosing row (absent at the top level). */
   parent?: string | undefined;
   depth: number;
@@ -482,8 +484,12 @@ function addObjectProperties(schema: JsonSchemaObject, base: ResolutionBase, sou
   }
 }
 
-/** Store a row (merging a repeated declaration into the existing one) and return the stored row. */
-function addRow(row: DataDictionaryRow, builder: CategoryBuilder): DataDictionaryRow {
+/**
+ * Store a row (merging a repeated declaration into the existing one) and return the stored row.
+ * Declarations from `allOf` branches describe one value and normally agree on its type; those
+ * from `oneOf`/`anyOf` branches (`variant`) are alternatives, so their types are listed side by side.
+ */
+function addRow(row: DataDictionaryRow, builder: CategoryBuilder, variant = false): DataDictionaryRow {
   const key = row["Variable name"];
   if (row.__parent !== undefined) {
     const siblings = builder.children.get(row.__parent) ?? new Set<string>();
@@ -497,7 +503,7 @@ function addRow(row: DataDictionaryRow, builder: CategoryBuilder): DataDictionar
   }
   // Same property declared in more than one merged branch: union the information.
   existing["Description"] = joinNonEmpty([existing["Description"], row["Description"]]);
-  existing["Data type"] = existing["Data type"] || row["Data type"];
+  existing["Data type"] = variant ? unionTypes(existing["Data type"], row["Data type"]) : existing["Data type"] || row["Data type"];
   existing["Format"] = joinNonEmpty([existing["Format"], row["Format"]], " ");
   existing["Valid values"] = dedupeValidValues([...existing["Valid values"], ...row["Valid values"]]);
   existing["Constraints"] = dedupeConstraints([...existing["Constraints"], ...row["Constraints"]]);
@@ -521,15 +527,16 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
   const validValues = analysis.validValues.slice();
   const constraints: ConstraintItem[] = [];
   const last = path[path.length - 1];
+  const variant = ref.union !== undefined && ref.variant !== undefined && enclosing.parent !== undefined ? `variant ${ref.variant + 1} of ${enclosing.parent}` : undefined;
   if (last?.kind === "property" && enclosing.required.has(last.name)) {
     // "Required within visits[]" rather than a bare "Required": the field is mandatory in
     // every element, which says nothing about whether `visits` itself is present.
     const within = path.length > 1 ? ` within ${formatVariablePath(path.slice(0, -1))}` : "";
     constraints.push({ keyword: "required", value: true, text: `Required${within}` });
+  } else if (last?.kind === "property" && variant !== undefined && enclosing.variantRequired?.has(last.name)) {
+    constraints.push({ keyword: "required", value: true, text: `Required in ${variant}` });
   }
-  if (ref.union !== undefined && ref.variant !== undefined && enclosing.parent !== undefined) {
-    constraints.push({ keyword: ref.union, value: ref.variant, text: `In variant ${ref.variant + 1} of ${enclosing.parent}` });
-  }
+  if (variant !== undefined) constraints.push({ keyword: ref.union as "oneOf" | "anyOf", value: ref.variant, text: `In ${variant}` });
   constraints.push(...analysis.constraints);
 
   applySkipPatterns(name, validValues, constraints, ctx);
@@ -549,7 +556,8 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
       __depth: enclosing.depth,
       __path: path.slice()
     },
-    builder
+    builder,
+    variant !== undefined
   );
 
   if (ctx.options.expandNested) expandChildren(path, analysis.shape, row, enclosing, builder, ctx);
@@ -578,11 +586,26 @@ function expandChildren(
   const hasFields =
     shape.properties.size > 0 ||
     shape.patternProperties.size > 0 ||
-    isSchemaRef(shape.additionalProperties) ||
-    isSchemaRef(shape.unevaluatedProperties);
+    describesOpenContent(shape.additionalProperties) ||
+    describesOpenContent(shape.unevaluatedProperties);
   if (hasFields && guard(shape, owner, enclosing, ctx)) {
+    // What the object requires: its own `required` (through `$ref`/`allOf`) applies to every
+    // field; a `oneOf`/`anyOf` branch's `required` only to the fields of that branch, and only
+    // while it is the variant in effect -- the rows say so ("Required in variant 2 of contact").
     const required = collectRequired(shape.self.schema, registry, shape.self.base, maxDepth);
-    const fields: Enclosing = { ...child, required };
+    const variantRequired = new Map<string, Set<string>>();
+    for (const variant of shape.variants) {
+      const key = variantKey(variant);
+      if (key === undefined) continue;
+      const names = variantRequired.get(key) ?? new Set<string>();
+      for (const name of collectRequired(variant.schema, registry, variant.base, maxDepth)) names.add(name);
+      variantRequired.set(key, names);
+    }
+    const fieldsOf = (ref: SchemaRef): Enclosing => {
+      const key = variantKey(ref);
+      const own = key !== undefined ? variantRequired.get(key) : undefined;
+      return { ...child, required, ...(own ? { variantRequired: own } : {}) };
+    };
     // Rules between the fields of this object, named by their rows, before the rows are built
     // so that each row picks up its conditions.
     const qualify = (property: string): string => formatVariablePath([...path, { kind: "property", name: property }]);
@@ -590,12 +613,12 @@ function expandChildren(
     for (const variant of shape.variants) mergeSkipPatterns(ctx.skip, collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, qualify }));
 
     for (const [name, refs] of shape.properties) {
-      for (const ref of refs) emitVariable([...path, { kind: "property", name }], ref, fields, builder, ctx);
+      for (const ref of refs) emitVariable([...path, { kind: "property", name }], ref, fieldsOf(ref), builder, ctx);
     }
     if (includePatternProperties) {
       for (const [pattern, refs] of shape.patternProperties) {
         for (const ref of refs) {
-          const row = emitVariable([...path, { kind: "pattern", pattern }], ref, fields, builder, ctx);
+          const row = emitVariable([...path, { kind: "pattern", pattern }], ref, fieldsOf(ref), builder, ctx);
           row.Constraints.unshift({ keyword: "patternProperties", text: `Property name matches /${pattern}/.` });
         }
       }
@@ -606,8 +629,8 @@ function expandChildren(
         ["unevaluatedProperties", "Any property name not evaluated by adjacent applicators."]
       ] as const) {
         const ref = shape[keyword];
-        if (!isSchemaRef(ref)) continue;
-        const row = emitVariable([...path, { kind: "additional", keyword }], ref, fields, builder, ctx);
+        if (!describesOpenContent(ref)) continue;
+        const row = emitVariable([...path, { kind: "additional", keyword }], ref, fieldsOf(ref), builder, ctx);
         row.Constraints.unshift({ keyword, text: note });
       }
     }
@@ -630,8 +653,17 @@ function expandChildren(
   }
 }
 
-function isSchemaRef(value: SchemaRef | false | undefined): value is SchemaRef {
-  return value !== undefined && value !== false;
+/**
+ * An open-content schema worth a row: `additionalProperties: true` (or a missing keyword)
+ * says nothing about the values and gets none, as at the top level.
+ */
+function describesOpenContent(value: SchemaRef | false | undefined): value is SchemaRef {
+  return value !== undefined && value !== false && value.schema !== true;
+}
+
+/** The `oneOf`/`anyOf` branch a schema came from, as a map key; `undefined` outside a union. */
+function variantKey(ref: SchemaRef): string | undefined {
+  return ref.union !== undefined && ref.variant !== undefined ? `${ref.union}:${ref.variant}` : undefined;
 }
 
 /**
@@ -826,6 +858,11 @@ function finalizeBuilders(builders: CategoryBuilder[]): DataDictionaryCategory[]
       additionalInformation: b.additionalInformation,
       ...(b.source ? { source: b.source } : {})
     }));
+}
+
+/** "string" + "integer (nullable)" -> "string or integer (nullable)"; a repeated alternative is listed once. */
+function unionTypes(a: string, b: string): string {
+  return [...new Set([...a.split(" or "), ...b.split(" or ")].filter(Boolean))].join(" or ");
 }
 
 function dedupeValidValues(values: ValidValue[]): ValidValue[] {

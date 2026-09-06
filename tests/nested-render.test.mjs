@@ -45,6 +45,11 @@ test("splitVariableName: the parent's length fixes the split, whatever the synta
   assert.deepEqual(splitVariableName("bp_readings[][0]", "bp_readings[]"), ["bp_readings[]", "[0]"]);
   assert.deepEqual(splitVariableName("matrix[]", "matrix"), ["matrix", "[]"]);
   assert.deepEqual(splitVariableName('odd["a.b"]', "odd"), ["odd", '["a.b"]']);
+  assert.deepEqual(splitVariableName('odd["x]y"]', "odd"), ["odd", '["x]y"]'], "a `]` inside the quotes does not close the group");
+  assert.deepEqual(splitVariableName('odd["x]y"].z', 'odd["x]y"]'), ['odd["x]y"].', "z"]);
+  assert.deepEqual(splitVariableName('odd["a\\"b"].z', "odd"), ['odd["a\\"b"].', "z"], "an escaped quote is part of the name");
+  assert.deepEqual(splitVariableName('odd["a.b"][0]', 'odd["a.b"]'), ['odd["a.b"]', "[0]"]);
+  assert.deepEqual(splitVariableName('odd["unterminated', "odd"), ["", 'odd["unterminated']);
   assert.deepEqual(splitVariableName("biomarkers.*", "biomarkers"), ["biomarkers.", "*"]);
   assert.deepEqual(splitVariableName("biomarkers./^il_[0-9]+$/", "biomarkers"), ["biomarkers.", "/^il_[0-9]+$/"]);
   // Nothing to split: no parent, a parent that is not a prefix, an empty leaf, an unclosed bracket.

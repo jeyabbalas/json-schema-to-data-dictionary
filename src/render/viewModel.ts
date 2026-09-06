@@ -188,13 +188,21 @@ export function splitVariableName(name: string, parent: string | undefined): [pr
   const rest = name.slice(parent.length);
   if (rest.startsWith(".")) return rest.length > 1 ? [`${parent}.`, rest.slice(1)] : ["", name];
   if (rest.startsWith("[")) {
-    const close = rest.indexOf("]");
+    const close = bracketGroupEnd(rest);
     if (close < 0) return ["", name];
     if (close === rest.length - 1) return [parent, rest];
     const after = close + (rest.charAt(close + 1) === "." ? 2 : 1);
     return after < rest.length ? [name.slice(0, parent.length + after), rest.slice(after)] : ["", name];
   }
   return ["", name];
+}
+
+/** Index of the `]` closing the bracket group `rest` starts with, reading a quoted name (`["x]y"]`) as one token. */
+function bracketGroupEnd(rest: string): number {
+  if (rest.charAt(1) !== '"') return rest.indexOf("]");
+  let i = 2;
+  while (i < rest.length && rest.charAt(i) !== '"') i += rest.charAt(i) === "\\" ? 2 : 1;
+  return rest.charAt(i) === '"' && rest.charAt(i + 1) === "]" ? i + 1 : -1;
 }
 
 function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, category: string): RowVM {

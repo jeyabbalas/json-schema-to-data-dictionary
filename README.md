@@ -137,8 +137,9 @@ weights             array of number + coded values   Each item: Measured value: 
   `No other properties allowed`, item counts).
 - A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`) and the fields of
   its object branches (badged `In variant 2 of contact`). A field the enclosing object requires
-  reads `Required within visits[]`; `if`/`then` and `dependentRequired` inside a nested object
-  are qualified by the path (`visits[].fasting = 0`) and join `table.conditionalRules`.
+  reads `Required within visits[]` (`Required in variant 2 of contact` when only a union branch
+  requires it); `if`/`then` and `dependentRequired` inside a nested object are qualified by the
+  path (`visits[].fasting = 0`) and join `table.conditionalRules`.
 - A **recursive** definition (an event whose `follow_ups` are events) is expanded once and then
   noted (`Recursive structure: same shape as events[]`), and `maxNestingDepth` (default 6)
   bounds how deep the rows go. `expandNested: false` keeps one row per top-level property; the

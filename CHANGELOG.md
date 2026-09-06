@@ -22,10 +22,13 @@ Variables of any JSON type.
   visits[]`; `if`/`then` and `dependentRequired` inside a nested object are collected with
   path-qualified names (`visits[].fasting = 0`) and join `table.conditionalRules`; a `oneOf`
   of shapes lists every alternative (`string or object`) and badges the fields of an object
-  branch `In variant 2 of …`; a recursive definition is expanded once and then noted
-  (`Recursive structure: same shape as events[]`). `SchemaToTableOptions.expandNested`
-  (default `true`) turns the expansion off; `maxNestingDepth` (default 6) bounds it, with a
-  warning when reached.
+  branch `In variant 2 of …` (`Required in variant 2 of …` when that branch requires them); a
+  recursive definition is expanded once and then noted (`Recursive structure: same shape as
+  events[]`). A tuple says `Exactly 2 item(s)`, `Up to 2 item(s)` or `1–2 items` according to
+  its `minItems`; an array of tuples says `Each item: Exactly 2 item(s)`; an array of arrays
+  keeps the rules of the innermost elements as `Each inner item: …`, so nothing is lost when
+  the expansion is off. `SchemaToTableOptions.expandNested` (default `true`) turns the
+  expansion off; `maxNestingDepth` (default 6) bounds it, with a warning when reached.
 - The rendered table indents nested rows under their parent with a tree glyph, the parent path
   muted and the field's own name bold (`data-dd-depth`, `.dd-name-prefix` / `.dd-name-leaf`);
   the ranked results list shows them unindented with the full path. `RowVM` gains `depth`,

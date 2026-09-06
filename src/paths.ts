@@ -8,8 +8,11 @@
 import type { PathStep, SourceInfo } from "./types";
 import { encodePointer, type ResolutionBase } from "./registry";
 
-/** Property names that can follow a `.` unquoted; anything else is written `["like this"]`. */
-const PLAIN_NAME = /^[^.[\]"*\s]+$/;
+/**
+ * Property names that can follow a `.` unquoted; anything else is written `["like this"]`. A
+ * name starting with `/` is quoted so that it cannot read as a `patternProperties` entry.
+ */
+const PLAIN_NAME = /^(?!\/)[^.[\]"*\s]+$/;
 
 export function formatVariablePath(steps: readonly PathStep[]): string {
   let out = "";

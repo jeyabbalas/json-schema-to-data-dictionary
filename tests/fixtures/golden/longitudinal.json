@@ -858,6 +858,11 @@
    "values": [],
    "constraints": [
     [
+     "required",
+     "Required in variant 2 of contact",
+     null
+    ],
+    [
      "oneOf",
      "In variant 2 of contact",
      null
@@ -1005,7 +1010,7 @@
    "constraints": [
     [
      "prefixItems",
-     "Exactly 2 item(s)",
+     "Each item: Exactly 2 item(s)",
      null
     ]
    ],
