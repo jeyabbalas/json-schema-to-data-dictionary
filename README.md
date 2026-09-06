@@ -76,15 +76,77 @@ Each variable becomes one row with these columns:
 
 | Column | What it holds |
 | --- | --- |
-| **Variable name** | The property key. |
+| **Variable name** | The property key — or, for a field inside an array/object variable, its path (`visits[].date`, `address.city`). |
 | **Description** | `title` + `description` + `$comment` (the codebook text), following `$ref`s. |
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
 | **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. |
-| **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds, and **conditional** rules from skip patterns. |
+| **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds (`Each item: …` for the items of an array, `Fields: …` for an object), and **conditional** rules from skip patterns. |
 | **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a collapsible JSON tree. |
 
 The dataset's own `title`/`description` are shown as a header, and each externally `$ref`'d
 object schema becomes a **sub-heading** (e.g. *Demographics*, *Lab measurements*).
+
+### Nested variables: arrays and objects
+
+A variable need not be a scalar. A property holding an **array of objects** (repeated visits,
+events, measurements), an **object** (an address, a nested record) or an **array of arrays**
+keeps its own row and is followed by one row per field inside it, named by its path:
+
+```jsonc
+"visits": {
+  "description": "Study visits attended by the participant",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["date"],
+    "properties": {
+      "date":   { "type": "string", "format": "date", "description": "Visit date" },
+      "weight": { "type": "number", "minimum": 30, "maximum": 250, "description": "Weight (kg)" }
+    }
+  }
+},
+"weights": {
+  "description": "Self-reported weight at each visit (kg)",
+  "type": "array",
+  "items": { "anyOf": [{ "type": "number", "minimum": 30, "maximum": 250 }, { "const": 888, "title": "Missing" }] }
+}
+```
+
+becomes four rows:
+
+```
+visits              array of object                  Fields: date, weight
+  └ visits[].date     date                           Required within visits[]
+  └ visits[].weight   number                         30 ≤ value ≤ 250
+weights             array of number + coded values   Each item: Measured value: 30 ≤ value ≤ 250
+                    Valid values: 30–250 (measured value) · 888 Missing
+```
+
+- **Arrays of scalars are not split.** The item schema's codes, ranges and format are the
+  variable's own: they land in **Valid values**, **Constraints** (prefixed *Each item:*) and
+  **Format**, and the type reads `array of date`, `array of categorical (integer)` or
+  `array of number + coded values`.
+- **Nested rows follow their parent**, indented in the rendered table with the parent path
+  muted and the field's own name bold. They carry `__parent` (the parent's variable name),
+  `__depth` (0 for a top-level variable) and `__path` (the structured path). Objects nest the
+  same way (`address.city`, `contact.address.zip`); tuples (`prefixItems`) become
+  `genotype[0]`, `genotype[1]`; an array of arrays gets a `readings[]` row for the inner array;
+  an open map (`additionalProperties`) becomes `biomarkers.*` and a `patternProperties` entry
+  `biomarkers./^il_[0-9]+$/`; a property name that is not a plain identifier is written
+  `parent["odd name"]`. The parent row summarises the container (`Fields: date, weight`,
+  `No other properties allowed`, item counts).
+- A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`) and the fields of
+  its object branches (badged `In variant 2 of contact`). A field the enclosing object requires
+  reads `Required within visits[]`; `if`/`then` and `dependentRequired` inside a nested object
+  are qualified by the path (`visits[].fasting = 0`) and join `table.conditionalRules`.
+- A **recursive** definition (an event whose `follow_ups` are events) is expanded once and then
+  noted (`Recursive structure: same shape as events[]`), and `maxNestingDepth` (default 6)
+  bounds how deep the rows go. `expandNested: false` keeps one row per top-level property; the
+  item rules of an array of scalars are hoisted either way.
+
+Every row, nested ones included, is in `table.rows`, so the variable counter, the search index
+and `toPlainRows` / `tableToCsv` all see them; `toPlainRows(table, { includeInternalColumns: true })`
+adds a `Parent` column.
 
 ## Mixed types & skip patterns
 
@@ -175,7 +237,9 @@ materialised up front and each category fills in as it scrolls into view (or via
 more* button). Measured in Chrome on a 10,070-variable dictionary (1,045 categories): first
 paint 0.3 s (was 7.4 s in 0.2), 34k DOM nodes (was 380k), 22–46 ms of script per keystroke
 (was 0.4–1.1 s), 8 ms to clear the search box (was 2.4–3.3 s). Small dictionaries (up to five
-pages) are rendered in full.
+pages) are rendered in full. Nested fields (see [Nested variables](#nested-variables-arrays-and-objects))
+sit indented under their parent with the parent path muted; the results list shows them
+unindented with their full path, since it lists rows out of context.
 
 Theme it from your page with CSS custom properties (they pierce the shadow boundary):
 
@@ -212,7 +276,8 @@ description, value labels, category title, format and constraints, with **as-you
 matching** of the last word (`menop` finds the menopause rows), plural/singular stemming, and
 an AND-then-OR policy for multi-word queries (*age at first birth* → `age_preg1`). Exact and
 prefix name matches always rank first, and anything the 0.2 substring search matched still
-matches (`kg/m2`, `meno_`).
+matches (`kg/m2`, `meno_`). Nested paths split the same way — `visits[].date` matches *date* and
+*visits date* typed as words — and the full path typed as-is is an exact name match.
 
 The headless pieces are exported: `createLexicalIndex(lexicalDocumentsFromTable(table))`,
 `rankHybrid(lexicalHits, semanticHits, { maxRelated })` and
@@ -379,6 +444,7 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 | `defineDataDictionaryElement(tag?)` | Register the `<json-data-dictionary>` custom element. |
 | `toPlainRows(table, options?)` / `tableToCsv(table, options?)` | Spreadsheet export. |
 | `buildViewModel(table, options?)` | The render-ready view model (for custom UIs). |
+| `formatVariablePath(path)` / `splitVariableName(name, parent)` | Nested-field paths: the name of a `PathStep[]`, and the muted-prefix / leaf split a renderer shows. |
 | `createTransformersEmbedder(module, options?)` | `Embedder` adapter for Transformers.js (opt-in semantic search); `KNOWN_EMBEDDING_MODELS`, `DEFAULT_EMBEDDING_MODEL`, `detectWebGpu()`. |
 | `createSearchEngine(table, options?)` | Headless hybrid search: synchronous lexical `search()`, semantic hits via `subscribe()`. |
 | `createLexicalIndex(docs, options?)` / `lexicalDocumentsFromTable(table)` / `rankHybrid(...)` | The BM25F index and the fusion behind it. |
@@ -394,8 +460,9 @@ Supported keywords include the full draft 2020-12 vocabulary (and draft-07 spell
 `if`/`then`/`else`, `enum`/`const` (+ `enumDescriptions` / `x-enumDescriptions` /
 `x-value-kind`), every
 `format`, `contentEncoding`/`contentMediaType`, all numeric/string/array/object constraints,
-`required`/`dependentRequired`/`dependentSchemas`, and `patternProperties` /
-`additionalProperties`.
+`items`/`prefixItems`/`contains` and nested `properties` at any depth (draft-07 `items` arrays
+and `additionalItems` too), `required`/`dependentRequired`/`dependentSchemas`, and
+`patternProperties` / `additionalProperties`.
 
 ## Develop
 

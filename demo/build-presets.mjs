@@ -39,6 +39,14 @@ const SOURCES = [
     only: "format-showcase-dataset.json"
   },
   {
+    key: "longitudinal",
+    label: "Longitudinal cohort — nested arrays and objects",
+    description:
+      "One schema whose variables are any JSON type: repeated visits (an array of objects, three levels deep), arrays of values with missing codes, a genotype tuple, an open biomarker map and a recursive event definition. Nested fields become indented rows named by path.",
+    dir: "single_schema",
+    only: "longitudinal-cohort-dataset.json"
+  },
+  {
     key: "trial",
     label: "Clinical trial — 5 interlinked schemas",
     description:

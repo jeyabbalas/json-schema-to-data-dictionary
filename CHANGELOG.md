@@ -4,6 +4,66 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## 0.6.0 - 2026-09-05
+
+Variables of any JSON type.
+
+### Added
+
+- **Nested variables.** A property holding an array of objects, an object or an array of
+  arrays no longer collapses to a type label: it keeps its row (`array of object` / `object`,
+  with a `Fields: …` constraint naming what is inside) and every field inside it gets a row of
+  its own right after it, named by its path — `visits[].date`, `address.city`,
+  `contact.address.zip`, tuples `genotype[0]`, an inner array `readings[]`, open maps
+  `biomarkers.*`, pattern properties `biomarkers./^il_[0-9]+$/`. Nested rows carry
+  `__parent`, `__depth` and `__path` (a `PathStep[]`), sit in `table.rows` and in their
+  category's `rows`, and so reach `toPlainRows` / `tableToCsv`, the lexical index and the
+  semantic chunks unchanged. A field the enclosing object requires reads `Required within
+  visits[]`; `if`/`then` and `dependentRequired` inside a nested object are collected with
+  path-qualified names (`visits[].fasting = 0`) and join `table.conditionalRules`; a `oneOf`
+  of shapes lists every alternative (`string or object`) and badges the fields of an object
+  branch `In variant 2 of …`; a recursive definition is expanded once and then noted
+  (`Recursive structure: same shape as events[]`). `SchemaToTableOptions.expandNested`
+  (default `true`) turns the expansion off; `maxNestingDepth` (default 6) bounds it, with a
+  warning when reached.
+- The rendered table indents nested rows under their parent with a tree glyph, the parent path
+  muted and the field's own name bold (`data-dd-depth`, `.dd-name-prefix` / `.dd-name-leaf`);
+  the ranked results list shows them unindented with the full path. `RowVM` gains `depth`,
+  `parent`, `namePrefix` and `nameLeaf`; `splitVariableName` and `formatVariablePath` are
+  exported, as are the `PathStep`, `PropertyShape` and `SchemaRef` types
+  (`analyzeProperty` now returns the property's `shape`).
+- `toPlainRows(table, { includeInternalColumns: true })` adds a `Parent` column.
+- `contains` is rendered (`Must contain an item matching: …`), `propertyNames` too
+  (`Property names match pattern …`), and a closed object says `No other properties allowed`.
+- Demo: a *Longitudinal cohort* preset (`?preset=longitudinal`) with repeated visits three
+  levels deep, arrays of values with missing codes, a tuple, an open map and a recursive event.
+- A golden-output test (`tests/golden.test.mjs`) pins the projection of every fixture.
+
+### Changed
+
+- **Arrays of scalars are hoisted into the row.** The item schema's codes, ranges and format
+  are the variable's own — **Data type** reads `array of number + coded values` /
+  `array of date` / `array of categorical (integer)`, the codes are in **Valid values**, the
+  item constraints are prefixed `Each item:` and the item format is the **Format**. Item
+  annotations join the description and item extras sit under `Additional information.items`.
+- `humanizeName` treats brackets, quotes and `*` as separators (`visits[].date` → *visits
+  date*, `genotype[0]` → *genotype 0*), so a path typed as words is an exact name match and the
+  semantic identity chunk reads naturally. Names without them humanise exactly as before, so
+  cached vectors and snapshots stay valid and `EMBED_TEXT_VERSION` remains 2.
+- Items typed `["integer", "null"]` read `array of integer or null` (the `(nullable)` suffix
+  is the array's own); `additionalItems`, `unevaluatedItems`, `dependentRequired` and
+  `dependentSchemas` on a property are consumed rather than shown in **Additional information**.
+
+### Fixed
+
+- **A union of typed branches is no longer typed `any`.** `anyOf` / `oneOf` branches that
+  declare a type or format but neither a range nor coded values (`{ "type": "string" }`,
+  `{ "type": "null" }`, an object or array branch) contributed nothing to the row's type, so
+  `oneOf: [string, object]` read `any`, `anyOf: [number, null]` lost its null and
+  `oneOf: [date, const 999]` came out `integer`. The branch types are now merged
+  (`string or object`, `number (nullable)`, `date` with its code).
+- `type: ["string", "object"]` read `string`; it now reads `string or object`.
+
 ## 0.5.0 - 2026-09-05
 
 ### Fixed
