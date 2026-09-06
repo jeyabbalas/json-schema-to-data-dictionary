@@ -40,7 +40,7 @@ export function attachBehavior(root: Root, opts: BehaviorOptions): () => void {
   const lazy = attachLazyRows(root, vm, { pageSize: vm.options.pageSize, rowOptions: COMPONENT_ROW_OPTIONS });
   const results = createResultsView(root, vm, {
     pageSize: vm.options.resultsPageSize,
-    rowOptions: { ...COMPONENT_ROW_OPTIONS, categoryTag: true }
+    rowOptions: { ...COMPONENT_ROW_OPTIONS, categoryTag: true, indent: false }
   });
 
   // The counter overlays the right end of the input. Padding the input by the counter's width

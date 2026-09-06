@@ -13,9 +13,9 @@ import type { RowMarkupOptions } from "./rowMarkup";
 export type MarkupTarget = "static" | "component";
 
 /** Row options of the static output: the inline script filters on `data-search`. */
-export const STATIC_ROW_OPTIONS: RowMarkupOptions = { searchAttr: true, rowIndex: false, categoryTag: false };
-/** Row options of the component's category sections (the results list adds the category tag). */
-export const COMPONENT_ROW_OPTIONS: RowMarkupOptions = { searchAttr: false, rowIndex: true, categoryTag: false };
+export const STATIC_ROW_OPTIONS: RowMarkupOptions = { searchAttr: true, rowIndex: false, categoryTag: false, indent: true };
+/** Row options of the component's category sections (the results list adds the category tag and drops the indentation). */
+export const COMPONENT_ROW_OPTIONS: RowMarkupOptions = { searchAttr: false, rowIndex: true, categoryTag: false, indent: true };
 
 let counter = 0;
 

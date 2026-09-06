@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+  "title": "Longitudinal Cohort Dataset",
+  "description": "One record per participant of a prospective cohort. Repeated measures are stored inside the record: clinic visits are an array of visit objects, a few trajectories are arrays of values, and contact details are nested objects. Missing values use the sentinel codes defined in $defs.",
+  "$comment": "A synthetic dataset for testing. The variable shapes are drawn from real longitudinal cohorts: wide-format visit arrays, per-visit lab panels, tuples for genotypes, open maps for biomarker panels and a recursive event definition.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "title": "Participant record",
+    "properties": {
+      "participant_id": {
+        "type": "string",
+        "title": "Participant ID",
+        "description": "Unique identifier assigned at enrollment.",
+        "pattern": "^LC-[0-9]{6}$"
+      },
+      "enrollment_date": {
+        "type": "string",
+        "title": "Enrollment date",
+        "description": "Date the participant was enrolled in the cohort.",
+        "format": "date"
+      },
+      "visits": {
+        "type": "array",
+        "title": "Clinic visits",
+        "description": "Every clinic visit attended by the participant, in chronological order. One element per visit.",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/visit" }
+      },
+      "baseline": {
+        "title": "Baseline visit",
+        "description": "The enrollment visit, stored separately from the follow-up visits.",
+        "$ref": "#/$defs/visit"
+      },
+      "address": {
+        "type": "object",
+        "title": "Residential address",
+        "description": "Address at enrollment; the postcode is used to derive area-level deprivation.",
+        "properties": {
+          "street": { "type": "string", "title": "Street" },
+          "city": { "type": "string", "title": "City" },
+          "postcode": { "type": "string", "title": "Postcode", "pattern": "^[0-9]{5}$" }
+        },
+        "required": ["city"],
+        "additionalProperties": false
+      },
+      "contact": {
+        "title": "Preferred contact",
+        "description": "Either a bare email address, or a contact record with a phone number.",
+        "oneOf": [
+          { "type": "string", "format": "email", "title": "Email only" },
+          {
+            "type": "object",
+            "title": "Contact record",
+            "properties": {
+              "email": { "type": "string", "format": "email", "title": "Email address" },
+              "phone": { "type": "string", "title": "Phone number", "pattern": "^\\+?[0-9 ]{7,15}$" }
+            },
+            "required": ["email"]
+          }
+        ]
+      },
+      "genotype": {
+        "type": "array",
+        "title": "Genotype at the index SNP",
+        "description": "The two alleles carried at the index SNP, as a pair.",
+        "prefixItems": [
+          { "type": "string", "title": "Allele 1", "enum": ["A", "C", "G", "T"] },
+          { "type": "string", "title": "Allele 2", "enum": ["A", "C", "G", "T"] }
+        ],
+        "items": false,
+        "minItems": 2
+      },
+      "bp_readings": {
+        "type": "array",
+        "title": "Blood pressure readings",
+        "description": "Ambulatory blood pressure readings taken over 24 hours, each a [systolic, diastolic] pair in mmHg.",
+        "items": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "integer", "title": "Systolic (mmHg)", "minimum": 50, "maximum": 300 },
+            { "type": "integer", "title": "Diastolic (mmHg)", "minimum": 20, "maximum": 200 }
+          ],
+          "items": false,
+          "minItems": 2
+        }
+      },
+      "biomarkers": {
+        "type": "object",
+        "title": "Biomarker panel",
+        "description": "Serum biomarker concentrations keyed by assay name. Interleukins are named il_<number>.",
+        "additionalProperties": { "type": "number", "minimum": 0, "description": "Concentration (pg/mL)." },
+        "patternProperties": {
+          "^il_[0-9]+$": { "type": "number", "minimum": 0, "description": "Interleukin concentration (pg/mL)." }
+        },
+        "propertyNames": { "pattern": "^[a-z][a-z0-9_]*$" },
+        "minProperties": 1
+      },
+      "comorbidities": {
+        "type": "array",
+        "title": "Comorbidities at enrollment",
+        "description": "Pre-existing conditions reported at enrollment.",
+        "uniqueItems": true,
+        "items": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["diabetes", "hypertension", "copd", "ckd"],
+              "enumDescriptions": ["Diabetes mellitus (type 1 or 2)", "Hypertension", "Chronic obstructive pulmonary disease", "Chronic kidney disease"]
+            },
+            { "$ref": "#/$defs/missing" }
+          ]
+        }
+      },
+      "pain_scores": {
+        "type": "array",
+        "title": "Daily pain scores",
+        "description": "Self-reported pain on a 0-10 numeric rating scale, one entry per day of the diary week.",
+        "minItems": 1,
+        "maxItems": 12,
+        "items": {
+          "anyOf": [
+            { "type": "integer", "minimum": 0, "maximum": 10 },
+            { "$ref": "#/$defs/missing_code" }
+          ]
+        }
+      },
+      "hospital_days": {
+        "type": ["array", "null"],
+        "title": "Hospital days per admission",
+        "description": "Length of stay in days for each admission during follow-up; null when the linkage to hospital records is not available.",
+        "items": { "type": "integer", "minimum": 0 }
+      },
+      "daily_steps": {
+        "type": "array",
+        "title": "Daily step counts",
+        "description": "Accelerometer step counts for the wear period; a day without wear is null.",
+        "items": { "type": ["integer", "null"], "minimum": 0 },
+        "contains": { "type": "integer", "minimum": 10000 },
+        "minContains": 1
+      },
+      "allele_pairs": {
+        "title": "Allele pair (coded)",
+        "description": "The genotype as one of three coded pairs.",
+        "enum": [["A", "A"], ["A", "G"], ["G", "G"]],
+        "enumDescriptions": ["Homozygous reference", "Heterozygous", "Homozygous alternate"]
+      },
+      "diet_flags": {
+        "type": "array",
+        "title": "Diet questionnaire flags",
+        "description": "Quality flags raised on the diet questionnaire; every code marks a problem, none is a substantive answer.",
+        "default": [],
+        "items": {
+          "type": "integer",
+          "enum": [7, 8, 9],
+          "enumDescriptions": ["Implausible energy intake", "Incomplete questionnaire", "Questionnaire not returned"],
+          "x-value-kind": "sentinel",
+          "examples": [7]
+        }
+      },
+      "events": {
+        "type": "array",
+        "title": "Clinical events",
+        "description": "Diagnoses, hospitalisations and deaths recorded during follow-up, each with its own follow-up events.",
+        "items": { "$ref": "#/$defs/event" }
+      },
+      "notes": {
+        "type": "object",
+        "title": "Free-form notes",
+        "description": "Unstructured notes keyed by author; no fixed fields."
+      },
+      "tags": {
+        "type": "array",
+        "title": "Tags",
+        "description": "Arbitrary labels attached by the study team.",
+        "items": true
+      },
+      "consent": {
+        "type": "object",
+        "title": "Consent",
+        "properties": {
+          "signed": { "type": "boolean", "title": "Consent form signed" },
+          "version": { "type": "string", "title": "Consent form version" }
+        },
+        "required": ["signed", "witness"]
+      },
+      "vital_status": {
+        "title": "Vital status at end of follow-up",
+        "$comment": "Source coding: 0 - Alive; 1 - Deceased; 999 - Missing/Unknown.",
+        "oneOf": [
+          { "const": 0, "title": "Alive" },
+          { "const": 1, "title": "Deceased" },
+          { "$ref": "#/$defs/missing_code" }
+        ]
+      },
+      "death_year": {
+        "title": "Year of death",
+        "$comment": "Source coding: yyyy; 777 - Not applicable (alive); 999 - Missing/Unknown.",
+        "anyOf": [
+          { "type": "integer", "minimum": 1990, "maximum": 2030, "not": { "enum": [777, 999] } },
+          { "$ref": "#/$defs/not_applicable" },
+          { "$ref": "#/$defs/missing_code" }
+        ]
+      }
+    },
+    "required": ["participant_id", "enrollment_date", "visits"],
+    "dependentRequired": { "hospital_days": ["visits"] },
+    "allOf": [
+      {
+        "$comment": "Skip pattern: alive (vital_status=0) => death_year is Not applicable (777).",
+        "if": { "required": ["vital_status"], "properties": { "vital_status": { "const": 0 } } },
+        "then": { "properties": { "death_year": { "const": 777 } } }
+      }
+    ]
+  },
+  "$defs": {
+    "missing": {
+      "const": "not_collected",
+      "title": "Not collected",
+      "description": "The item was not collected for this participant."
+    },
+    "missing_code": {
+      "const": 999,
+      "title": "Missing/Unknown",
+      "description": "Sentinel for a missing or unknown numeric value."
+    },
+    "not_applicable": {
+      "const": 777,
+      "title": "Not applicable"
+    },
+    "visit": {
+      "type": "object",
+      "title": "Clinic visit",
+      "description": "Measurements taken at one clinic visit.",
+      "properties": {
+        "visit_date": { "type": "string", "title": "Visit date", "format": "date" },
+        "fasting": {
+          "title": "Fasting at blood draw",
+          "oneOf": [
+            { "const": 0, "title": "Non-fasting" },
+            { "const": 1, "title": "Fasting" }
+          ]
+        },
+        "weight_kg": {
+          "title": "Weight (kg)",
+          "$comment": "Source coding: weight in kilograms; 999 - Missing/Unknown.",
+          "anyOf": [
+            { "type": "number", "minimum": 2, "maximum": 300 },
+            { "$ref": "#/$defs/missing_code" }
+          ]
+        },
+        "glucose_mmol": {
+          "title": "Plasma glucose (mmol/L)",
+          "anyOf": [
+            { "type": "number", "minimum": 1, "maximum": 40 },
+            { "$ref": "#/$defs/missing_code" }
+          ]
+        },
+        "labs": {
+          "type": "object",
+          "title": "Laboratory results",
+          "properties": {
+            "hba1c_pct": { "type": "number", "title": "HbA1c (%)", "minimum": 3, "maximum": 20 },
+            "panel": {
+              "type": "object",
+              "title": "Lipid panel",
+              "properties": {
+                "ldl": { "type": "number", "title": "LDL cholesterol (mmol/L)", "minimum": 0 },
+                "hdl": { "type": "number", "title": "HDL cholesterol (mmol/L)", "minimum": 0 }
+              }
+            }
+          },
+          "required": ["hba1c_pct"],
+          "additionalProperties": false
+        },
+        "medications": {
+          "type": "array",
+          "title": "Current medications",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["metformin", "insulin", "statin"],
+            "enumDescriptions": ["Metformin", "Insulin", "Statin"]
+          }
+        }
+      },
+      "required": ["visit_date", "fasting"],
+      "dependentRequired": { "glucose_mmol": ["fasting"] },
+      "allOf": [
+        {
+          "$comment": "Skip pattern: non-fasting visit (fasting=0) => plasma glucose is recorded as Missing (999).",
+          "if": { "required": ["fasting"], "properties": { "fasting": { "const": 0 } } },
+          "then": { "properties": { "glucose_mmol": { "const": 999 } } }
+        }
+      ]
+    },
+    "event": {
+      "type": "object",
+      "title": "Clinical event",
+      "properties": {
+        "event_type": {
+          "type": "string",
+          "title": "Event type",
+          "enum": ["diagnosis", "hospitalization", "death"],
+          "enumDescriptions": ["New diagnosis", "Hospital admission", "Death"]
+        },
+        "event_date": { "type": "string", "title": "Event date", "format": "date" },
+        "follow_ups": {
+          "type": "array",
+          "title": "Follow-up events",
+          "description": "Events that followed from this one (a readmission after a diagnosis, for example).",
+          "items": { "$ref": "#/$defs/event" }
+        }
+      },
+      "required": ["event_type"]
+    }
+  }
+}

@@ -42,6 +42,7 @@ const SCHEMA_CHILD_KEYWORDS = new Set([
   "unevaluatedProperties",
   "propertyNames",
   "items",
+  "additionalItems",
   "contains",
   "unevaluatedItems",
   "if",
@@ -155,7 +156,7 @@ export class SchemaRegistry {
 
     for (const key of Object.keys(schema)) {
       const value = schema[key];
-      if (SCHEMA_CHILD_KEYWORDS.has(key)) {
+      if (SCHEMA_CHILD_KEYWORDS.has(key) && !Array.isArray(value)) {
         if (isSchema(value)) this.indexSchema(value, retrievalUri, idBase, [...pointerFromRoot, key], [...idPath, key], name);
       } else if (SCHEMA_MAP_KEYWORDS.has(key)) {
         if (isRecord(value)) {
@@ -165,7 +166,8 @@ export class SchemaRegistry {
             }
           }
         }
-      } else if (SCHEMA_ARRAY_KEYWORDS.has(key)) {
+      } else if (SCHEMA_ARRAY_KEYWORDS.has(key) || (key === "items" && Array.isArray(value))) {
+        // `items` as an array is the draft-07 tuple form (2020-12 `prefixItems`).
         if (Array.isArray(value)) {
           value.forEach((childSchema, index) => {
             if (isSchema(childSchema)) {

@@ -5,6 +5,10 @@
 // Output is (1) dataset-level ConditionalRule[] for a "skip patterns" panel, and
 // (2) a per-variable map the extractor uses to annotate the affected rows' valid values
 // and constraints with the triggering condition.
+//
+// The same logic can live inside a nested object (a rule between the fields of every visit).
+// The extractor then scans that object with `qualify` mapping its property names to the
+// nested rows' names (`fasting` -> `visits[].fasting`), and merges the result into the table's.
 
 import type { ConditionalEffect, ConditionalRule, JsonSchema, JsonSchemaObject, JsonValue, SourceInfo } from "./types";
 import type { ResolutionBase, SchemaRegistry } from "./registry";
@@ -31,12 +35,17 @@ export interface SkipPatternResult {
   byVariable: Map<string, VariableConditional[]>;
 }
 
-interface Ctx {
+export interface SkipPatternContext {
   registry: SchemaRegistry;
   maxDepth: number;
+  /**
+   * Maps a property name of the object being scanned to the name of its row. Nested objects
+   * pass the path prefix (`date` -> `visits[].date`); the row object needs nothing.
+   */
+  qualify?: ((name: string) => string) | undefined;
 }
 
-export function collectSkipPatterns(itemSchema: JsonSchema, base: ResolutionBase, ctx: Ctx): SkipPatternResult {
+export function collectSkipPatterns(itemSchema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext): SkipPatternResult {
   const rules: ConditionalRule[] = [];
   const byVariable = new Map<string, VariableConditional[]>();
   const visited = new Set<string>();
@@ -71,7 +80,7 @@ export function collectSkipPatterns(itemSchema: JsonSchema, base: ResolutionBase
     }
 
     if (isRecord(schema.dependentRequired)) {
-      handleDependentRequired(schema.dependentRequired, attach);
+      handleDependentRequired(schema.dependentRequired, ctx, attach);
     }
     if (isRecord(schema.dependentSchemas)) {
       handleDependentSchemas(schema.dependentSchemas, currentBase, ctx, attach);
@@ -82,20 +91,52 @@ export function collectSkipPatterns(itemSchema: JsonSchema, base: ResolutionBase
   return { rules, byVariable };
 }
 
+/**
+ * Append the rules and per-variable facts of `from` to `into`, skipping any already there. The
+ * same nested object can be scanned twice (a parent declared by two `allOf` branches), and a
+ * repeated rule would badge a value with the same condition twice.
+ */
+export function mergeSkipPatterns(into: SkipPatternResult, from: SkipPatternResult): void {
+  const ruleKey = (r: ConditionalRule): string => JSON.stringify([r.condition, r.description ?? null, r.effects]);
+  const seenRules = new Set(into.rules.map(ruleKey));
+  for (const rule of from.rules) {
+    const key = ruleKey(rule);
+    if (seenRules.has(key)) continue;
+    seenRules.add(key);
+    into.rules.push(rule);
+  }
+  const factKey = (vc: VariableConditional): string => JSON.stringify([vc.condition, vc.constraintText, vc.value ?? null]);
+  for (const [variable, facts] of from.byVariable) {
+    const list = into.byVariable.get(variable) ?? [];
+    const seen = new Set(list.map(factKey));
+    for (const fact of facts) {
+      const key = factKey(fact);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      list.push(fact);
+    }
+    into.byVariable.set(variable, list);
+  }
+}
+
+const identity = (name: string): string => name;
+
 function handleIfThen(
   block: JsonSchemaObject,
   base: ResolutionBase,
-  ctx: Ctx,
+  ctx: SkipPatternContext,
   attach: (variable: string, vc: VariableConditional) => void,
   rules: ConditionalRule[]
 ): void {
+  const q = ctx.qualify ?? identity;
   const comment = typeof block.$comment === "string" ? block.$comment : undefined;
   const codeLabels = comment ? parseCodeLabels(comment) : new Map<string, string>();
 
   const apply = (clause: JsonSchema | undefined, condition: string): ConditionalEffect[] => {
     if (clause === undefined || !isSchemaObject(clause)) return [];
     const effects: ConditionalEffect[] = [];
-    for (const [variable, sub] of thenProperties(clause, base, ctx)) {
+    for (const [property, sub] of thenProperties(clause, base, ctx)) {
+      const variable = q(property);
       const forced = forcedValue(sub);
       const label = labelForForced(forced, codeLabels);
       const constraintText = constraintTextFor(condition, forced, label);
@@ -128,18 +169,21 @@ function handleIfThen(
 
 function handleDependentRequired(
   dependentRequired: Record<string, unknown>,
+  ctx: SkipPatternContext,
   attach: (variable: string, vc: VariableConditional) => void
 ): void {
+  const q = ctx.qualify ?? identity;
   for (const [trigger, deps] of Object.entries(dependentRequired)) {
-    const names = asStringArray(deps);
+    const names = asStringArray(deps).map(q);
     if (names.length === 0) continue;
     const verb = names.length === 1 ? "is" : "are";
-    attach(trigger, {
-      condition: `${trigger} is present`,
-      constraintText: `When ${trigger} is present, ${names.join(", ")} ${verb} also required.`
+    const condition = `${q(trigger)} is present`;
+    attach(q(trigger), {
+      condition,
+      constraintText: `When ${q(trigger)} is present, ${names.join(", ")} ${verb} also required.`
     });
     for (const dep of names) {
-      attach(dep, { condition: `${trigger} is present`, constraintText: `Required when ${trigger} is present.` });
+      attach(dep, { condition, constraintText: `Required when ${q(trigger)} is present.` });
     }
   }
 }
@@ -147,26 +191,28 @@ function handleDependentRequired(
 function handleDependentSchemas(
   dependentSchemas: Record<string, unknown>,
   base: ResolutionBase,
-  ctx: Ctx,
+  ctx: SkipPatternContext,
   attach: (variable: string, vc: VariableConditional) => void
 ): void {
+  const q = ctx.qualify ?? identity;
   for (const [trigger, sub] of Object.entries(dependentSchemas)) {
     if (!isSchemaObject(sub) && sub !== true && sub !== false) continue;
-    attach(trigger, {
-      condition: `${trigger} is present`,
-      constraintText: `When ${trigger} is present, additional schema constraints apply.`
+    const condition = `${q(trigger)} is present`;
+    attach(q(trigger), {
+      condition,
+      constraintText: `When ${q(trigger)} is present, additional schema constraints apply.`
     });
-    for (const [variable] of thenProperties(sub as JsonSchema, base, ctx)) {
-      attach(variable, {
-        condition: `${trigger} is present`,
-        constraintText: `Constrained when ${trigger} is present.`
+    for (const [property] of thenProperties(sub as JsonSchema, base, ctx)) {
+      attach(q(property), {
+        condition,
+        constraintText: `Constrained when ${q(trigger)} is present.`
       });
     }
   }
 }
 
 /** Property name/schema pairs declared by a `then`/dependent clause (through `$ref`/`allOf`). */
-function thenProperties(schema: JsonSchema, base: ResolutionBase, ctx: Ctx, depth = 0): Array<[string, JsonSchemaObject]> {
+function thenProperties(schema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext, depth = 0): Array<[string, JsonSchemaObject]> {
   if (depth > ctx.maxDepth || !isSchemaObject(schema)) return [];
   const out: Array<[string, JsonSchemaObject]> = [];
   const ref = refKeyword(schema);
@@ -207,8 +253,9 @@ function constraintTextFor(condition: string, forced: JsonValue | JsonValue[] | 
 }
 
 /** Render an `if` schema as a compact human condition, e.g. "parous = 1 and parity ≤ 2". */
-export function describeCondition(ifSchema: JsonSchema, base: ResolutionBase, ctx: Ctx, depth = 0): string {
+export function describeCondition(ifSchema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext, depth = 0): string {
   if (depth > ctx.maxDepth || !isSchemaObject(ifSchema)) return "condition holds";
+  const q = ctx.qualify ?? identity;
 
   const ref = refKeyword(ifSchema);
   if (ref) {
@@ -221,18 +268,18 @@ export function describeCondition(ifSchema: JsonSchema, base: ResolutionBase, ct
     for (const [name, sub] of Object.entries(ifSchema.properties)) {
       if (!isSchemaObject(sub)) continue;
       if (Object.prototype.hasOwnProperty.call(sub, "const")) {
-        parts.push(`${name} = ${formatJsonValue(sub.const)}`);
+        parts.push(`${q(name)} = ${formatJsonValue(sub.const)}`);
       } else if (Array.isArray(sub.enum)) {
-        parts.push(`${name} ∈ {${sub.enum.map(formatJsonValue).join(", ")}}`);
+        parts.push(`${q(name)} ∈ {${sub.enum.map(formatJsonValue).join(", ")}}`);
       } else {
         const range = conditionRange(sub);
-        parts.push(range ? `${name} ${range}` : `${name} is constrained`);
+        parts.push(range ? `${q(name)} ${range}` : `${q(name)} is constrained`);
       }
     }
   }
 
   if (parts.length === 0) {
-    const required = asStringArray(ifSchema.required);
+    const required = asStringArray(ifSchema.required).map(q);
     if (required.length) return `${required.join(", ")} present`;
     return "condition holds";
   }

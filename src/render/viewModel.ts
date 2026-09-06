@@ -54,7 +54,18 @@ export interface RowVM {
   index: number;
   /** Title of the category the row belongs to. */
   category: string;
+  /** The property key, or the full path of a nested field (`visits[].date`). */
   name: string;
+  /** Nesting level: 0 for a top-level variable, 1 for a field of one, … */
+  depth: number;
+  /** Full path of the variable this row is a field of (nested rows only). */
+  parent?: string | undefined;
+  /**
+   * Display split of `name`: the parent path with its separator, then the field's own name
+   * (`visits[].` + `date`); `namePrefix + nameLeaf === name`. Empty prefix for top-level rows.
+   */
+  namePrefix: string;
+  nameLeaf: string;
   description: string;
   dataType: string;
   format: string;
@@ -163,7 +174,41 @@ export function buildViewModel(table: DataDictionaryTable, options: ViewModelOpt
   };
 }
 
+/**
+ * Split a nested row's path into the parent path (with its separator) and the leaf. The split
+ * point is fixed by the parent's length -- never by scanning for dots, which a pattern-property
+ * leaf (`./^il_[0-9]+$/`) can contain. Only the character(s) right after the parent are read:
+ * `.` gives `parent.`; a bracket group (`[]`, `[0]`, `["odd name"]`) plus an optional `.` gives
+ * `parent[].`, and when the group is the whole remainder the leaf IS the group (`genotype` +
+ * `[0]`). Anything that does not fit (a parent that is not a prefix, an empty leaf) falls back
+ * to no prefix at all; the row still indents by depth.
+ */
+export function splitVariableName(name: string, parent: string | undefined): [prefix: string, leaf: string] {
+  if (!parent || name.length <= parent.length || !name.startsWith(parent)) return ["", name];
+  const rest = name.slice(parent.length);
+  if (rest.startsWith(".")) return rest.length > 1 ? [`${parent}.`, rest.slice(1)] : ["", name];
+  if (rest.startsWith("[")) {
+    const close = bracketGroupEnd(rest);
+    if (close < 0) return ["", name];
+    if (close === rest.length - 1) return [parent, rest];
+    const after = close + (rest.charAt(close + 1) === "." ? 2 : 1);
+    return after < rest.length ? [name.slice(0, parent.length + after), rest.slice(after)] : ["", name];
+  }
+  return ["", name];
+}
+
+/** Index of the `]` closing the bracket group `rest` starts with, reading a quoted name (`["x]y"]`) as one token. */
+function bracketGroupEnd(rest: string): number {
+  if (rest.charAt(1) !== '"') return rest.indexOf("]");
+  let i = 2;
+  while (i < rest.length && rest.charAt(i) !== '"') i += rest.charAt(i) === "\\" ? 2 : 1;
+  return rest.charAt(i) === '"' && rest.charAt(i + 1) === "]" ? i + 1 : -1;
+}
+
 function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, category: string): RowVM {
+  const depth = typeof row.__depth === "number" && Number.isInteger(row.__depth) && row.__depth > 0 ? row.__depth : 0;
+  const parent = typeof row.__parent === "string" && row.__parent ? row.__parent : undefined;
+  const [namePrefix, nameLeaf] = splitVariableName(row["Variable name"], parent);
   const measurements: ValueVM[] = [];
   const values: ValueVM[] = [];
   const sentinels: ValueVM[] = [];
@@ -185,6 +230,10 @@ function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, cat
     index,
     category,
     name: row["Variable name"],
+    depth,
+    ...(parent !== undefined ? { parent } : {}),
+    namePrefix,
+    nameLeaf,
     description: row["Description"],
     dataType: row["Data type"],
     format: row["Format"],

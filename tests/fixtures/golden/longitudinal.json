@@ -1,0 +1,1699 @@
+{
+ "title": "Longitudinal Cohort Dataset",
+ "categories": [
+  {
+   "id": "general",
+   "title": "General",
+   "rows": [
+    "participant_id",
+    "enrollment_date",
+    "visits",
+    "visits[].visit_date",
+    "visits[].fasting",
+    "visits[].weight_kg",
+    "visits[].glucose_mmol",
+    "visits[].labs",
+    "visits[].labs.hba1c_pct",
+    "visits[].labs.panel",
+    "visits[].labs.panel.ldl",
+    "visits[].labs.panel.hdl",
+    "visits[].medications",
+    "baseline",
+    "baseline.visit_date",
+    "baseline.fasting",
+    "baseline.weight_kg",
+    "baseline.glucose_mmol",
+    "baseline.labs",
+    "baseline.labs.hba1c_pct",
+    "baseline.labs.panel",
+    "baseline.labs.panel.ldl",
+    "baseline.labs.panel.hdl",
+    "baseline.medications",
+    "address",
+    "address.street",
+    "address.city",
+    "address.postcode",
+    "contact",
+    "contact.email",
+    "contact.phone",
+    "genotype",
+    "genotype[0]",
+    "genotype[1]",
+    "bp_readings",
+    "bp_readings[]",
+    "bp_readings[][0]",
+    "bp_readings[][1]",
+    "biomarkers",
+    "biomarkers./^il_[0-9]+$/",
+    "biomarkers.*",
+    "comorbidities",
+    "pain_scores",
+    "hospital_days",
+    "daily_steps",
+    "allele_pairs",
+    "diet_flags",
+    "events",
+    "events[].event_type",
+    "events[].event_date",
+    "events[].follow_ups",
+    "notes",
+    "tags",
+    "consent",
+    "consent.signed",
+    "consent.version",
+    "vital_status",
+    "death_year"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "participant_id",
+   "category": "General",
+   "description": "Participant ID\nUnique identifier assigned at enrollment.",
+   "type": "string",
+   "format": "Matches pattern ^LC-[0-9]{6}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/participant_id"
+   }
+  },
+  {
+   "name": "enrollment_date",
+   "category": "General",
+   "description": "Enrollment date\nDate the participant was enrolled in the cohort.",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/enrollment_date"
+   }
+  },
+  {
+   "name": "visits",
+   "category": "General",
+   "description": "Clinic visits\nEvery clinic visit attended by the participant, in chronological order. One element per visit.\nClinic visit\nMeasurements taken at one clinic visit.",
+   "type": "array of object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At least 1 item(s)",
+     null
+    ],
+    [
+     "properties",
+     "Fields: visit_date, fasting, weight_kg, glucose_mmol, labs, medications",
+     null
+    ],
+    [
+     "if/then",
+     "Each item: Has a conditional (if/then) sub-rule.",
+     null
+    ],
+    [
+     "conditional",
+     "Required when hospital_days is present.",
+     "hospital_days is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/visits"
+   }
+  },
+  {
+   "name": "visits[].visit_date",
+   "category": "General",
+   "description": "Visit date",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within visits[]",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/visit_date"
+   }
+  },
+  {
+   "name": "visits[].fasting",
+   "category": "General",
+   "description": "Fasting at blood draw",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Non-fasting",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Fasting",
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required within visits[]",
+     null
+    ],
+    [
+     "conditional",
+     "Required when visits[].glucose_mmol is present.",
+     "visits[].glucose_mmol is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/fasting"
+   }
+  },
+  {
+   "name": "visits[].weight_kg",
+   "category": "General",
+   "description": "Weight (kg)\nSource coding: weight in kilograms; 999 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "2–300",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "range",
+     "Measured value: 2 ≤ value ≤ 300",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/weight_kg"
+   }
+  },
+  {
+   "name": "visits[].glucose_mmol",
+   "category": "General",
+   "description": "Plasma glucose (mmol/L)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1–40",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     "visits[].fasting = 0"
+    ]
+   ],
+   "constraints": [
+    [
+     "range",
+     "Measured value: 1 ≤ value ≤ 40",
+     null
+    ],
+    [
+     "conditional",
+     "When visits[].fasting = 0, value = 999 (Missing).",
+     "visits[].fasting = 0"
+    ],
+    [
+     "conditional",
+     "When visits[].glucose_mmol is present, visits[].fasting is also required.",
+     "visits[].glucose_mmol is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/glucose_mmol"
+   }
+  },
+  {
+   "name": "visits[].labs",
+   "category": "General",
+   "description": "Laboratory results",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: hba1c_pct, panel",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs"
+   }
+  },
+  {
+   "name": "visits[].labs.hba1c_pct",
+   "category": "General",
+   "description": "HbA1c (%)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within visits[].labs",
+     null
+    ],
+    [
+     "range",
+     "3 ≤ value ≤ 20",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/hba1c_pct"
+   }
+  },
+  {
+   "name": "visits[].labs.panel",
+   "category": "General",
+   "description": "Lipid panel",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: ldl, hdl",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel"
+   }
+  },
+  {
+   "name": "visits[].labs.panel.ldl",
+   "category": "General",
+   "description": "LDL cholesterol (mmol/L)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel/properties/ldl"
+   }
+  },
+  {
+   "name": "visits[].labs.panel.hdl",
+   "category": "General",
+   "description": "HDL cholesterol (mmol/L)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel/properties/hdl"
+   }
+  },
+  {
+   "name": "visits[].medications",
+   "category": "General",
+   "description": "Current medications",
+   "type": "array of categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "metformin",
+     "value",
+     null,
+     "Metformin",
+     null
+    ],
+    [
+     "insulin",
+     "value",
+     null,
+     "Insulin",
+     null
+    ],
+    [
+     "statin",
+     "value",
+     null,
+     "Statin",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "uniqueItems",
+     "Items must be unique",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/medications"
+   }
+  },
+  {
+   "name": "baseline",
+   "category": "General",
+   "description": "Clinic visit\nMeasurements taken at one clinic visit.\nBaseline visit\nThe enrollment visit, stored separately from the follow-up visits.",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: visit_date, fasting, weight_kg, glucose_mmol, labs, medications",
+     null
+    ],
+    [
+     "if/then",
+     "Has a conditional (if/then) sub-rule.",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/baseline"
+   }
+  },
+  {
+   "name": "baseline.visit_date",
+   "category": "General",
+   "description": "Visit date",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within baseline",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/visit_date"
+   }
+  },
+  {
+   "name": "baseline.fasting",
+   "category": "General",
+   "description": "Fasting at blood draw",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Non-fasting",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Fasting",
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required within baseline",
+     null
+    ],
+    [
+     "conditional",
+     "Required when baseline.glucose_mmol is present.",
+     "baseline.glucose_mmol is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/fasting"
+   }
+  },
+  {
+   "name": "baseline.weight_kg",
+   "category": "General",
+   "description": "Weight (kg)\nSource coding: weight in kilograms; 999 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "2–300",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "range",
+     "Measured value: 2 ≤ value ≤ 300",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/weight_kg"
+   }
+  },
+  {
+   "name": "baseline.glucose_mmol",
+   "category": "General",
+   "description": "Plasma glucose (mmol/L)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1–40",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     "baseline.fasting = 0"
+    ]
+   ],
+   "constraints": [
+    [
+     "range",
+     "Measured value: 1 ≤ value ≤ 40",
+     null
+    ],
+    [
+     "conditional",
+     "When baseline.fasting = 0, value = 999 (Missing).",
+     "baseline.fasting = 0"
+    ],
+    [
+     "conditional",
+     "When baseline.glucose_mmol is present, baseline.fasting is also required.",
+     "baseline.glucose_mmol is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/glucose_mmol"
+   }
+  },
+  {
+   "name": "baseline.labs",
+   "category": "General",
+   "description": "Laboratory results",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: hba1c_pct, panel",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs"
+   }
+  },
+  {
+   "name": "baseline.labs.hba1c_pct",
+   "category": "General",
+   "description": "HbA1c (%)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within baseline.labs",
+     null
+    ],
+    [
+     "range",
+     "3 ≤ value ≤ 20",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/hba1c_pct"
+   }
+  },
+  {
+   "name": "baseline.labs.panel",
+   "category": "General",
+   "description": "Lipid panel",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: ldl, hdl",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel"
+   }
+  },
+  {
+   "name": "baseline.labs.panel.ldl",
+   "category": "General",
+   "description": "LDL cholesterol (mmol/L)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel/properties/ldl"
+   }
+  },
+  {
+   "name": "baseline.labs.panel.hdl",
+   "category": "General",
+   "description": "HDL cholesterol (mmol/L)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/labs/properties/panel/properties/hdl"
+   }
+  },
+  {
+   "name": "baseline.medications",
+   "category": "General",
+   "description": "Current medications",
+   "type": "array of categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "metformin",
+     "value",
+     null,
+     "Metformin",
+     null
+    ],
+    [
+     "insulin",
+     "value",
+     null,
+     "Insulin",
+     null
+    ],
+    [
+     "statin",
+     "value",
+     null,
+     "Statin",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "uniqueItems",
+     "Items must be unique",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/visit/properties/medications"
+   }
+  },
+  {
+   "name": "address",
+   "category": "General",
+   "description": "Residential address\nAddress at enrollment; the postcode is used to derive area-level deprivation.",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: street, city, postcode",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/address"
+   }
+  },
+  {
+   "name": "address.street",
+   "category": "General",
+   "description": "Street",
+   "type": "string",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/address/properties/street"
+   }
+  },
+  {
+   "name": "address.city",
+   "category": "General",
+   "description": "City",
+   "type": "string",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within address",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/address/properties/city"
+   }
+  },
+  {
+   "name": "address.postcode",
+   "category": "General",
+   "description": "Postcode",
+   "type": "string",
+   "format": "Matches pattern ^[0-9]{5}$",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/address/properties/postcode"
+   }
+  },
+  {
+   "name": "contact",
+   "category": "General",
+   "description": "Preferred contact\nEither a bare email address, or a contact record with a phone number.",
+   "type": "email address or object",
+   "format": "Email address (RFC 5321) — e.g. user@example.org",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: email, phone",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/contact"
+   }
+  },
+  {
+   "name": "contact.email",
+   "category": "General",
+   "description": "Email address",
+   "type": "email address",
+   "format": "Email address (RFC 5321) — e.g. user@example.org",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required in variant 2 of contact",
+     null
+    ],
+    [
+     "oneOf",
+     "In variant 2 of contact",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/contact/oneOf/1/properties/email"
+   }
+  },
+  {
+   "name": "contact.phone",
+   "category": "General",
+   "description": "Phone number",
+   "type": "string",
+   "format": "Matches pattern ^\\+?[0-9 ]{7,15}$",
+   "values": [],
+   "constraints": [
+    [
+     "oneOf",
+     "In variant 2 of contact",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/contact/oneOf/1/properties/phone"
+   }
+  },
+  {
+   "name": "genotype",
+   "category": "General",
+   "description": "Genotype at the index SNP\nThe two alleles carried at the index SNP, as a pair.",
+   "type": "array",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "prefixItems",
+     "Exactly 2 item(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/genotype"
+   }
+  },
+  {
+   "name": "genotype[0]",
+   "category": "General",
+   "description": "Allele 1",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "A",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "C",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "G",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "T",
+     "value",
+     null,
+     null,
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/genotype/prefixItems/0"
+   }
+  },
+  {
+   "name": "genotype[1]",
+   "category": "General",
+   "description": "Allele 2",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "A",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "C",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "G",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "T",
+     "value",
+     null,
+     null,
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/genotype/prefixItems/1"
+   }
+  },
+  {
+   "name": "bp_readings",
+   "category": "General",
+   "description": "Blood pressure readings\nAmbulatory blood pressure readings taken over 24 hours, each a [systolic, diastolic] pair in mmHg.",
+   "type": "array of array",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "prefixItems",
+     "Each item: Exactly 2 item(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/bp_readings"
+   }
+  },
+  {
+   "name": "bp_readings[]",
+   "category": "General",
+   "description": "",
+   "type": "array",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "prefixItems",
+     "Exactly 2 item(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/bp_readings/items"
+   }
+  },
+  {
+   "name": "bp_readings[][0]",
+   "category": "General",
+   "description": "Systolic (mmHg)",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "50 ≤ value ≤ 300",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/bp_readings/items/prefixItems/0"
+   }
+  },
+  {
+   "name": "bp_readings[][1]",
+   "category": "General",
+   "description": "Diastolic (mmHg)",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "20 ≤ value ≤ 200",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/bp_readings/items/prefixItems/1"
+   }
+  },
+  {
+   "name": "biomarkers",
+   "category": "General",
+   "description": "Biomarker panel\nSerum biomarker concentrations keyed by assay name. Interleukins are named il_<number>.",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "minProperties",
+     "At least 1 property",
+     null
+    ],
+    [
+     "propertyNames",
+     "Property names match pattern ^[a-z][a-z0-9_]*$",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/biomarkers"
+   }
+  },
+  {
+   "name": "biomarkers./^il_[0-9]+$/",
+   "category": "General",
+   "description": "Interleukin concentration (pg/mL).",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "patternProperties",
+     "Property name matches /^il_[0-9]+$/.",
+     null
+    ],
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/biomarkers/patternProperties/^il_[0-9]+$"
+   }
+  },
+  {
+   "name": "biomarkers.*",
+   "category": "General",
+   "description": "Concentration (pg/mL).",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "additionalProperties",
+     "Any property name not listed above.",
+     null
+    ],
+    [
+     "range",
+     "value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/biomarkers/additionalProperties"
+   }
+  },
+  {
+   "name": "comorbidities",
+   "category": "General",
+   "description": "Comorbidities at enrollment\nPre-existing conditions reported at enrollment.",
+   "type": "array of categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "diabetes",
+     "value",
+     null,
+     "Diabetes mellitus (type 1 or 2)",
+     null
+    ],
+    [
+     "hypertension",
+     "value",
+     null,
+     "Hypertension",
+     null
+    ],
+    [
+     "copd",
+     "value",
+     null,
+     "Chronic obstructive pulmonary disease",
+     null
+    ],
+    [
+     "ckd",
+     "value",
+     null,
+     "Chronic kidney disease",
+     null
+    ],
+    [
+     "not_collected",
+     "sentinel",
+     "Not collected",
+     "The item was not collected for this participant.",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "uniqueItems",
+     "Items must be unique",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/comorbidities"
+   }
+  },
+  {
+   "name": "pain_scores",
+   "category": "General",
+   "description": "Daily pain scores\nSelf-reported pain on a 0-10 numeric rating scale, one entry per day of the diary week.",
+   "type": "array of integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–10",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "items",
+     "1–12 items",
+     null
+    ],
+    [
+     "range",
+     "Each item: Measured value: 0 ≤ value ≤ 10",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/pain_scores"
+   }
+  },
+  {
+   "name": "hospital_days",
+   "category": "General",
+   "description": "Hospital days per admission\nLength of stay in days for each admission during follow-up; null when the linkage to hospital records is not available.",
+   "type": "array of integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "Each item: value ≥ 0",
+     null
+    ],
+    [
+     "conditional",
+     "When hospital_days is present, visits is also required.",
+     "hospital_days is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/hospital_days"
+   }
+  },
+  {
+   "name": "daily_steps",
+   "category": "General",
+   "description": "Daily step counts\nAccelerometer step counts for the wear period; a day without wear is null.",
+   "type": "array of integer or null",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "contains",
+     "Must contain an item matching: integer ≥ 10000",
+     null
+    ],
+    [
+     "minContains",
+     "At least 1 matching item(s)",
+     null
+    ],
+    [
+     "range",
+     "Each item: value ≥ 0",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/daily_steps"
+   }
+  },
+  {
+   "name": "allele_pairs",
+   "category": "General",
+   "description": "Allele pair (coded)\nThe genotype as one of three coded pairs.",
+   "type": "array",
+   "format": "",
+   "values": [
+    [
+     [
+      "A",
+      "A"
+     ],
+     "value",
+     null,
+     "Homozygous reference",
+     null
+    ],
+    [
+     [
+      "A",
+      "G"
+     ],
+     "value",
+     null,
+     "Heterozygous",
+     null
+    ],
+    [
+     [
+      "G",
+      "G"
+     ],
+     "value",
+     null,
+     "Homozygous alternate",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/allele_pairs"
+   }
+  },
+  {
+   "name": "diet_flags",
+   "category": "General",
+   "description": "Diet questionnaire flags\nQuality flags raised on the diet questionnaire; every code marks a problem, none is a substantive answer.",
+   "type": "array of integer",
+   "format": "",
+   "values": [
+    [
+     7,
+     "sentinel",
+     null,
+     "Implausible energy intake",
+     null
+    ],
+    [
+     8,
+     "sentinel",
+     null,
+     "Incomplete questionnaire",
+     null
+    ],
+    [
+     9,
+     "sentinel",
+     null,
+     "Questionnaire not returned",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": {
+    "items": {
+     "examples": [
+      7
+     ]
+    }
+   },
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/diet_flags"
+   }
+  },
+  {
+   "name": "events",
+   "category": "General",
+   "description": "Clinical events\nDiagnoses, hospitalisations and deaths recorded during follow-up, each with its own follow-up events.\nClinical event",
+   "type": "array of object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: event_type, event_date, follow_ups",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/events"
+   }
+  },
+  {
+   "name": "events[].event_type",
+   "category": "General",
+   "description": "Event type",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "diagnosis",
+     "value",
+     null,
+     "New diagnosis",
+     null
+    ],
+    [
+     "hospitalization",
+     "value",
+     null,
+     "Hospital admission",
+     null
+    ],
+    [
+     "death",
+     "value",
+     null,
+     "Death",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required within events[]",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/event/properties/event_type"
+   }
+  },
+  {
+   "name": "events[].event_date",
+   "category": "General",
+   "description": "Event date",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/event/properties/event_date"
+   }
+  },
+  {
+   "name": "events[].follow_ups",
+   "category": "General",
+   "description": "Follow-up events\nEvents that followed from this one (a readmission after a diagnosis, for example).\nClinical event",
+   "type": "array of object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: event_type, event_date, follow_ups",
+     null
+    ],
+    [
+     "recursive",
+     "Recursive structure: same shape as events[]",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/$defs/event/properties/follow_ups"
+   }
+  },
+  {
+   "name": "notes",
+   "category": "General",
+   "description": "Free-form notes\nUnstructured notes keyed by author; no fixed fields.",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/notes"
+   }
+  },
+  {
+   "name": "tags",
+   "category": "General",
+   "description": "Tags\nArbitrary labels attached by the study team.",
+   "type": "array of any",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/tags"
+   }
+  },
+  {
+   "name": "consent",
+   "category": "General",
+   "description": "Consent",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: signed, version",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/consent"
+   }
+  },
+  {
+   "name": "consent.signed",
+   "category": "General",
+   "description": "Consent form signed",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within consent",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/consent/properties/signed"
+   }
+  },
+  {
+   "name": "consent.version",
+   "category": "General",
+   "description": "Consent form version",
+   "type": "string",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/consent/properties/version"
+   }
+  },
+  {
+   "name": "vital_status",
+   "category": "General",
+   "description": "Vital status at end of follow-up\nSource coding: 0 - Alive; 1 - Deceased; 999 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Alive",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Deceased",
+     null,
+     null
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/vital_status"
+   }
+  },
+  {
+   "name": "death_year",
+   "category": "General",
+   "description": "Year of death\nSource coding: yyyy; 777 - Not applicable (alive); 999 - Missing/Unknown.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1990–2030",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Not applicable",
+     null,
+     "vital_status = 0"
+    ],
+    [
+     999,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel for a missing or unknown numeric value.",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "range",
+     "Measured value: 1990 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When vital_status = 0, value = 777 (Not applicable).",
+     "vital_status = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/longitudinal-cohort-dataset.json",
+    "pointer": "/properties/death_year"
+   }
+  }
+ ],
+ "conditionalRules": [
+  {
+   "condition": "vital_status = 0",
+   "description": "Skip pattern: alive (vital_status=0) => death_year is Not applicable (777).",
+   "effects": [
+    {
+     "variable": "death_year",
+     "value": 777,
+     "label": "Not applicable"
+    }
+   ]
+  },
+  {
+   "condition": "visits[].fasting = 0",
+   "description": "Skip pattern: non-fasting visit (fasting=0) => plasma glucose is recorded as Missing (999).",
+   "effects": [
+    {
+     "variable": "visits[].glucose_mmol",
+     "value": 999,
+     "label": "Missing"
+    }
+   ]
+  },
+  {
+   "condition": "baseline.fasting = 0",
+   "description": "Skip pattern: non-fasting visit (fasting=0) => plasma glucose is recorded as Missing (999).",
+   "effects": [
+    {
+     "variable": "baseline.glucose_mmol",
+     "value": 999,
+     "label": "Missing"
+    }
+   ]
+  }
+ ],
+ "warnings": []
+}

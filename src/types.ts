@@ -111,6 +111,21 @@ export interface SchemaDocumentInput {
   schema: JsonSchema;
 }
 
+/**
+ * One step of a nested variable's path. `Variable name` is `formatVariablePath(__path)`:
+ * `visits[].date` is `[property visits, items, property date]`.
+ */
+export type PathStep =
+  | { kind: "property"; name: string }
+  /** Every element of an array (`[]`). */
+  | { kind: "items" }
+  /** One position of a tuple (`prefixItems`), `[0]`. */
+  | { kind: "index"; index: number }
+  /** A `patternProperties` entry, `/regex/`. */
+  | { kind: "pattern"; pattern: string }
+  /** The schema of properties not named: `additionalProperties` / `unevaluatedProperties`, `*`. */
+  | { kind: "additional"; keyword: "additionalProperties" | "unevaluatedProperties" };
+
 /** Where a piece of information came from, for provenance and debugging. */
 export interface SourceInfo {
   uri: string;
@@ -162,9 +177,15 @@ export interface ConstraintItem {
 
 /**
  * A spreadsheet-shaped row. The seven literal keys are the table columns. The `__`
- * fields carry grouping/provenance metadata that renderers use but exports can drop.
+ * fields carry grouping/provenance/nesting metadata that renderers use but exports can drop.
+ *
+ * A variable can be any JSON value. A property holding an object, an array of objects or an
+ * array of arrays keeps its row and is followed by one row per field inside it, named by path
+ * (`visits[].date`, `address.city`); those rows carry `__parent` and `__depth`. An array of
+ * scalars is a single row whose Valid values / Constraints / Format describe the items.
  */
 export interface DataDictionaryRow {
+  /** The property key, or the path of a nested field (`visits[].date`). */
   "Variable name": string;
   "Description": string;
   "Data type": string;
@@ -174,6 +195,12 @@ export interface DataDictionaryRow {
   "Additional information": Record<string, JsonValue> | null;
   __category?: string | undefined;
   __source?: SourceInfo | undefined;
+  /** Variable name of the row this one is a field of (`visits` for `visits[].date`); absent on top-level rows. */
+  __parent?: string | undefined;
+  /** Nesting depth: 0 for a property of the row object, 1 for a field inside one, and so on. */
+  __depth?: number | undefined;
+  /** Structured path of the variable; `Variable name` is its `formatVariablePath` rendering. */
+  __path?: PathStep[] | undefined;
 }
 
 /** A sub-section of the dataset (e.g. "Demographics"), typically one external `$ref`'d schema. */
@@ -262,14 +289,22 @@ export interface SchemaToTableOptions {
   includeSource?: boolean | undefined;
   /** Treat object schemas referenced from `items.allOf` as category sections. Default: true. */
   splitAllOfObjectCategories?: boolean | undefined;
-  /** Max recursion depth when summarising nested schemas. Default: 6. */
+  /** Max recursion depth when summarising nested schemas (`$ref`/branch traversal per variable). Default: 6. */
   maxDepth?: number | undefined;
+  /**
+   * Emit a row for every field of an object-shaped variable, an array of objects or an array
+   * of arrays (`visits[].date`). `false` keeps one row per top-level property; the item rules of
+   * an array of scalars are hoisted into the row either way. Default: true.
+   */
+  expandNested?: boolean | undefined;
+  /** Deepest nested-field level emitted as rows (0 = top-level rows only). Default: 6. */
+  maxNestingDepth?: number | undefined;
 }
 
 export interface PlainRowsOptions {
   /** Convert complex columns to strings so the result exports directly to CSV/XLSX. Default: true. */
   stringifyComplexColumns?: boolean | undefined;
-  /** Include the `__category`/`__source` metadata columns. Default: false. */
+  /** Include the `__category`/`__parent`/`__source` metadata columns (`Category`, `Parent`, `Source`). Default: false. */
   includeInternalColumns?: boolean | undefined;
   /** Placeholder for empty cells. Default: "". */
   emptyCell?: string | undefined;

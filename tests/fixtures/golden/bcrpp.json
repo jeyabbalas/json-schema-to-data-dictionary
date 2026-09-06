@@ -1,0 +1,6232 @@
+{
+ "title": "BCRPP - CORE table",
+ "categories": [
+  {
+   "id": "core-identification-dates",
+   "title": "CORE — Identification/Dates",
+   "rows": [
+    "subject_id",
+    "id",
+    "record_date",
+    "qcycle",
+    "baseline"
+   ]
+  },
+  {
+   "id": "core-censoring",
+   "title": "CORE — Censoring",
+   "rows": [
+    "lastfup",
+    "lastfup_reason"
+   ]
+  },
+  {
+   "id": "core-status",
+   "title": "CORE — Status",
+   "rows": [
+    "Status"
+   ]
+  },
+  {
+   "id": "core-demographics",
+   "title": "CORE — Demographics",
+   "rows": [
+    "birth_year",
+    "sex",
+    "age",
+    "race",
+    "ethnicity",
+    "education",
+    "AJAncestry"
+   ]
+  },
+  {
+   "id": "core-anthropometry",
+   "title": "CORE — Anthropometry",
+   "rows": [
+    "height",
+    "weight",
+    "bmi",
+    "waist",
+    "hip",
+    "whr",
+    "bmi_earlyadult"
+   ]
+  },
+  {
+   "id": "core-alcohol-and-tobacco",
+   "title": "CORE — Alcohol and Tobacco",
+   "rows": [
+    "alcohol_status",
+    "alcohol_init",
+    "alcohol_amt",
+    "alcohol_stop",
+    "alcohol_dur",
+    "smoking_status",
+    "smoking_init",
+    "smoking_amt",
+    "smoking_dur",
+    "smoking_stop"
+   ]
+  },
+  {
+   "id": "core-family-health-history",
+   "title": "CORE — Family Health History",
+   "rows": [
+    "fhx_fdr_brca",
+    "sisters",
+    "brCancerSis",
+    "daughters",
+    "brCancerDau",
+    "brCancerMom",
+    "brCancerDad",
+    "FHisFstBC",
+    "FHisFstBCNr",
+    "fam1grBC50",
+    "ovCancerSis",
+    "ovCancerDau",
+    "ovCancerMom",
+    "FHisFstOC",
+    "FHisFstOCNr",
+    "fam1grOC50"
+   ]
+  },
+  {
+   "id": "core-personal-health-history",
+   "title": "CORE — Personal Health History",
+   "rows": [
+    "Biopsies_yesno",
+    "Biopsies_number",
+    "BBD_history",
+    "BBD_number",
+    "BBD_type1",
+    "BBD_year1",
+    "BBD_type2",
+    "BBD_year2",
+    "BBD_type3",
+    "BBD_year3",
+    "BBD_type4",
+    "BBD_year4"
+   ]
+  },
+  {
+   "id": "core-reproductive-history",
+   "title": "CORE — Reproductive History",
+   "rows": [
+    "agemenarche",
+    "parous",
+    "age_preg1",
+    "parity",
+    "age_preg2",
+    "age_preg3",
+    "age_preg4",
+    "age_preg5",
+    "age_preg6",
+    "age_preg7",
+    "age_preg8",
+    "age_preg9",
+    "age_preg10",
+    "breastfeed",
+    "breastfeed_dur",
+    "breastfeed_dur_b1",
+    "breastfeed_dur_b2",
+    "breastfeed_dur_b3",
+    "breastfeed_dur_b4",
+    "breastfeed_dur_b5",
+    "breastfeed_dur_b6",
+    "breastfeed_dur_b7",
+    "breastfeed_dur_b8",
+    "breastfeed_dur_b9",
+    "breastfeed_dur_b10",
+    "ocuse_ever",
+    "ocuse_current",
+    "ocuse_dur",
+    "ocuse_start",
+    "ocuse_stop",
+    "othcontracep_ever",
+    "othcontracep_current",
+    "meno_status",
+    "meno_age",
+    "meno_reason",
+    "hrtuse",
+    "hrt_dur",
+    "hrtuse_ep",
+    "hrtep_dur",
+    "hrtuse_eonly",
+    "hrteonly_dur"
+   ]
+  },
+  {
+   "id": "core-physical-activity",
+   "title": "CORE — Physical Activity",
+   "rows": [
+    "pa_mets",
+    "pa_pct"
+   ]
+  },
+  {
+   "id": "core-screening-history",
+   "title": "CORE — Screening History",
+   "rows": [
+    "screen_ever",
+    "screen_start",
+    "lastscreen_year"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "subject_id",
+   "category": "CORE — Identification/Dates",
+   "description": "Subject ID\nIndividual ID combining study and person info, formatted '<study_id>_<person_id>' (e.g. 16_0012345). The two-digit prefix is one of the 24 BCRPP study codes 01-24 enumerated in COHORT_METADATA.study_id.\nSource CORE row 3: 'Study ID + \"_\" + person ID (e.g.: XX_XXX)'.",
+   "type": "string",
+   "format": "Matches pattern ^(0[1-9]|1[0-9]|2[0-4])_.+$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/identification.json",
+    "pointer": "/properties/subject_id"
+   }
+  },
+  {
+   "name": "id",
+   "category": "CORE — Identification/Dates",
+   "description": "Individual ID (original from study)\nStudy-specific person ID as supplied by the originating cohort.",
+   "type": "string",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/identification.json",
+    "pointer": "/properties/id"
+   }
+  },
+  {
+   "name": "record_date",
+   "category": "CORE — Identification/Dates",
+   "description": "Date of data/sample collection\nSource coding: dd/mm/yyyy; 08/08/8000 - Missing/Unknown.\nDate (dd/mm/yyyy)\nCalendar date in dd/mm/yyyy format. The reserved value 08/08/8000 denotes Missing/Unknown.\nThe sentinel 08/08/8000 deliberately satisfies this pattern (a oneOf split would double-match), so missingness is documented here rather than enforced as a separate branch.",
+   "type": "string",
+   "format": "Matches pattern ^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/identification.json",
+    "pointer": "/properties/record_date"
+   }
+  },
+  {
+   "name": "qcycle",
+   "category": "CORE — Identification/Dates",
+   "description": "Questionnaire cycle (repeated measures)\nSource coding: 0 - Baseline; 1+ - Follow up cycle #; 888 - Missing. Open-ended count, not a closed enum.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–100",
+     "0 = baseline; positive integer = follow-up cycle number.",
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 100",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/identification.json",
+    "pointer": "/properties/qcycle"
+   }
+  },
+  {
+   "name": "baseline",
+   "category": "CORE — Identification/Dates",
+   "description": "Baseline record indicator\nSource coding: 0 - Record taken subsequent to baseline; 1 - Record taken at baseline.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Record taken subsequent to baseline",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Record taken at baseline",
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/identification.json",
+    "pointer": "/properties/baseline"
+   }
+  },
+  {
+   "name": "lastfup",
+   "category": "CORE — Censoring",
+   "description": "Year of last available follow up\nYear of last follow up based on (1) most recent year cancer registry was linked/checked, (2) end of cohort study period, (3) date of death, or (4) other loss to follow up.\nSource coding: yyyy; 8888 - Missing/Unknown.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1950–2030",
+     null,
+     null
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1950 ≤ value ≤ 2030",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/censoring.json",
+    "pointer": "/properties/lastfup"
+   }
+  },
+  {
+   "name": "lastfup_reason",
+   "category": "CORE — Censoring",
+   "description": "Reason for last follow up date\nSource coding: 1 - Year of last cancer registry linkage; 2 - End of cohort study period; 3 - Death; 4 - Withdrew from cohort; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Year of last cancer registry linkage",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "End of cohort study period",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Death",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "Withdrew from cohort",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/censoring.json",
+    "pointer": "/properties/lastfup_reason"
+   }
+  },
+  {
+   "name": "Status",
+   "category": "CORE — Status",
+   "description": "Breast cancer status\nCoded 1 if the participant was diagnosed with breast cancer (invasive or in situ) prior to cohort enrollment (prevalent breast cancer) or diagnosed over cohort follow-up; otherwise 0.\nSource coding: 0 - non-breast cancer case; 1 - case. No missing code defined in source. Variable name is capitalised ('Status') in the dictionary.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Non-breast cancer case",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Case",
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/status.json",
+    "pointer": "/properties/Status"
+   }
+  },
+  {
+   "name": "birth_year",
+   "category": "CORE — Demographics",
+   "description": "Birth year\nSource coding: yyyy; 8888 - Missing/Unknown. Typed 'Date (yyyy)' in source but is a 4-digit calendar year.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1850–2030",
+     null,
+     null
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1850 ≤ value ≤ 2030",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/birth_year"
+   }
+  },
+  {
+   "name": "sex",
+   "category": "CORE — Demographics",
+   "description": "Sex\nSource coding: 0 - Female; 1 - Male. No missing code defined in source.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Female",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Male",
+     null,
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/sex"
+   }
+  },
+  {
+   "name": "age",
+   "category": "CORE — Demographics",
+   "description": "Age at record_date\nAge in years. No missing code defined in source.\nSource coding: Age in years.",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 120",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/age"
+   }
+  },
+  {
+   "name": "race",
+   "category": "CORE — Demographics",
+   "description": "Race (US OMB categories)\nSource coding: 1 - White; 2 - Black/African American; 3 - Asian; 4 - Native Hawaiin/Pacific Islander [sic]; 5 - American Indian/Alaska Native; 6 - Other, including multiracial; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "White",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Black/African American",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Asian",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "Native Hawaiian/Pacific Islander",
+     null,
+     null
+    ],
+    [
+     5,
+     "value",
+     "American Indian/Alaska Native",
+     null,
+     null
+    ],
+    [
+     6,
+     "value",
+     "Other, including multiracial",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/race"
+   }
+  },
+  {
+   "name": "ethnicity",
+   "category": "CORE — Demographics",
+   "description": "Ethnicity (US OMB categories)\nSource coding: 0 - Non-Hispanic/Non-Latino; 1 - Hispanic/Latino; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Non-Hispanic/Non-Latino",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Hispanic/Latino",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/ethnicity"
+   }
+  },
+  {
+   "name": "education",
+   "category": "CORE — Demographics",
+   "description": "Highest level education attained\nSource coding: 1 - Less than high school; 2 - High School; 3 - Some college education; 4 - University (degree); 5 - Graduate school (some or degree); 888 - Unknown/Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Less than high school",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "High School",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Some college education",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "University (degree)",
+     null,
+     null
+    ],
+    [
+     5,
+     "value",
+     "Graduate school (some or degree)",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/education"
+   }
+  },
+  {
+   "name": "AJAncestry",
+   "category": "CORE — Demographics",
+   "description": "Ashkenazi Jewish Ancestry\nSee COHORT_METADATA.ajancestry_def for how AJ ancestry was determined for the cohort.\nSource coding: 0 - No; 1 - Yes; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/demographics.json",
+    "pointer": "/properties/AJAncestry"
+   }
+  },
+  {
+   "name": "height",
+   "category": "CORE — Anthropometry",
+   "description": "Height (cm)\nAdult height in cm.\nSource coding: Height in cm; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "100–250",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 100 ≤ value ≤ 250",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/height"
+   }
+  },
+  {
+   "name": "weight",
+   "category": "CORE — Anthropometry",
+   "description": "Weight (kg)\nAdult weight in kg.\nSource coding: Weight in kg; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "20–300",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 20 ≤ value ≤ 300",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/weight"
+   }
+  },
+  {
+   "name": "bmi",
+   "category": "CORE — Anthropometry",
+   "description": "Body Mass Index (BMI) (kg/m2)\nAdult BMI in kg/m2.\nSource coding: BMI in kg/m2; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–80",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 80",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/bmi"
+   }
+  },
+  {
+   "name": "waist",
+   "category": "CORE — Anthropometry",
+   "description": "Waist Circumference (cm)\nAdult waist circumference in cm.\nSource coding: Waist circumference in cm; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "40–250",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 40 ≤ value ≤ 250",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/waist"
+   }
+  },
+  {
+   "name": "hip",
+   "category": "CORE — Anthropometry",
+   "description": "Hip Circumference (cm)\nAdult hip circumference in cm.\nSource coding: Hip circumference in cm; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "40–250",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 40 ≤ value ≤ 250",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/hip"
+   }
+  },
+  {
+   "name": "whr",
+   "category": "CORE — Anthropometry",
+   "description": "Waist to hip ratio\nAdult waist-to-hip ratio.\nSource coding: Waist-to-hip ratio; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0.4–3",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0.4 ≤ value ≤ 3",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/whr"
+   }
+  },
+  {
+   "name": "bmi_earlyadult",
+   "category": "CORE — Anthropometry",
+   "description": "Body Mass Index (BMI) (kg/m2) age 18-24\nBMI in kg/m2 at age 18-24.\nSource coding: BMI in kg/m2; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–80",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 80",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/anthropometry.json",
+    "pointer": "/properties/bmi_earlyadult"
+   }
+  },
+  {
+   "name": "alcohol_status",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Drinking status\nSource coding: 1 - Current; 2 - Former; 3 - Ever (unknown current or former); 4 - Never; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Current",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Former",
+     null,
+     null
+    ],
+    [
+     3,
+     "sentinel",
+     "Ever (unknown current or former)",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "Never",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/alcohol_status"
+   }
+  },
+  {
+   "name": "alcohol_init",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Age of initiation of regular alcohol drinking\nSource coding: Age in years; 777 - Nondrinker; 888 - Missing.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nondrinker",
+     null,
+     "alcohol_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When alcohol_status = 4, value = 777 (Nondrinker).",
+     "alcohol_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/alcohol_init"
+   }
+  },
+  {
+   "name": "alcohol_amt",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Current alcohol intake (grams/day)\nSource coding: Value; 777 - Nondrinker; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–500",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nondrinker",
+     null,
+     "alcohol_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 500",
+     null
+    ],
+    [
+     "conditional",
+     "When alcohol_status = 4, value = 777 (Nondrinker).",
+     "alcohol_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/alcohol_amt"
+   }
+  },
+  {
+   "name": "alcohol_stop",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Age of cessation of regular alcohol drinking\nSource coding: Age in years; 666 - N/A (no stop date); 777 - Nondrinker; 888 - Missing.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (no stop date)",
+     null,
+     "alcohol_status = 1"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nondrinker",
+     null,
+     "alcohol_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When alcohol_status = 4, value = 777 (Nondrinker).",
+     "alcohol_status = 4"
+    ],
+    [
+     "conditional",
+     "When alcohol_status = 1, value = 666 (N/A no-stop-date).",
+     "alcohol_status = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/alcohol_stop"
+   }
+  },
+  {
+   "name": "alcohol_dur",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Duration of regular alcohol drinking (years)\nSource coding: Years of alcohol use; 777 - Nondrinker; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–90",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nondrinker",
+     null,
+     "alcohol_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 90",
+     null
+    ],
+    [
+     "conditional",
+     "When alcohol_status = 4, value = 777 (Nondrinker).",
+     "alcohol_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/alcohol_dur"
+   }
+  },
+  {
+   "name": "smoking_status",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Smoking status\nSource coding: 1 - Current; 2 - Former; 3 - Ever (unknown current or former); 4 - Never; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Current",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Former",
+     null,
+     null
+    ],
+    [
+     3,
+     "sentinel",
+     "Ever (unknown current or former)",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "Never",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/smoking_status"
+   }
+  },
+  {
+   "name": "smoking_init",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Age of initiation of smoking\nSource coding: Age in years; 777 - Nonsmoker; 888 - Missing.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonsmoker",
+     null,
+     "smoking_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When smoking_status = 4, value = 777 (Nonsmoker).",
+     "smoking_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/smoking_init"
+   }
+  },
+  {
+   "name": "smoking_amt",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Current amount smoked (cig/day)\nSource coding: Value; 777 - Nonsmoker; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–200",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonsmoker",
+     null,
+     "smoking_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 200",
+     null
+    ],
+    [
+     "conditional",
+     "When smoking_status = 4, value = 777 (Nonsmoker).",
+     "smoking_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/smoking_amt"
+   }
+  },
+  {
+   "name": "smoking_dur",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Duration of smoking (years)\nSource coding: Years of regular smoking; 777 - Nonsmoker; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–90",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonsmoker",
+     null,
+     "smoking_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 90",
+     null
+    ],
+    [
+     "conditional",
+     "When smoking_status = 4, value = 777 (Nonsmoker).",
+     "smoking_status = 4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/smoking_dur"
+   }
+  },
+  {
+   "name": "smoking_stop",
+   "category": "CORE — Alcohol and Tobacco",
+   "description": "Age of cessation of smoking\nSource coding: Age in years; 666 - N/A (current smoker); 777 - Nonsmoker; 888 - Missing/Unknown.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (current smoker)",
+     null,
+     "smoking_status = 1"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonsmoker",
+     null,
+     "smoking_status = 4"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When smoking_status = 4, value = 777 (Nonsmoker).",
+     "smoking_status = 4"
+    ],
+    [
+     "conditional",
+     "When smoking_status = 1, value = 666 (N/A current-smoker).",
+     "smoking_status = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/alcohol_tobacco.json",
+    "pointer": "/properties/smoking_stop"
+   }
+  },
+  {
+   "name": "fhx_fdr_brca",
+   "category": "CORE — Family Health History",
+   "description": "Family history of breast cancer (first degree relative)\nSee COHORT_METADATA.fhx_def for which relatives were included.\nSource coding: 0 - No; 1 - Yes; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/fhx_fdr_brca"
+   }
+  },
+  {
+   "name": "sisters",
+   "category": "CORE — Family Health History",
+   "description": "Total number of sisters\nIncluding half-sisters.\nSource coding: 888 = DK (Don't Know). Variable type 'quantitative - continuous'.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/sisters"
+   }
+  },
+  {
+   "name": "brCancerSis",
+   "category": "CORE — Family Health History",
+   "description": "Number of sisters with breast cancer\nIncluding half-sisters. Consistency (not enforced): if sisters=0 then brCancerSis should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/brCancerSis"
+   }
+  },
+  {
+   "name": "daughters",
+   "category": "CORE — Family Health History",
+   "description": "Total number of daughters\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/daughters"
+   }
+  },
+  {
+   "name": "brCancerDau",
+   "category": "CORE — Family Health History",
+   "description": "Number of daughters with breast cancer\nConsistency (not enforced): if daughters=0 then brCancerDau should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/brCancerDau"
+   }
+  },
+  {
+   "name": "brCancerMom",
+   "category": "CORE — Family Health History",
+   "description": "Mother had breast cancer\nSource coding: 0=No, 1=Yes, 888=DK.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/brCancerMom"
+   }
+  },
+  {
+   "name": "brCancerDad",
+   "category": "CORE — Family Health History",
+   "description": "Father had breast cancer\nSource coding: 0=No, 1=Yes, 888=DK.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/brCancerDad"
+   }
+  },
+  {
+   "name": "FHisFstBC",
+   "category": "CORE — Family Health History",
+   "description": "First degree female family history of breast cancer\nFirst degree: mother, sisters, daughters.\nSource coding: 0=No, 1=Yes, 888=DK.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/FHisFstBC"
+   }
+  },
+  {
+   "name": "FHisFstBCNr",
+   "category": "CORE — Family Health History",
+   "description": "Number of first degree female family members with breast cancer\nConsistency (not enforced): if FHisFstBC=0 then FHisFstBCNr should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/FHisFstBCNr"
+   }
+  },
+  {
+   "name": "fam1grBC50",
+   "category": "CORE — Family Health History",
+   "description": "Number of first degree female family members with breast cancer before age 50 (<50)\nConsistency (not enforced): if FHisFstBC=0 then fam1grBC50 should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/fam1grBC50"
+   }
+  },
+  {
+   "name": "ovCancerSis",
+   "category": "CORE — Family Health History",
+   "description": "Number of sisters with ovarian cancer\nIncluding half-sisters. Consistency (not enforced): if sisters=0 then ovCancerSis should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/ovCancerSis"
+   }
+  },
+  {
+   "name": "ovCancerDau",
+   "category": "CORE — Family Health History",
+   "description": "Number of daughters with ovarian cancer\nConsistency (not enforced): if daughters=0 then ovCancerDau should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/ovCancerDau"
+   }
+  },
+  {
+   "name": "ovCancerMom",
+   "category": "CORE — Family Health History",
+   "description": "Mother had ovarian cancer\nSource coding: 0=No, 1=Yes, 888=DK.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/ovCancerMom"
+   }
+  },
+  {
+   "name": "FHisFstOC",
+   "category": "CORE — Family Health History",
+   "description": "First degree female family members with ovarian cancer\nFirst degree: mother, sisters, daughters.\nSource coding: 0=No, 1=Yes, 888=DK.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/FHisFstOC"
+   }
+  },
+  {
+   "name": "FHisFstOCNr",
+   "category": "CORE — Family Health History",
+   "description": "Number of first degree female family members with ovarian cancer\nConsistency (not enforced): if FHisFstOC=0 then FHisFstOCNr should be 0.\nSource coding: integer; 888 = DK.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/FHisFstOCNr"
+   }
+  },
+  {
+   "name": "fam1grOC50",
+   "category": "CORE — Family Health History",
+   "description": "Number of first degree family members with ovarian cancer before age 50 (<50)\nConsistency (not enforced): if FHisFstOC=0 then fam1grOC50 should be 0.\nSource coding: integer; 888 = DK. NOTE: the source comment erroneously references 'FHisFstBC=0'; the intended gate is FHisFstOC.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/family_health_history.json",
+    "pointer": "/properties/fam1grOC50"
+   }
+  },
+  {
+   "name": "Biopsies_yesno",
+   "category": "CORE — Personal Health History",
+   "description": "Ever had a breast biopsy (excluding biopsies leading to a cancer diagnosis in cases)\nSource coding: 0 - No; 1 - Yes; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/Biopsies_yesno"
+   }
+  },
+  {
+   "name": "Biopsies_number",
+   "category": "CORE — Personal Health History",
+   "description": "Number of breast biopsies (excluding biopsies leading to a breast cancer diagnosis in cases)\nSee COHORT_METADATA.biopsynum_def for how the number of biopsies was determined.\nSource coding: number; 888 - Missing/Unknown.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–50",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 50",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/Biopsies_number"
+   }
+  },
+  {
+   "name": "BBD_history",
+   "category": "CORE — Personal Health History",
+   "description": "History of benign breast disease\nSource coding: 0 - No; 1 - Yes; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_history"
+   }
+  },
+  {
+   "name": "BBD_number",
+   "category": "CORE — Personal Health History",
+   "description": "Number of benign breast disease diagnoses\nSource coding: number 0-4; 5 - more than 4; 888 - Missing/Unknown. Top-coded categorical, not a free integer.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "0",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "1",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "2",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "3",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "4",
+     null,
+     null
+    ],
+    [
+     5,
+     "value",
+     "More than 4",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_number"
+   }
+  },
+  {
+   "name": "BBD_type1",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for first BBD diagnosis",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Non-proliferative disease",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Proliferative disease without atypia",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Atypical hyperplasia",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_type1"
+   }
+  },
+  {
+   "name": "BBD_year1",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of first benign breast disease diagnosis",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1900–2030",
+     null,
+     null
+    ],
+    [
+     7777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0"
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1900 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_year1"
+   }
+  },
+  {
+   "name": "BBD_type2",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for second BBD diagnosis",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Non-proliferative disease",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Proliferative disease without atypia",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Atypical hyperplasia",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_type2"
+   }
+  },
+  {
+   "name": "BBD_year2",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of second benign breast disease diagnosis",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1900–2030",
+     null,
+     null
+    ],
+    [
+     7777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1"
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1900 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_year2"
+   }
+  },
+  {
+   "name": "BBD_type3",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for third BBD diagnosis",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Non-proliferative disease",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Proliferative disease without atypia",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Atypical hyperplasia",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 2, value = 777 (BBD type/year slots 3-4 are NA).",
+     "BBD_number = 2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_type3"
+   }
+  },
+  {
+   "name": "BBD_year3",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of third benign breast disease diagnosis",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1900–2030",
+     null,
+     null
+    ],
+    [
+     7777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2"
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1900 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 2, value = 7777 (BBD type/year slots 3-4 are NA).",
+     "BBD_number = 2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_year3"
+   }
+  },
+  {
+   "name": "BBD_type4",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for fourth BBD diagnosis",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Non-proliferative disease",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Proliferative disease without atypia",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Atypical hyperplasia",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2; BBD_number = 3"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 2, value = 777 (BBD type/year slots 3-4 are NA).",
+     "BBD_number = 2"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 3, value = 777 (BBD type/year slot 4 is NA).",
+     "BBD_number = 3"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_type4"
+   }
+  },
+  {
+   "name": "BBD_year4",
+   "category": "CORE — Personal Health History",
+   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of fourth benign breast disease diagnosis",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1900–2030",
+     null,
+     null
+    ],
+    [
+     7777,
+     "sentinel",
+     "NA",
+     null,
+     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2; BBD_number = 3"
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1900 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_history = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "BBD_number = 0"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "BBD_number = 1"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 2, value = 7777 (BBD type/year slots 3-4 are NA).",
+     "BBD_number = 2"
+    ],
+    [
+     "conditional",
+     "When BBD_number = 3, value = 7777 (BBD type/year slot 4 is NA).",
+     "BBD_number = 3"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/personal_health_history.json",
+    "pointer": "/properties/BBD_year4"
+   }
+  },
+  {
+   "name": "agemenarche",
+   "category": "CORE — Reproductive History",
+   "description": "Age at menarche\nSource coding: Age in years; 777 - Never had a period; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "8–21",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Never had a period",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 8 ≤ value ≤ 21",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/agemenarche"
+   }
+  },
+  {
+   "name": "parous",
+   "category": "CORE — Reproductive History",
+   "description": "Parous or not\nSource coding: 0 - Non-parous; 1 - Parous; 888 - Missing.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Non-parous",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Parous",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/parous"
+   }
+  },
+  {
+   "name": "age_preg1",
+   "category": "CORE — Reproductive History",
+   "description": "Age at first pregnancy (full-term)\nSource coding: Age in years; 777 - Nonparous; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg1"
+   }
+  },
+  {
+   "name": "parity",
+   "category": "CORE — Reproductive History",
+   "description": "Number of pregnancies (full-term)\nSee COHORT_METADATA.preg_def for the cohort's definition of full-term pregnancies.\nSource coding: 0+; 888 - Missing/Unknown. Open-ended count, not a closed enum. No nonparous sentinel: a non-parous participant is expected to record 0.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–30",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 30",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/parity"
+   }
+  },
+  {
+   "name": "age_preg2",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at second pregnancy (full-term)\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity = 1"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity = 1, value = 666 (N/A).",
+     "parous = 1 and parity = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg2"
+   }
+  },
+  {
+   "name": "age_preg3",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at third pregnancy (full-term)\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–2"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–2, value = 666 (N/A).",
+     "parous = 1 and parity 1–2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg3"
+   }
+  },
+  {
+   "name": "age_preg4",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at fourth pregnancy (full-term)\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–3"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–3, value = 666 (N/A).",
+     "parous = 1 and parity 1–3"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg4"
+   }
+  },
+  {
+   "name": "age_preg5",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at fifth pregnancy (full-term)\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–4"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–4, value = 666 (N/A).",
+     "parous = 1 and parity 1–4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg5"
+   }
+  },
+  {
+   "name": "age_preg6",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at sixth pregnancy (full-term)\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–5"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–5, value = 666 (N/A).",
+     "parous = 1 and parity 1–5"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg6"
+   }
+  },
+  {
+   "name": "age_preg7",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at seventh pregnancy (full-term)\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–6"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–6, value = 666 (N/A).",
+     "parous = 1 and parity 1–6"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg7"
+   }
+  },
+  {
+   "name": "age_preg8",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at eighth pregnancy (full-term)\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–7"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–7, value = 666 (N/A).",
+     "parous = 1 and parity 1–7"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg8"
+   }
+  },
+  {
+   "name": "age_preg9",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at ninth pregnancy (full-term)\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–8"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–8, value = 666 (N/A).",
+     "parous = 1 and parity 1–8"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg9"
+   }
+  },
+  {
+   "name": "age_preg10",
+   "category": "CORE — Reproductive History",
+   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at tenth pregnancy (full-term)\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "12–55",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–9"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 12 ≤ value ≤ 55",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–9, value = 666 (N/A).",
+     "parous = 1 and parity 1–9"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/age_preg10"
+   }
+  },
+  {
+   "name": "breastfeed",
+   "category": "CORE — Reproductive History",
+   "description": "Ever breastfeed\nSource coding: 0 - Never Breastfed; 1 - Ever Breastfed; 777 - Nonparous; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never breastfed",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Ever breastfed",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed"
+   }
+  },
+  {
+   "name": "breastfeed_dur",
+   "category": "CORE — Reproductive History",
+   "description": "Cumulative lifetime duration of breastfeeding (months)\nEnter 0 if parous and did not breastfeed.\nSource coding: Time in months; 777 - Nonparous; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–600",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 600",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b1",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for first birth\nEnter 0 if parous and did not breastfeed for the first birth.\nSource coding: Time in months; 777 - Nonparous; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b1"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b2",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for second birth\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity = 1"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity = 1, value = 666 (N/A).",
+     "parous = 1 and parity = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b2"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b3",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for third birth\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–2"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–2, value = 666 (N/A).",
+     "parous = 1 and parity 1–2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b3"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b4",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for fourth birth\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–3"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–3, value = 666 (N/A).",
+     "parous = 1 and parity 1–3"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b4"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b5",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for fifth birth\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–4"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–4, value = 666 (N/A).",
+     "parous = 1 and parity 1–4"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b5"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b6",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for sixth birth\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–5"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–5, value = 666 (N/A).",
+     "parous = 1 and parity 1–5"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b6"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b7",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for seventh birth\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–6"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–6, value = 666 (N/A).",
+     "parous = 1 and parity 1–6"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b7"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b8",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for eighth birth\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–7"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–7, value = 666 (N/A).",
+     "parous = 1 and parity 1–7"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b8"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b9",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for ninth birth\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–8"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–8, value = 666 (N/A).",
+     "parous = 1 and parity 1–8"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b9"
+   }
+  },
+  {
+   "name": "breastfeed_dur_b10",
+   "category": "CORE — Reproductive History",
+   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for tenth birth\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–120",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "N/A (fewer than N full-term pregnancies)",
+     null,
+     "parous = 1 and parity 1–9"
+    ],
+    [
+     777,
+     "sentinel",
+     "Nonparous",
+     null,
+     "parous = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 120",
+     null
+    ],
+    [
+     "conditional",
+     "When parous = 0, value = 777 (Nonparous).",
+     "parous = 0"
+    ],
+    [
+     "conditional",
+     "When parous = 1 and parity 1–9, value = 666 (N/A).",
+     "parous = 1 and parity 1–9"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/breastfeed_dur_b10"
+   }
+  },
+  {
+   "name": "ocuse_ever",
+   "category": "CORE — Reproductive History",
+   "description": "Ever use of oral contraceptives\nSource coding: 0 - Never used oral contraceptives; 1 - Ever used oral contraceptives; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never used oral contraceptives",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Ever used oral contraceptives",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/ocuse_ever"
+   }
+  },
+  {
+   "name": "ocuse_current",
+   "category": "CORE — Reproductive History",
+   "description": "Current OC use (at record_date)\nSource coding: 0 - No; 1 - Yes; 888 - Missing/Unknown. (No nonuser sentinel defined.)",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/ocuse_current"
+   }
+  },
+  {
+   "name": "ocuse_dur",
+   "category": "CORE — Reproductive History",
+   "description": "Lifetime duration of oral contraceptive use (months)\nSource coding: Time in months; 777 - NA (never user); 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–600",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA (never user)",
+     null,
+     "ocuse_ever = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 600",
+     null
+    ],
+    [
+     "conditional",
+     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
+     "ocuse_ever = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/ocuse_dur"
+   }
+  },
+  {
+   "name": "ocuse_start",
+   "category": "CORE — Reproductive History",
+   "description": "Age at first use of oral contraceptive\nSource coding: Age in years; 777 - NA (never user); 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA (never user)",
+     null,
+     "ocuse_ever = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
+     "ocuse_ever = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/ocuse_start"
+   }
+  },
+  {
+   "name": "ocuse_stop",
+   "category": "CORE — Reproductive History",
+   "description": "Age at last use of oral contraceptive\nAge in years if stopped before reference date.\nSource coding: 666 - Current user; 777 - NA (never user); 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "Current user",
+     null,
+     "ocuse_current = 1"
+    ],
+    [
+     777,
+     "sentinel",
+     "NA (never user)",
+     null,
+     "ocuse_ever = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
+     "ocuse_ever = 0"
+    ],
+    [
+     "conditional",
+     "When ocuse_current = 1, value = 666 (OC stop age is Current-user).",
+     "ocuse_current = 1"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/ocuse_stop"
+   }
+  },
+  {
+   "name": "othcontracep_ever",
+   "category": "CORE — Reproductive History",
+   "description": "Use of other types of hormonal contraceptives\nSource coding: 0 - Never; 1 - Ever; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Ever",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/othcontracep_ever"
+   }
+  },
+  {
+   "name": "othcontracep_current",
+   "category": "CORE — Reproductive History",
+   "description": "Current use of other types of hormonal contraceptives\nSource coding: 0 - No; 1 - Yes; 777 - NA (never user); 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "No",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Yes",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA (never user)",
+     null,
+     "othcontracep_ever = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When othcontracep_ever = 0, value = 777 (NA never-user).",
+     "othcontracep_ever = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/othcontracep_current"
+   }
+  },
+  {
+   "name": "meno_status",
+   "category": "CORE — Reproductive History",
+   "description": "Menopausal status\nSee COHORT_METADATA.menoage_def for how age of menopause and/or menopausal status was defined.\nSource coding: 1 - Postmenopausal; 2 - Premenopausal [source spells 'Premenopuasal']; 3 - Perimenopausal/other; 888 - Missing/Unknown. NOTE: this 1=Post/2=Pre coding is INVERTED relative to MAMMOGRAPHIC_DENSITY.MamMenoStat (1=Pre/2=Post).",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Postmenopausal",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Premenopausal",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Perimenopausal/other",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/meno_status"
+   }
+  },
+  {
+   "name": "meno_age",
+   "category": "CORE — Reproductive History",
+   "description": "Age at menopause (years)\nSurgically/medically induced menopause can occur well before the typical natural range.\nSource coding: Age in years; 777 - Premenopausal at questionnaire; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "20–65",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Premenopausal at questionnaire",
+     null,
+     "meno_status = 2"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 20 ≤ value ≤ 65",
+     null
+    ],
+    [
+     "conditional",
+     "When meno_status = 2, value = 777 (Premenopausal/NA).",
+     "meno_status = 2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/meno_age"
+   }
+  },
+  {
+   "name": "meno_reason",
+   "category": "CORE — Reproductive History",
+   "description": "Reason for menopause\nSource coding: 1 - Natural; 2 - Surgical; 3 - Radiation/Chemotherapy induced; 4 - Medication; 5 - Artificial/Induced (no detail); 777 - NA (premenopausal); 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     1,
+     "value",
+     "Natural",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Surgical",
+     null,
+     null
+    ],
+    [
+     3,
+     "value",
+     "Radiation/Chemotherapy induced",
+     null,
+     null
+    ],
+    [
+     4,
+     "value",
+     "Medication",
+     null,
+     null
+    ],
+    [
+     5,
+     "value",
+     "Artificial/Induced (no detail)",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "NA (premenopausal)",
+     null,
+     "meno_status = 2"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When meno_status = 2, value = 777 (Premenopausal/NA).",
+     "meno_status = 2"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/meno_reason"
+   }
+  },
+  {
+   "name": "hrtuse",
+   "category": "CORE — Reproductive History",
+   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of any hormone replacement therapy",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never used hormone replacement therapy",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Current use",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Former use",
+     null,
+     null
+    ],
+    [
+     3,
+     "sentinel",
+     "Ever used (unknown current or former)",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrtuse"
+   }
+  },
+  {
+   "name": "hrt_dur",
+   "category": "CORE — Reproductive History",
+   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of any hormone replacement therapy (months)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–600",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "NA (premenopausal)",
+     null,
+     "meno_status = 2"
+    ],
+    [
+     777,
+     "sentinel",
+     "Never user",
+     null,
+     "meno_status = 2; hrtuse = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     "meno_status = 2"
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 600",
+     null
+    ],
+    [
+     "conditional",
+     "When meno_status = 2, value is one of 666, 777, 888.",
+     "meno_status = 2"
+    ],
+    [
+     "conditional",
+     "When hrtuse = 0, value = 777 (HRT duration is Never-user).",
+     "hrtuse = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrt_dur"
+   }
+  },
+  {
+   "name": "hrtuse_ep",
+   "category": "CORE — Reproductive History",
+   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of E+P hormone replacement therapy",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never used hormone replacement therapy",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Current use",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Former use",
+     null,
+     null
+    ],
+    [
+     3,
+     "sentinel",
+     "Ever used (unknown current or former)",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrtuse_ep"
+   }
+  },
+  {
+   "name": "hrtep_dur",
+   "category": "CORE — Reproductive History",
+   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of E+P hormone replacement therapy (months)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–600",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "NA (premenopausal)",
+     null,
+     "meno_status = 2"
+    ],
+    [
+     777,
+     "sentinel",
+     "Never user",
+     null,
+     "meno_status = 2; hrtuse_ep = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     "meno_status = 2"
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 600",
+     null
+    ],
+    [
+     "conditional",
+     "When meno_status = 2, value is one of 666, 777, 888.",
+     "meno_status = 2"
+    ],
+    [
+     "conditional",
+     "When hrtuse_ep = 0, value = 777 (E+P HRT duration is Never-user).",
+     "hrtuse_ep = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrtep_dur"
+   }
+  },
+  {
+   "name": "hrtuse_eonly",
+   "category": "CORE — Reproductive History",
+   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of E-only hormone replacement therapy",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never used hormone replacement therapy",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Current use",
+     null,
+     null
+    ],
+    [
+     2,
+     "value",
+     "Former use",
+     null,
+     null
+    ],
+    [
+     3,
+     "sentinel",
+     "Ever used (unknown current or former)",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrtuse_eonly"
+   }
+  },
+  {
+   "name": "hrteonly_dur",
+   "category": "CORE — Reproductive History",
+   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of E-only hormone replacement therapy (months)",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–600",
+     null,
+     null
+    ],
+    [
+     666,
+     "sentinel",
+     "NA (premenopausal)",
+     null,
+     "meno_status = 2"
+    ],
+    [
+     777,
+     "sentinel",
+     "Never user",
+     null,
+     "meno_status = 2; hrtuse_eonly = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     "meno_status = 2"
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 600",
+     null
+    ],
+    [
+     "conditional",
+     "When meno_status = 2, value is one of 666, 777, 888.",
+     "meno_status = 2"
+    ],
+    [
+     "conditional",
+     "When hrtuse_eonly = 0, value = 777 (E-only HRT duration is Never-user).",
+     "hrtuse_eonly = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/reproductive_history.json",
+    "pointer": "/properties/hrteonly_dur"
+   }
+  },
+  {
+   "name": "pa_mets",
+   "category": "CORE — Physical Activity",
+   "description": "Leisure time physical activity (MET hrs/wk)\nSource coding: MET hrs/wk; 888 - Missing/Unknown.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–500",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 500",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/physical_activity.json",
+    "pointer": "/properties/pa_mets"
+   }
+  },
+  {
+   "name": "pa_pct",
+   "category": "CORE — Physical Activity",
+   "description": "Leisure time physical activity (percentile)\nSource coding: Percentile; 888 - Missing/Unknown.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "0–100",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 0 ≤ value ≤ 100",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/physical_activity.json",
+    "pointer": "/properties/pa_pct"
+   }
+  },
+  {
+   "name": "screen_ever",
+   "category": "CORE — Screening History",
+   "description": "Ever had a screening mammogram\nSource coding: 0 - Never; 1 - Ever; 888 - Missing/Unknown.",
+   "type": "categorical (integer)",
+   "format": "",
+   "values": [
+    [
+     0,
+     "value",
+     "Never",
+     null,
+     null
+    ],
+    [
+     1,
+     "value",
+     "Ever",
+     null,
+     null
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/screening_history.json",
+    "pointer": "/properties/screen_ever"
+   }
+  },
+  {
+   "name": "screen_start",
+   "category": "CORE — Screening History",
+   "description": "Age at first screening mammogram\nSource coding: Age in years; 777 - Never screened; 888 - Unknown/Missing.",
+   "type": "number + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "10–100",
+     null,
+     null
+    ],
+    [
+     777,
+     "sentinel",
+     "Never screened",
+     null,
+     "screen_ever = 0"
+    ],
+    [
+     888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 10 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "When screen_ever = 0, value = 777 (Never-screened).",
+     "screen_ever = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/screening_history.json",
+    "pointer": "/properties/screen_start"
+   }
+  },
+  {
+   "name": "lastscreen_year",
+   "category": "CORE — Screening History",
+   "description": "Year of last screening mammogram\nSource coding: YYYY; 7777 - Never screened; 8888 - Unknown/Missing.",
+   "type": "integer + coded values",
+   "format": "",
+   "values": [
+    [
+     null,
+     "measurement",
+     "1950–2030",
+     null,
+     null
+    ],
+    [
+     7777,
+     "sentinel",
+     "Never screened",
+     null,
+     "screen_ever = 0"
+    ],
+    [
+     8888,
+     "sentinel",
+     "Missing/Unknown",
+     "Sentinel denoting a missing/unknown value in a 4-digit field (calendar year).",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "Measured value: 1950 ≤ value ≤ 2030",
+     null
+    ],
+    [
+     "conditional",
+     "When screen_ever = 0, value = 7777 (Never-screened).",
+     "screen_ever = 0"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://epi-schemas.bcrpp/core/categories/screening_history.json",
+    "pointer": "/properties/lastscreen_year"
+   }
+  }
+ ],
+ "conditionalRules": [
+  {
+   "condition": "parous = 0",
+   "description": "Skip pattern: nonparous (parous=0) => all pregnancy/breastfeeding fields are Nonparous (777).",
+   "effects": [
+    {
+     "variable": "age_preg1",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg2",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg3",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg4",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg5",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg6",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg7",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg8",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg9",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "age_preg10",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b1",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b2",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b3",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b4",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b5",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b6",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b7",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b8",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b9",
+     "value": 777,
+     "label": "Nonparous"
+    },
+    {
+     "variable": "breastfeed_dur_b10",
+     "value": 777,
+     "label": "Nonparous"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity = 1",
+   "description": "Skip pattern: parous with fewer than 2 full-term pregnancies => 2nd pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg2",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b2",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–2",
+   "description": "Skip pattern: parous with fewer than 3 full-term pregnancies => 3rd pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg3",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b3",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–3",
+   "description": "Skip pattern: parous with fewer than 4 full-term pregnancies => 4th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg4",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b4",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–4",
+   "description": "Skip pattern: parous with fewer than 5 full-term pregnancies => 5th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg5",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b5",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–5",
+   "description": "Skip pattern: parous with fewer than 6 full-term pregnancies => 6th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg6",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b6",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–6",
+   "description": "Skip pattern: parous with fewer than 7 full-term pregnancies => 7th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg7",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b7",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–7",
+   "description": "Skip pattern: parous with fewer than 8 full-term pregnancies => 8th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg8",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b8",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–8",
+   "description": "Skip pattern: parous with fewer than 9 full-term pregnancies => 9th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg9",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b9",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "parous = 1 and parity 1–9",
+   "description": "Skip pattern: parous with fewer than 10 full-term pregnancies => 10th pregnancy/birth fields are N/A (666).",
+   "effects": [
+    {
+     "variable": "age_preg10",
+     "value": 666,
+     "label": "N/A"
+    },
+    {
+     "variable": "breastfeed_dur_b10",
+     "value": 666,
+     "label": "N/A"
+    }
+   ]
+  },
+  {
+   "condition": "meno_status = 2",
+   "description": "Skip pattern: premenopausal (meno_status=2) => age/reason at menopause are Premenopausal/NA (777) and HRT durations are not real values (sentinel 666/777/888).",
+   "effects": [
+    {
+     "variable": "meno_age",
+     "value": 777,
+     "label": "Premenopausal/NA"
+    },
+    {
+     "variable": "meno_reason",
+     "value": 777,
+     "label": "Premenopausal/NA"
+    },
+    {
+     "variable": "hrt_dur",
+     "value": [
+      666,
+      777,
+      888
+     ]
+    },
+    {
+     "variable": "hrtep_dur",
+     "value": [
+      666,
+      777,
+      888
+     ]
+    },
+    {
+     "variable": "hrteonly_dur",
+     "value": [
+      666,
+      777,
+      888
+     ]
+    }
+   ]
+  },
+  {
+   "condition": "hrtuse = 0",
+   "description": "Skip pattern: never used any HRT (hrtuse=0) => total HRT duration is Never-user (777).",
+   "effects": [
+    {
+     "variable": "hrt_dur",
+     "value": 777,
+     "label": "HRT duration is Never-user"
+    }
+   ]
+  },
+  {
+   "condition": "hrtuse_ep = 0",
+   "description": "Skip pattern: never used E+P HRT (hrtuse_ep=0) => E+P HRT duration is Never-user (777).",
+   "effects": [
+    {
+     "variable": "hrtep_dur",
+     "value": 777,
+     "label": "E+P HRT duration is Never-user"
+    }
+   ]
+  },
+  {
+   "condition": "hrtuse_eonly = 0",
+   "description": "Skip pattern: never used E-only HRT (hrtuse_eonly=0) => E-only HRT duration is Never-user (777).",
+   "effects": [
+    {
+     "variable": "hrteonly_dur",
+     "value": 777,
+     "label": "E-only HRT duration is Never-user"
+    }
+   ]
+  },
+  {
+   "condition": "alcohol_status = 4",
+   "description": "Skip pattern: never drinker (alcohol_status=4) => alcohol init/amt/dur/stop are Nondrinker (777).",
+   "effects": [
+    {
+     "variable": "alcohol_init",
+     "value": 777,
+     "label": "Nondrinker"
+    },
+    {
+     "variable": "alcohol_amt",
+     "value": 777,
+     "label": "Nondrinker"
+    },
+    {
+     "variable": "alcohol_dur",
+     "value": 777,
+     "label": "Nondrinker"
+    },
+    {
+     "variable": "alcohol_stop",
+     "value": 777,
+     "label": "Nondrinker"
+    }
+   ]
+  },
+  {
+   "condition": "alcohol_status = 1",
+   "description": "Skip pattern: current drinker (alcohol_status=1) => alcohol stop age is N/A no-stop-date (666).",
+   "effects": [
+    {
+     "variable": "alcohol_stop",
+     "value": 666,
+     "label": "N/A no-stop-date"
+    }
+   ]
+  },
+  {
+   "condition": "smoking_status = 4",
+   "description": "Skip pattern: never smoker (smoking_status=4) => smoking init/amt/dur/stop are Nonsmoker (777).",
+   "effects": [
+    {
+     "variable": "smoking_init",
+     "value": 777,
+     "label": "Nonsmoker"
+    },
+    {
+     "variable": "smoking_amt",
+     "value": 777,
+     "label": "Nonsmoker"
+    },
+    {
+     "variable": "smoking_dur",
+     "value": 777,
+     "label": "Nonsmoker"
+    },
+    {
+     "variable": "smoking_stop",
+     "value": 777,
+     "label": "Nonsmoker"
+    }
+   ]
+  },
+  {
+   "condition": "smoking_status = 1",
+   "description": "Skip pattern: current smoker (smoking_status=1) => smoking stop age is N/A current-smoker (666).",
+   "effects": [
+    {
+     "variable": "smoking_stop",
+     "value": 666,
+     "label": "N/A current-smoker"
+    }
+   ]
+  },
+  {
+   "condition": "ocuse_ever = 0",
+   "description": "Skip pattern: never OC user (ocuse_ever=0) => OC duration/start/stop are NA never-user (777).",
+   "effects": [
+    {
+     "variable": "ocuse_dur",
+     "value": 777,
+     "label": "OC duration/start/stop are NA never-user"
+    },
+    {
+     "variable": "ocuse_start",
+     "value": 777,
+     "label": "OC duration/start/stop are NA never-user"
+    },
+    {
+     "variable": "ocuse_stop",
+     "value": 777,
+     "label": "OC duration/start/stop are NA never-user"
+    }
+   ]
+  },
+  {
+   "condition": "ocuse_current = 1",
+   "description": "Skip pattern: current OC user (ocuse_current=1) => OC stop age is Current-user (666).",
+   "effects": [
+    {
+     "variable": "ocuse_stop",
+     "value": 666,
+     "label": "OC stop age is Current-user"
+    }
+   ]
+  },
+  {
+   "condition": "othcontracep_ever = 0",
+   "description": "Skip pattern: never other-hormonal-contraceptive user (othcontracep_ever=0) => current use is NA never-user (777).",
+   "effects": [
+    {
+     "variable": "othcontracep_current",
+     "value": 777,
+     "label": "NA never-user"
+    }
+   ]
+  },
+  {
+   "condition": "screen_ever = 0",
+   "description": "Skip pattern: never screened (screen_ever=0) => age at first screen is Never-screened (777) and last-screen year is Never-screened (7777).",
+   "effects": [
+    {
+     "variable": "screen_start",
+     "value": 777,
+     "label": "Never-screened"
+    },
+    {
+     "variable": "lastscreen_year",
+     "value": 7777,
+     "label": "Never-screened"
+    }
+   ]
+  },
+  {
+   "condition": "BBD_history = 0",
+   "description": "Skip pattern: no benign breast disease (BBD_history=0) => all four BBD type/year slots are NA (777 / 7777).",
+   "effects": [
+    {
+     "variable": "BBD_type1",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type2",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type3",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type4",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year1",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year2",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year3",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year4",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    }
+   ]
+  },
+  {
+   "condition": "BBD_number = 0",
+   "description": "Skip pattern: zero BBD diagnoses (BBD_number=0) => all four BBD type/year slots are NA (777 / 7777).",
+   "effects": [
+    {
+     "variable": "BBD_type1",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type2",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type3",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_type4",
+     "value": 777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year1",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year2",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year3",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    },
+    {
+     "variable": "BBD_year4",
+     "value": 7777,
+     "label": "BBD type/year slots are NA"
+    }
+   ]
+  },
+  {
+   "condition": "BBD_number = 1",
+   "description": "Skip pattern: exactly 1 BBD diagnosis (BBD_number=1) => BBD type/year slots 2-4 are NA (777 / 7777).",
+   "effects": [
+    {
+     "variable": "BBD_type2",
+     "value": 777,
+     "label": "BBD type/year slots 2-4 are NA"
+    },
+    {
+     "variable": "BBD_type3",
+     "value": 777,
+     "label": "BBD type/year slots 2-4 are NA"
+    },
+    {
+     "variable": "BBD_type4",
+     "value": 777,
+     "label": "BBD type/year slots 2-4 are NA"
+    },
+    {
+     "variable": "BBD_year2",
+     "value": 7777,
+     "label": "BBD type/year slots 2-4 are NA"
+    },
+    {
+     "variable": "BBD_year3",
+     "value": 7777,
+     "label": "BBD type/year slots 2-4 are NA"
+    },
+    {
+     "variable": "BBD_year4",
+     "value": 7777,
+     "label": "BBD type/year slots 2-4 are NA"
+    }
+   ]
+  },
+  {
+   "condition": "BBD_number = 2",
+   "description": "Skip pattern: exactly 2 BBD diagnoses (BBD_number=2) => BBD type/year slots 3-4 are NA (777 / 7777).",
+   "effects": [
+    {
+     "variable": "BBD_type3",
+     "value": 777,
+     "label": "BBD type/year slots 3-4 are NA"
+    },
+    {
+     "variable": "BBD_type4",
+     "value": 777,
+     "label": "BBD type/year slots 3-4 are NA"
+    },
+    {
+     "variable": "BBD_year3",
+     "value": 7777,
+     "label": "BBD type/year slots 3-4 are NA"
+    },
+    {
+     "variable": "BBD_year4",
+     "value": 7777,
+     "label": "BBD type/year slots 3-4 are NA"
+    }
+   ]
+  },
+  {
+   "condition": "BBD_number = 3",
+   "description": "Skip pattern: exactly 3 BBD diagnoses (BBD_number=3) => BBD type/year slot 4 is NA (777 / 7777).",
+   "effects": [
+    {
+     "variable": "BBD_type4",
+     "value": 777,
+     "label": "BBD type/year slot 4 is NA"
+    },
+    {
+     "variable": "BBD_year4",
+     "value": 7777,
+     "label": "BBD type/year slot 4 is NA"
+    }
+   ]
+  }
+ ],
+ "warnings": []
+}

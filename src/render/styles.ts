@@ -159,6 +159,24 @@ export const STYLES = `
 .dd-table tbody tr:hover .dd-col-name { background: color-mix(in srgb, var(--_accent-weak) 55%, var(--_bg)); }
 .dd-col-name code { font-family: var(--_mono); font-weight: 600; font-size: .9em; word-break: break-word; }
 
+/* Nested fields sit indented under their parent (one step per level, the deepest levels
+   sharing the last) with a tree glyph in the gutter the indentation opens -- positioned, so a
+   long path wrapping in the narrow column never strands the glyph on a line of its own. The
+   muted prefix is the parent path, the bold leaf the field itself. The results list renders
+   nested rows without data-dd-depth, so it gets neither. */
+.dd-row[data-dd-depth] .dd-col-name { padding-left: 26px; }
+.dd-row[data-dd-depth] .dd-col-name::before {
+  content: "└"; content: "└" / ""; position: absolute; top: 10px; left: 12px;
+  color: var(--_muted); font-family: var(--_mono); font-size: .85em; line-height: 1.5;
+}
+.dd-row[data-dd-depth="2"] .dd-col-name { padding-left: 40px; }
+.dd-row[data-dd-depth="2"] .dd-col-name::before { left: 26px; }
+.dd-row[data-dd-depth="3"] .dd-col-name { padding-left: 54px; }
+.dd-row[data-dd-depth="3"] .dd-col-name::before { left: 40px; }
+.dd-row[data-dd-depth="4"] .dd-col-name, .dd-row[data-dd-depth="5"] .dd-col-name, .dd-row[data-dd-depth="6"] .dd-col-name { padding-left: 68px; }
+.dd-row[data-dd-depth="4"] .dd-col-name::before, .dd-row[data-dd-depth="5"] .dd-col-name::before, .dd-row[data-dd-depth="6"] .dd-col-name::before { left: 54px; }
+.dd-name-prefix { font-weight: 400; color: var(--_muted); }
+
 .dd-desc { white-space: pre-line; }
 .dd-format { color: var(--_muted); }
 
@@ -221,6 +239,7 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
 
 @media (max-width: 640px) {
   .dd-col-name { position: static; }
+  .dd-row[data-dd-depth] .dd-col-name { position: relative; } /* keeps the tree glyph anchored to its cell */
   .dd-table thead th { position: static; }
 }
 `;

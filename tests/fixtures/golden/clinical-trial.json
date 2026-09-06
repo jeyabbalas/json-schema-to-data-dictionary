@@ -1,0 +1,1043 @@
+{
+ "title": "Clinical Trial Dataset",
+ "categories": [
+  {
+   "id": "general",
+   "title": "General",
+   "rows": [
+    "treatment_arm",
+    "completed_study",
+    "last_visit_date"
+   ]
+  },
+  {
+   "id": "patient-demographics",
+   "title": "Patient Demographics",
+   "rows": [
+    "subject_id",
+    "site_id",
+    "enrollment_date",
+    "date_of_birth",
+    "sex",
+    "race",
+    "ethnicity",
+    "weight_kg",
+    "height_cm",
+    "smoking_status"
+   ]
+  },
+  {
+   "id": "laboratory-results",
+   "title": "Laboratory Results",
+   "rows": [
+    "hemoglobin_g_dl",
+    "wbc_k_ul",
+    "platelet_k_ul",
+    "alt_u_l",
+    "ast_u_l",
+    "creatinine_mg_dl",
+    "egfr_ml_min",
+    "glucose_mg_dl",
+    "hba1c_percent",
+    "ldl_cholesterol_mg_dl",
+    "hdl_cholesterol_mg_dl",
+    "triglycerides_mg_dl",
+    "lab_date",
+    "fasting_status"
+   ]
+  },
+  {
+   "id": "adverse-events",
+   "title": "Adverse Events",
+   "rows": [
+    "any_ae",
+    "ae_count",
+    "serious_ae",
+    "ae_severity_max",
+    "ae_related",
+    "discontinued_due_to_ae",
+    "hospitalization_required",
+    "death",
+    "common_ae_headache",
+    "common_ae_nausea",
+    "common_ae_fatigue",
+    "common_ae_dizziness"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "treatment_arm",
+   "category": "General",
+   "description": "Randomized treatment assignment",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Placebo",
+     "value",
+     null,
+     "Placebo control group",
+     null
+    ],
+    [
+     "Low_Dose",
+     "value",
+     null,
+     "Low dose treatment (10mg daily)",
+     null
+    ],
+    [
+     "High_Dose",
+     "value",
+     null,
+     "High dose treatment (50mg daily)",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/combined-row.json",
+    "pointer": "/properties/treatment_arm"
+   }
+  },
+  {
+   "name": "completed_study",
+   "category": "General",
+   "description": "Whether participant completed the full study protocol",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/combined-row.json",
+    "pointer": "/properties/completed_study"
+   }
+  },
+  {
+   "name": "last_visit_date",
+   "category": "General",
+   "description": "Date of last study visit",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/combined-row.json",
+    "pointer": "/properties/last_visit_date"
+   }
+  },
+  {
+   "name": "subject_id",
+   "category": "Patient Demographics",
+   "description": "Unique subject identifier",
+   "type": "string",
+   "format": "Matches pattern ^SUBJ-[0-9]{6}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/subject_id"
+   }
+  },
+  {
+   "name": "site_id",
+   "category": "Patient Demographics",
+   "description": "Clinical trial site identifier",
+   "type": "string",
+   "format": "Matches pattern ^SITE-[0-9]{3}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/site_id"
+   }
+  },
+  {
+   "name": "enrollment_date",
+   "category": "Patient Demographics",
+   "description": "Date of enrollment in clinical trial",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/enrollment_date"
+   }
+  },
+  {
+   "name": "date_of_birth",
+   "category": "Patient Demographics",
+   "description": "Subject's date of birth",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/date_of_birth"
+   }
+  },
+  {
+   "name": "sex",
+   "category": "Patient Demographics",
+   "description": "Biological sex at birth",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "M",
+     "value",
+     null,
+     "Male",
+     null
+    ],
+    [
+     "F",
+     "value",
+     null,
+     "Female",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/sex"
+   }
+  },
+  {
+   "name": "race",
+   "category": "Patient Demographics",
+   "description": "Self-reported race category",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "White",
+     "value",
+     null,
+     "White/Caucasian",
+     null
+    ],
+    [
+     "Black",
+     "value",
+     null,
+     "Black/African American",
+     null
+    ],
+    [
+     "Asian",
+     "value",
+     null,
+     "Asian",
+     null
+    ],
+    [
+     "Native_American",
+     "value",
+     null,
+     "American Indian/Alaska Native",
+     null
+    ],
+    [
+     "Pacific_Islander",
+     "value",
+     null,
+     "Native Hawaiian/Pacific Islander",
+     null
+    ],
+    [
+     "Multiple",
+     "value",
+     null,
+     "Multiple races",
+     null
+    ],
+    [
+     "Unknown",
+     "sentinel",
+     null,
+     "Unknown or not reported",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/race"
+   }
+  },
+  {
+   "name": "ethnicity",
+   "category": "Patient Demographics",
+   "description": "Self-reported ethnicity",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Hispanic",
+     "value",
+     null,
+     "Hispanic or Latino",
+     null
+    ],
+    [
+     "Non-Hispanic",
+     "value",
+     null,
+     "Not Hispanic or Latino",
+     null
+    ],
+    [
+     "Unknown",
+     "sentinel",
+     null,
+     "Unknown or not reported",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/ethnicity"
+   }
+  },
+  {
+   "name": "weight_kg",
+   "category": "Patient Demographics",
+   "description": "Body weight in kilograms at baseline",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 < value ≤ 300",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/weight_kg"
+   }
+  },
+  {
+   "name": "height_cm",
+   "category": "Patient Demographics",
+   "description": "Height in centimeters at baseline",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "50 ≤ value ≤ 250",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/height_cm"
+   }
+  },
+  {
+   "name": "smoking_status",
+   "category": "Patient Demographics",
+   "description": "Current smoking status",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Never",
+     "value",
+     null,
+     "Never smoked",
+     null
+    ],
+    [
+     "Former",
+     "value",
+     null,
+     "Former smoker (quit >6 months ago)",
+     null
+    ],
+    [
+     "Current",
+     "value",
+     null,
+     "Current smoker",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/demographics.json",
+    "pointer": "/properties/smoking_status"
+   }
+  },
+  {
+   "name": "hemoglobin_g_dl",
+   "category": "Laboratory Results",
+   "description": "Hemoglobin level in g/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "5 ≤ value ≤ 20",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.1",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/hemoglobin_g_dl"
+   }
+  },
+  {
+   "name": "wbc_k_ul",
+   "category": "Laboratory Results",
+   "description": "White blood cell count (thousands per μL)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0.5 ≤ value ≤ 50",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.1",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/wbc_k_ul"
+   }
+  },
+  {
+   "name": "platelet_k_ul",
+   "category": "Laboratory Results",
+   "description": "Platelet count (thousands per μL)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "10 ≤ value ≤ 1000",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/platelet_k_ul"
+   }
+  },
+  {
+   "name": "alt_u_l",
+   "category": "Laboratory Results",
+   "description": "Alanine aminotransferase (ALT) in U/L",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 1000",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/alt_u_l"
+   }
+  },
+  {
+   "name": "ast_u_l",
+   "category": "Laboratory Results",
+   "description": "Aspartate aminotransferase (AST) in U/L",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 1000",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/ast_u_l"
+   }
+  },
+  {
+   "name": "creatinine_mg_dl",
+   "category": "Laboratory Results",
+   "description": "Serum creatinine in mg/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0.1 ≤ value ≤ 15",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.01",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/creatinine_mg_dl"
+   }
+  },
+  {
+   "name": "egfr_ml_min",
+   "category": "Laboratory Results",
+   "description": "Estimated glomerular filtration rate (mL/min/1.73m²)",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 < value ≤ 200",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/egfr_ml_min"
+   }
+  },
+  {
+   "name": "glucose_mg_dl",
+   "category": "Laboratory Results",
+   "description": "Fasting plasma glucose in mg/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "20 ≤ value ≤ 600",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/glucose_mg_dl"
+   }
+  },
+  {
+   "name": "hba1c_percent",
+   "category": "Laboratory Results",
+   "description": "Glycated hemoglobin (HbA1c) percentage",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "3 ≤ value ≤ 15",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.1",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/hba1c_percent"
+   }
+  },
+  {
+   "name": "ldl_cholesterol_mg_dl",
+   "category": "Laboratory Results",
+   "description": "LDL cholesterol in mg/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 500",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/ldl_cholesterol_mg_dl"
+   }
+  },
+  {
+   "name": "hdl_cholesterol_mg_dl",
+   "category": "Laboratory Results",
+   "description": "HDL cholesterol in mg/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 150",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/hdl_cholesterol_mg_dl"
+   }
+  },
+  {
+   "name": "triglycerides_mg_dl",
+   "category": "Laboratory Results",
+   "description": "Triglycerides in mg/dL",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 2000",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/triglycerides_mg_dl"
+   }
+  },
+  {
+   "name": "lab_date",
+   "category": "Laboratory Results",
+   "description": "Date of laboratory sample collection",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/lab_date"
+   }
+  },
+  {
+   "name": "fasting_status",
+   "category": "Laboratory Results",
+   "description": "Whether patient was fasting for lipid panel",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/lab-results.json",
+    "pointer": "/properties/fasting_status"
+   }
+  },
+  {
+   "name": "any_ae",
+   "category": "Adverse Events",
+   "description": "Whether subject experienced any adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When any_ae is present, ae_count, ae_severity_max are also required.",
+     "any_ae is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/any_ae"
+   }
+  },
+  {
+   "name": "ae_count",
+   "category": "Adverse Events",
+   "description": "Total number of adverse events reported",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "conditional",
+     "Required when any_ae is present.",
+     "any_ae is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/ae_count"
+   }
+  },
+  {
+   "name": "serious_ae",
+   "category": "Adverse Events",
+   "description": "Whether subject experienced serious adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "conditional",
+     "When serious_ae is present, hospitalization_required is also required.",
+     "serious_ae is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/serious_ae"
+   }
+  },
+  {
+   "name": "ae_severity_max",
+   "category": "Adverse Events",
+   "description": "Maximum severity of any adverse event",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "None",
+     "value",
+     null,
+     "No adverse events",
+     null
+    ],
+    [
+     "Mild",
+     "value",
+     null,
+     "Grade 1 - Mild symptoms, no intervention needed",
+     null
+    ],
+    [
+     "Moderate",
+     "value",
+     null,
+     "Grade 2 - Moderate symptoms, minimal intervention",
+     null
+    ],
+    [
+     "Severe",
+     "value",
+     null,
+     "Grade 3 - Severe symptoms, medical intervention required",
+     null
+    ],
+    [
+     "Life-threatening",
+     "value",
+     null,
+     "Grade 4 - Life-threatening, urgent intervention required",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "conditional",
+     "Required when any_ae is present.",
+     "any_ae is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/ae_severity_max"
+   }
+  },
+  {
+   "name": "ae_related",
+   "category": "Adverse Events",
+   "description": "Relationship of AE to study treatment",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "Not_related",
+     "value",
+     null,
+     "Clearly not related to treatment",
+     null
+    ],
+    [
+     "Unlikely",
+     "value",
+     null,
+     "Unlikely to be related to treatment",
+     null
+    ],
+    [
+     "Possibly",
+     "value",
+     null,
+     "Possibly related to treatment",
+     null
+    ],
+    [
+     "Probably",
+     "value",
+     null,
+     "Probably related to treatment",
+     null
+    ],
+    [
+     "Definitely",
+     "value",
+     null,
+     "Definitely related to treatment",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/ae_related"
+   }
+  },
+  {
+   "name": "discontinued_due_to_ae",
+   "category": "Adverse Events",
+   "description": "Whether treatment was discontinued due to adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/discontinued_due_to_ae"
+   }
+  },
+  {
+   "name": "hospitalization_required",
+   "category": "Adverse Events",
+   "description": "Whether any AE required hospitalization",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "Required when serious_ae is present.",
+     "serious_ae is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/hospitalization_required"
+   }
+  },
+  {
+   "name": "death",
+   "category": "Adverse Events",
+   "description": "Whether subject died during study period",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/death"
+   }
+  },
+  {
+   "name": "common_ae_headache",
+   "category": "Adverse Events",
+   "description": "Experienced headache as adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/common_ae_headache"
+   }
+  },
+  {
+   "name": "common_ae_nausea",
+   "category": "Adverse Events",
+   "description": "Experienced nausea as adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/common_ae_nausea"
+   }
+  },
+  {
+   "name": "common_ae_fatigue",
+   "category": "Adverse Events",
+   "description": "Experienced fatigue as adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/common_ae_fatigue"
+   }
+  },
+  {
+   "name": "common_ae_dizziness",
+   "category": "Adverse Events",
+   "description": "Experienced dizziness as adverse event",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/clinical-trial/adverse-events.json",
+    "pointer": "/properties/common_ae_dizziness"
+   }
+  }
+ ],
+ "conditionalRules": [],
+ "warnings": []
+}

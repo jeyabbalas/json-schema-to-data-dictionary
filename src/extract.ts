@@ -1,5 +1,8 @@
-// Orchestration: array root -> items object -> category sections -> variable rows,
-// then overlay the row-object skip patterns. Produces the DataDictionaryTable.
+// Orchestration: array root -> items object -> category sections -> variable rows -- and,
+// for every object-shaped variable, array of objects or array of arrays, the rows of the
+// fields inside it, named by path (`visits[].date`) and placed right after their parent --
+// then overlay the skip patterns of the row object and of the nested objects. Produces the
+// DataDictionaryTable.
 
 import type {
   ConstraintItem,
@@ -9,6 +12,7 @@ import type {
   JsonSchema,
   JsonSchemaObject,
   JsonValue,
+  PathStep,
   SchemaDocumentInput,
   SchemaRootCandidate,
   SchemaToTableOptions,
@@ -16,8 +20,9 @@ import type {
   ValidValue
 } from "./types";
 import { SchemaRegistry, type IndexedSchemaLocation, type ResolutionBase } from "./registry";
-import { analyzeProperty, collectRequired, refKeyword } from "./analyze";
-import { collectSkipPatterns, type SkipPatternResult, type VariableConditional } from "./skipPatterns";
+import { analyzeProperty, collectRequired, refKeyword, type PropertyShape, type SchemaRef } from "./analyze";
+import { collectSkipPatterns, mergeSkipPatterns, type SkipPatternResult, type VariableConditional } from "./skipPatterns";
+import { formatVariablePath, sourceAt } from "./paths";
 import { cloneJson, compactObject, isRecord, isSchemaObject, joinNonEmpty, uniqueSlug, valueKey } from "./utils";
 
 interface Options {
@@ -26,6 +31,8 @@ interface Options {
   includeSource: boolean;
   splitAllOfObjectCategories: boolean;
   maxDepth: number;
+  expandNested: boolean;
+  maxNestingDepth: number;
 }
 
 const DEFAULTS: Options = {
@@ -33,16 +40,39 @@ const DEFAULTS: Options = {
   includeOpenContentRows: true,
   includeSource: true,
   splitAllOfObjectCategories: true,
-  maxDepth: 6
+  maxDepth: 6,
+  expandNested: true,
+  maxNestingDepth: 6
 };
+
+/** A container being expanded: the schema objects that define its fields, for the recursion guard. */
+interface Frame {
+  name: string;
+  identities: ReadonlySet<JsonSchemaObject>;
+}
+
+/** What a row inherits from the object it is a field of. */
+interface Enclosing {
+  /** Property names the enclosing object requires. */
+  required: ReadonlySet<string>;
+  /** Names the `oneOf`/`anyOf` branch a field came from requires (mandatory in that variant only). */
+  variantRequired?: ReadonlySet<string> | undefined;
+  /** Variable name of the enclosing row (absent at the top level). */
+  parent?: string | undefined;
+  depth: number;
+  ancestors: readonly Frame[];
+}
 
 interface ExtractCtx {
   registry: SchemaRegistry;
   options: Options;
   warnings: string[];
   skip: SkipPatternResult;
+  /** The row object's own `required` names. */
   required: Set<string>;
   usedIds: Set<string>;
+  /** The row object and its category schemas: a `$ref` back into them is recursion. */
+  root: Frame;
 }
 
 interface Deref {
@@ -50,6 +80,8 @@ interface Deref {
   base: ResolutionBase;
   source?: SourceInfo | undefined;
 }
+
+const NO_REQUIRED: ReadonlySet<string> = new Set();
 
 export function schemaDocumentsToTable(
   input: Array<JsonSchema | SchemaDocumentInput>,
@@ -79,7 +111,15 @@ export function schemaDocumentsToTable(
   const skip = collectSkipPatterns(itemObject, itemDeref.base, { registry, maxDepth: opts.maxDepth });
   const required = collectRequired(itemObject, registry, itemDeref.base, opts.maxDepth);
 
-  const ctx: ExtractCtx = { registry, options: opts, warnings, skip, required, usedIds: new Set() };
+  const ctx: ExtractCtx = {
+    registry,
+    options: opts,
+    warnings,
+    skip,
+    required,
+    usedIds: new Set(),
+    root: { name: "the record", identities: new Set([itemObject]) }
+  };
   const categories = collectCategories(itemObject, itemDeref.base, itemSource, ctx);
 
   if (categories.length === 0) warnings.push("No object properties were found; the table has no variable rows.");
@@ -111,8 +151,15 @@ function normalizeOptions(o: SchemaToTableOptions): Options {
     includeOpenContentRows: o.includeOpenContentRows ?? DEFAULTS.includeOpenContentRows,
     includeSource: o.includeSource ?? DEFAULTS.includeSource,
     splitAllOfObjectCategories: o.splitAllOfObjectCategories ?? DEFAULTS.splitAllOfObjectCategories,
-    maxDepth: o.maxDepth ?? DEFAULTS.maxDepth
+    maxDepth: o.maxDepth ?? DEFAULTS.maxDepth,
+    expandNested: o.expandNested ?? DEFAULTS.expandNested,
+    maxNestingDepth: nonNegativeInt(o.maxNestingDepth) ?? DEFAULTS.maxNestingDepth
   };
+}
+
+function nonNegativeInt(value: number | undefined): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined;
+  return Math.floor(value);
 }
 
 /**
@@ -326,12 +373,17 @@ function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBas
   const compositors = [itemObject.allOf, itemObject.anyOf, itemObject.oneOf].filter(Array.isArray) as JsonSchema[][];
   for (const list of compositors) for (const b of list) branches.push({ schema: b, base: itemBase });
 
+  // Resolve every branch first: the category schemas are part of "the record", and a
+  // property that `$ref`s back into one of them must be recognised as recursion.
+  const derefs = branches.map((b) => deref(b.schema, b.base, ctx.registry, ctx.options.maxDepth, ctx.warnings));
+  const rootIdentities = ctx.root.identities as Set<JsonSchemaObject>;
+  for (const d of derefs) if (isSchemaObject(d.schema)) rootIdentities.add(d.schema);
+
   if (!ctx.options.splitAllOfObjectCategories) {
     // One merged category: own properties + every object branch.
     const merged = newCategoryBuilder("Variables", itemObject, itemBase, itemSource, ctx);
     addObjectProperties(itemObject, itemBase, itemSource, merged, ctx);
-    for (const b of branches) {
-      const d = deref(b.schema, b.base, ctx.registry, ctx.options.maxDepth, ctx.warnings);
+    for (const d of derefs) {
       if (isSchemaObject(d.schema) && hasProperties(d.schema)) addObjectProperties(d.schema, d.base, d.source, merged, ctx);
     }
     return finalizeBuilders([merged]);
@@ -349,8 +401,7 @@ function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBas
 
   // 2) Each object-typed branch (resolved through $ref) becomes its own sub-section.
   let sectionN = 0;
-  for (const b of branches) {
-    const d = deref(b.schema, b.base, ctx.registry, ctx.options.maxDepth, ctx.warnings);
+  for (const d of derefs) {
     if (!isSchemaObject(d.schema) || !hasProperties(d.schema)) continue; // skip if/then-only branches
     sectionN += 1;
     const title = categoryTitle(d.schema, `Section ${sectionN}`);
@@ -360,7 +411,10 @@ function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBas
     if (Array.isArray(d.schema.allOf)) {
       for (const inner of d.schema.allOf) {
         const di = deref(inner, d.base, ctx.registry, ctx.options.maxDepth, ctx.warnings);
-        if (isSchemaObject(di.schema) && hasProperties(di.schema)) addObjectProperties(di.schema, di.base, di.source, builder, ctx);
+        if (isSchemaObject(di.schema) && hasProperties(di.schema)) {
+          rootIdentities.add(di.schema);
+          addObjectProperties(di.schema, di.base, di.source, builder, ctx);
+        }
       }
     }
     categories.push(builder);
@@ -379,6 +433,8 @@ interface CategoryBuilder {
   description?: string | undefined;
   comment?: string | undefined;
   rows: Map<string, DataDictionaryRow>;
+  /** Parent variable name -> its child rows' names, in the order they were added. */
+  children: Map<string, Set<string>>;
   additionalInformation: Record<string, JsonValue> | null;
   source?: SourceInfo | undefined;
 }
@@ -389,91 +445,252 @@ function newCategoryBuilder(title: string, schema: JsonSchemaObject, _base: Reso
     title,
     ...(categoryDescription(schema) ? { description: categoryDescription(schema) } : {}),
     rows: new Map(),
+    children: new Map(),
     additionalInformation: (schemaExtra(schema) as Record<string, JsonValue>) ?? null,
     ...(ctx.options.includeSource && source ? { source } : {})
   };
 }
 
 function addObjectProperties(schema: JsonSchemaObject, base: ResolutionBase, source: SourceInfo | undefined, builder: CategoryBuilder, ctx: ExtractCtx): void {
+  const enclosing: Enclosing = { required: ctx.required, depth: 0, ancestors: [ctx.root] };
+
   if (isRecord(schema.properties)) {
     for (const [name, propSchema] of Object.entries(schema.properties)) {
-      addRow(buildRow(name, propSchema as JsonSchema, base, source, builder.title, ctx), builder);
+      const ref: SchemaRef = { schema: propSchema as JsonSchema, base, source: sourceAt(source, base, ["properties", name]) };
+      emitVariable([{ kind: "property", name }], ref, enclosing, builder, ctx);
     }
   }
 
   if (ctx.options.includePatternProperties && isRecord(schema.patternProperties)) {
     for (const [pattern, propSchema] of Object.entries(schema.patternProperties)) {
-      const row = buildRow(`/${pattern}/`, propSchema as JsonSchema, base, source, builder.title, ctx);
+      const ref: SchemaRef = { schema: propSchema as JsonSchema, base, source: sourceAt(source, base, ["patternProperties", pattern]) };
+      const row = emitVariable([{ kind: "pattern", pattern }], ref, enclosing, builder, ctx);
       row.Constraints.unshift({ keyword: "patternProperties", text: `Property name matches /${pattern}/.` });
-      addRow(row, builder);
     }
   }
 
   if (ctx.options.includeOpenContentRows) {
-    for (const [key, label, note] of [
-      ["additionalProperties", "(additional properties)", "Schema for properties not named above."],
-      ["unevaluatedProperties", "(unevaluated properties)", "Schema for properties not evaluated by adjacent applicators."]
+    for (const [key, note] of [
+      ["additionalProperties", "Schema for properties not named above."],
+      ["unevaluatedProperties", "Schema for properties not evaluated by adjacent applicators."]
     ] as const) {
       const sub = schema[key];
       if (sub !== undefined && sub !== false && sub !== true) {
-        const row = buildRow(label, sub as JsonSchema, base, source, builder.title, ctx);
+        const ref: SchemaRef = { schema: sub as JsonSchema, base, source: sourceAt(source, base, [key]) };
+        const row = emitVariable([{ kind: "additional", keyword: key }], ref, enclosing, builder, ctx);
         row.Constraints.unshift({ keyword: key, text: note });
-        addRow(row, builder);
       }
     }
   }
 }
 
-function addRow(row: DataDictionaryRow, builder: CategoryBuilder): void {
+/**
+ * Store a row (merging a repeated declaration into the existing one) and return the stored row.
+ * Declarations from `allOf` branches describe one value and normally agree on its type; those
+ * from `oneOf`/`anyOf` branches (`variant`) are alternatives, so their types are listed side by side.
+ */
+function addRow(row: DataDictionaryRow, builder: CategoryBuilder, variant = false): DataDictionaryRow {
   const key = row["Variable name"];
+  if (row.__parent !== undefined) {
+    const siblings = builder.children.get(row.__parent) ?? new Set<string>();
+    siblings.add(key);
+    builder.children.set(row.__parent, siblings);
+  }
   const existing = builder.rows.get(key);
   if (!existing) {
     builder.rows.set(key, row);
-    return;
+    return row;
   }
   // Same property declared in more than one merged branch: union the information.
   existing["Description"] = joinNonEmpty([existing["Description"], row["Description"]]);
-  existing["Data type"] = existing["Data type"] || row["Data type"];
+  existing["Data type"] = variant ? unionTypes(existing["Data type"], row["Data type"]) : existing["Data type"] || row["Data type"];
   existing["Format"] = joinNonEmpty([existing["Format"], row["Format"]], " ");
   existing["Valid values"] = dedupeValidValues([...existing["Valid values"], ...row["Valid values"]]);
   existing["Constraints"] = dedupeConstraints([...existing["Constraints"], ...row["Constraints"]]);
   existing["Additional information"] = mergeInfo(existing["Additional information"], row["Additional information"]);
+  return existing;
 }
 
-function buildRow(
-  name: string,
-  propSchema: JsonSchema,
-  base: ResolutionBase,
-  categorySource: SourceInfo | undefined,
-  categoryTitleText: string,
-  ctx: ExtractCtx
-): DataDictionaryRow {
-  const source = propertySource(categorySource, base, name);
-  const analysis = analyzeProperty(propSchema, {
+/**
+ * One variable: analyse its schema, build its row, and -- when it is an object, an array of
+ * objects, an array of arrays or a tuple -- the rows of the fields inside it.
+ */
+function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Enclosing, builder: CategoryBuilder, ctx: ExtractCtx): DataDictionaryRow {
+  const name = formatVariablePath(path);
+  const analysis = analyzeProperty(ref.schema, {
     registry: ctx.registry,
-    base,
-    ...(source ? { source } : {}),
+    base: ref.base,
+    ...(ref.source ? { source: ref.source } : {}),
     maxDepth: ctx.options.maxDepth
   });
 
   const validValues = analysis.validValues.slice();
   const constraints: ConstraintItem[] = [];
-  if (ctx.required.has(name)) constraints.push({ keyword: "required", value: true, text: "Required" });
+  const last = path[path.length - 1];
+  const variant = ref.union !== undefined && ref.variant !== undefined && enclosing.parent !== undefined ? `variant ${ref.variant + 1} of ${enclosing.parent}` : undefined;
+  if (last?.kind === "property" && enclosing.required.has(last.name)) {
+    // "Required within visits[]" rather than a bare "Required": the field is mandatory in
+    // every element, which says nothing about whether `visits` itself is present.
+    const within = path.length > 1 ? ` within ${formatVariablePath(path.slice(0, -1))}` : "";
+    constraints.push({ keyword: "required", value: true, text: `Required${within}` });
+  } else if (last?.kind === "property" && variant !== undefined && enclosing.variantRequired?.has(last.name)) {
+    constraints.push({ keyword: "required", value: true, text: `Required in ${variant}` });
+  }
+  if (variant !== undefined) constraints.push({ keyword: ref.union as "oneOf" | "anyOf", value: ref.variant, text: `In ${variant}` });
   constraints.push(...analysis.constraints);
 
   applySkipPatterns(name, validValues, constraints, ctx);
 
-  return {
-    "Variable name": name,
-    "Description": analysis.description,
-    "Data type": analysis.dataType,
-    "Format": analysis.format,
-    "Valid values": validValues,
-    "Constraints": constraints,
-    "Additional information": analysis.additionalInformation,
-    __category: categoryTitleText,
-    ...(ctx.options.includeSource && source ? { __source: source } : {})
-  };
+  const row = addRow(
+    {
+      "Variable name": name,
+      "Description": analysis.description,
+      "Data type": analysis.dataType,
+      "Format": analysis.format,
+      "Valid values": validValues,
+      "Constraints": constraints,
+      "Additional information": analysis.additionalInformation,
+      __category: builder.title,
+      ...(ctx.options.includeSource && ref.source ? { __source: ref.source } : {}),
+      ...(enclosing.parent !== undefined ? { __parent: enclosing.parent } : {}),
+      __depth: enclosing.depth,
+      __path: path.slice()
+    },
+    builder,
+    variant !== undefined
+  );
+
+  if (ctx.options.expandNested) expandChildren(path, analysis.shape, row, enclosing, builder, ctx);
+  return row;
+}
+
+/**
+ * The rows inside a container. Object fields become `path.field`; every element of an array
+ * of objects is the virtual node `path[]` whose fields become `path[].field`; an array of
+ * arrays gets a real `path[]` row; tuple positions become `path[0]`, `path[1]`, …
+ */
+function expandChildren(
+  path: readonly PathStep[],
+  shape: PropertyShape,
+  owner: DataDictionaryRow,
+  enclosing: Enclosing,
+  builder: CategoryBuilder,
+  ctx: ExtractCtx
+): void {
+  const { registry } = ctx;
+  const { maxDepth, includePatternProperties, includeOpenContentRows } = ctx.options;
+  const containerName = formatVariablePath(path);
+  const frame: Frame = { name: containerName, identities: shape.identities };
+  const child: Enclosing = { required: NO_REQUIRED, parent: owner["Variable name"], depth: enclosing.depth + 1, ancestors: [...enclosing.ancestors, frame] };
+
+  const hasFields =
+    shape.properties.size > 0 ||
+    shape.patternProperties.size > 0 ||
+    describesOpenContent(shape.additionalProperties) ||
+    describesOpenContent(shape.unevaluatedProperties);
+  if (hasFields && guard(shape, owner, enclosing, ctx)) {
+    // What the object requires: its own `required` (through `$ref`/`allOf`) applies to every
+    // field; a `oneOf`/`anyOf` branch's `required` only to the fields of that branch, and only
+    // while it is the variant in effect -- the rows say so ("Required in variant 2 of contact").
+    const required = collectRequired(shape.self.schema, registry, shape.self.base, maxDepth);
+    const variantRequired = new Map<string, Set<string>>();
+    for (const variant of shape.variants) {
+      const key = variantKey(variant);
+      if (key === undefined) continue;
+      const names = variantRequired.get(key) ?? new Set<string>();
+      for (const name of collectRequired(variant.schema, registry, variant.base, maxDepth)) names.add(name);
+      variantRequired.set(key, names);
+    }
+    const fieldsOf = (ref: SchemaRef): Enclosing => {
+      const key = variantKey(ref);
+      const own = key !== undefined ? variantRequired.get(key) : undefined;
+      return { ...child, required, ...(own ? { variantRequired: own } : {}) };
+    };
+    // Rules between the fields of this object, named by their rows, before the rows are built
+    // so that each row picks up its conditions.
+    const qualify = (property: string): string => formatVariablePath([...path, { kind: "property", name: property }]);
+    mergeSkipPatterns(ctx.skip, collectSkipPatterns(shape.self.schema, shape.self.base, { registry, maxDepth, qualify }));
+    for (const variant of shape.variants) mergeSkipPatterns(ctx.skip, collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, qualify }));
+
+    for (const [name, refs] of shape.properties) {
+      for (const ref of refs) emitVariable([...path, { kind: "property", name }], ref, fieldsOf(ref), builder, ctx);
+    }
+    if (includePatternProperties) {
+      for (const [pattern, refs] of shape.patternProperties) {
+        for (const ref of refs) {
+          const row = emitVariable([...path, { kind: "pattern", pattern }], ref, fieldsOf(ref), builder, ctx);
+          row.Constraints.unshift({ keyword: "patternProperties", text: `Property name matches /${pattern}/.` });
+        }
+      }
+    }
+    if (includeOpenContentRows) {
+      for (const [keyword, note] of [
+        ["additionalProperties", "Any property name not listed above."],
+        ["unevaluatedProperties", "Any property name not evaluated by adjacent applicators."]
+      ] as const) {
+        const ref = shape[keyword];
+        if (!describesOpenContent(ref)) continue;
+        const row = emitVariable([...path, { kind: "additional", keyword }], ref, fieldsOf(ref), builder, ctx);
+        row.Constraints.unshift({ keyword, text: note });
+      }
+    }
+  }
+
+  if (shape.prefixItems.length > 0 && guard(shape, owner, enclosing, ctx)) {
+    shape.prefixItems.forEach((refs, index) => {
+      for (const ref of refs) emitVariable([...path, { kind: "index", index }], ref, child, builder, ctx);
+    });
+  }
+
+  if (shape.items) {
+    const itemShape = shape.items.analysis.shape;
+    if (itemShape.kind === "object") {
+      // Every element is an object: its fields are `path[].field`, no row for `path[]` itself.
+      expandChildren([...path, { kind: "items" }], itemShape, owner, enclosing, builder, ctx);
+    } else if (itemShape.kind !== "scalar" && guard(itemShape, owner, enclosing, ctx)) {
+      emitVariable([...path, { kind: "items" }], shape.items.ref, child, builder, ctx);
+    }
+  }
+}
+
+/**
+ * An open-content schema worth a row: `additionalProperties: true` (or a missing keyword)
+ * says nothing about the values and gets none, as at the top level.
+ */
+function describesOpenContent(value: SchemaRef | false | undefined): value is SchemaRef {
+  return value !== undefined && value !== false && value.schema !== true;
+}
+
+/** The `oneOf`/`anyOf` branch a schema came from, as a map key; `undefined` outside a union. */
+function variantKey(ref: SchemaRef): string | undefined {
+  return ref.union !== undefined && ref.variant !== undefined ? `${ref.union}:${ref.variant}` : undefined;
+}
+
+/**
+ * Whether `owner`'s fields may be expanded: not when the shape is one of the containers
+ * already being expanded above it (a recursive schema), and not below the nesting limit.
+ * Either way the owner says so in its constraints, once.
+ */
+function guard(shape: PropertyShape, owner: DataDictionaryRow, enclosing: Enclosing, ctx: ExtractCtx): boolean {
+  for (const frame of enclosing.ancestors) {
+    for (const identity of shape.identities) {
+      if (!frame.identities.has(identity)) continue;
+      pushOnce(owner.Constraints, { keyword: "recursive", text: `Recursive structure: same shape as ${frame.name}` });
+      return false;
+    }
+  }
+  const limit = ctx.options.maxNestingDepth;
+  if (enclosing.depth + 1 > limit) {
+    pushOnce(owner.Constraints, { keyword: "maxNestingDepth", value: limit, text: "Nested fields not expanded (nesting depth limit reached)" });
+    const warning = `Nested fields of "${owner["Variable name"]}" were not expanded: nesting depth limit reached (maxNestingDepth = ${limit}).`;
+    if (!ctx.warnings.includes(warning)) ctx.warnings.push(warning);
+    return false;
+  }
+  return true;
+}
+
+function pushOnce(constraints: ConstraintItem[], item: ConstraintItem): void {
+  if (!constraints.some((c) => c.keyword === item.keyword && c.text === item.text)) constraints.push(item);
 }
 
 function applySkipPatterns(name: string, validValues: ValidValue[], constraints: ConstraintItem[], ctx: ExtractCtx): void {
@@ -576,14 +793,6 @@ function tableMeta(schema: JsonSchema): { title?: string; description?: string; 
   };
 }
 
-function propertySource(categorySource: SourceInfo | undefined, base: ResolutionBase, name: string): SourceInfo | undefined {
-  const uri = categorySource?.uri ?? base.idBase ?? base.retrievalUri;
-  if (!uri) return undefined;
-  const parentPointer = categorySource?.pointer ?? "";
-  const pointer = `${parentPointer}/properties/${name.replaceAll("~", "~0").replaceAll("/", "~1")}`;
-  return { uri, pointer, ...(categorySource?.name ? { name: categorySource.name } : {}) };
-}
-
 const EXTRA_KEYS = [
   "$id",
   "$schema",
@@ -615,6 +824,29 @@ function wrapItemExtra(schema: JsonSchemaObject): Record<string, unknown> {
   return extra ? { item: extra } : {};
 }
 
+/**
+ * Rows in reading order: each top-level row followed by its descendants, depth first. A parent
+ * declared again by a later `allOf` branch may add children long after its own row was added;
+ * insertion order alone would strand them at the end of the section.
+ */
+function orderedRows(builder: CategoryBuilder): DataDictionaryRow[] {
+  const out: DataDictionaryRow[] = [];
+  const emitted = new Set<string>();
+  const visit = (row: DataDictionaryRow): void => {
+    const name = row["Variable name"];
+    if (emitted.has(name)) return;
+    emitted.add(name);
+    out.push(row);
+    for (const child of builder.children.get(name) ?? []) {
+      const childRow = builder.rows.get(child);
+      if (childRow) visit(childRow);
+    }
+  };
+  for (const row of builder.rows.values()) if (row.__parent === undefined) visit(row);
+  for (const row of builder.rows.values()) visit(row); // anything left over (an orphaned child) still gets listed
+  return out;
+}
+
 function finalizeBuilders(builders: CategoryBuilder[]): DataDictionaryCategory[] {
   return builders
     .filter((b) => b.rows.size > 0)
@@ -622,10 +854,15 @@ function finalizeBuilders(builders: CategoryBuilder[]): DataDictionaryCategory[]
       id: b.id,
       title: b.title,
       ...(b.description ? { description: b.description } : {}),
-      rows: [...b.rows.values()],
+      rows: orderedRows(b),
       additionalInformation: b.additionalInformation,
       ...(b.source ? { source: b.source } : {})
     }));
+}
+
+/** "string" + "integer (nullable)" -> "string or integer (nullable)"; a repeated alternative is listed once. */
+function unionTypes(a: string, b: string): string {
+  return [...new Set([...a.split(" or "), ...b.split(" or ")].filter(Boolean))].join(" or ");
 }
 
 function dedupeValidValues(values: ValidValue[]): ValidValue[] {

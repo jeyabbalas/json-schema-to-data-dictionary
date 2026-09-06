@@ -1,0 +1,571 @@
+{
+ "title": "Format Showcase Dataset",
+ "categories": [
+  {
+   "id": "general",
+   "title": "General",
+   "rows": [
+    "record_id",
+    "created_datetime",
+    "created_date",
+    "created_time",
+    "processing_duration",
+    "contact_email",
+    "international_email",
+    "server_hostname",
+    "international_hostname",
+    "server_ipv4",
+    "server_ipv6",
+    "session_uuid",
+    "resource_uri",
+    "resource_uri_reference",
+    "international_resource_iri",
+    "international_resource_iri_reference",
+    "api_uri_template",
+    "data_json_pointer",
+    "relative_data_pointer",
+    "validation_regex",
+    "status",
+    "priority",
+    "confidence_score",
+    "is_active",
+    "tags",
+    "metadata",
+    "metadata.version",
+    "metadata.checksum",
+    "notes"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "record_id",
+   "category": "General",
+   "description": "Unique identifier for the record",
+   "type": "string",
+   "format": "Matches pattern ^REC-[0-9]{6}$",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "length",
+     "Exactly 10 character(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/record_id"
+   }
+  },
+  {
+   "name": "created_datetime",
+   "category": "General",
+   "description": "Date and time the record was created",
+   "type": "timestamp",
+   "format": "Date and time (ISO 8601 / RFC 3339) — e.g. 2026-06-22T14:30:00Z",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/created_datetime"
+   }
+  },
+  {
+   "name": "created_date",
+   "category": "General",
+   "description": "Date the record was created (date only)",
+   "type": "date",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/created_date"
+   }
+  },
+  {
+   "name": "created_time",
+   "category": "General",
+   "description": "Time the record was created (time only)",
+   "type": "time",
+   "format": "Time of day (ISO 8601 / RFC 3339) — e.g. 14:30:00Z",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/created_time"
+   }
+  },
+  {
+   "name": "processing_duration",
+   "category": "General",
+   "description": "Duration of processing (ISO 8601 format, e.g., P3D for 3 days)",
+   "type": "duration",
+   "format": "Time duration (ISO 8601) — e.g. P3Y6M4DT12H30M",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/processing_duration"
+   }
+  },
+  {
+   "name": "contact_email",
+   "category": "General",
+   "description": "Standard email address for contact",
+   "type": "email address",
+   "format": "Email address (RFC 5321) — e.g. user@example.org",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/contact_email"
+   }
+  },
+  {
+   "name": "international_email",
+   "category": "General",
+   "description": "Internationalized email address (supports non-ASCII characters)",
+   "type": "email address (intl.)",
+   "format": "Internationalized email address (RFC 6531) — e.g. δοκιμή@παράδειγμα.gr",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/international_email"
+   }
+  },
+  {
+   "name": "server_hostname",
+   "category": "General",
+   "description": "Server hostname (standard ASCII)",
+   "type": "hostname",
+   "format": "Internet host name (RFC 1123) — e.g. data.example.org",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "Required when server_ipv4 is present.",
+     "server_ipv4 is present"
+    ],
+    [
+     "conditional",
+     "Required when server_ipv6 is present.",
+     "server_ipv6 is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/server_hostname"
+   }
+  },
+  {
+   "name": "international_hostname",
+   "category": "General",
+   "description": "Internationalized hostname (supports non-ASCII characters)",
+   "type": "hostname (intl.)",
+   "format": "Internationalized host name (RFC 5890) — e.g. παράδειγμα.gr",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/international_hostname"
+   }
+  },
+  {
+   "name": "server_ipv4",
+   "category": "General",
+   "description": "IPv4 address of the server",
+   "type": "IPv4 address",
+   "format": "IPv4 network address (RFC 2673) — e.g. 192.0.2.1",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "When server_ipv4 is present, server_hostname is also required.",
+     "server_ipv4 is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/server_ipv4"
+   }
+  },
+  {
+   "name": "server_ipv6",
+   "category": "General",
+   "description": "IPv6 address of the server",
+   "type": "IPv6 address",
+   "format": "IPv6 network address (RFC 4291) — e.g. 2001:db8::1",
+   "values": [],
+   "constraints": [
+    [
+     "conditional",
+     "When server_ipv6 is present, server_hostname is also required.",
+     "server_ipv6 is present"
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/server_ipv6"
+   }
+  },
+  {
+   "name": "session_uuid",
+   "category": "General",
+   "description": "UUID for the session",
+   "type": "UUID",
+   "format": "Universally unique identifier (RFC 4122) — e.g. 123e4567-e89b-12d3-a456-426614174000",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/session_uuid"
+   }
+  },
+  {
+   "name": "resource_uri",
+   "category": "General",
+   "description": "Full URI to the resource",
+   "type": "URI",
+   "format": "Absolute URI (RFC 3986) — e.g. https://example.org/x",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/resource_uri"
+   }
+  },
+  {
+   "name": "resource_uri_reference",
+   "category": "General",
+   "description": "URI reference (can be relative or absolute)",
+   "type": "URI reference",
+   "format": "URI or relative reference (RFC 3986) — e.g. ../record?id=1",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/resource_uri_reference"
+   }
+  },
+  {
+   "name": "international_resource_iri",
+   "category": "General",
+   "description": "Internationalized Resource Identifier",
+   "type": "IRI",
+   "format": "Internationalized URI (RFC 3987) — e.g. https://例え.jp/項目",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/international_resource_iri"
+   }
+  },
+  {
+   "name": "international_resource_iri_reference",
+   "category": "General",
+   "description": "IRI reference (can be relative or absolute)",
+   "type": "IRI reference",
+   "format": "IRI or relative IRI reference (RFC 3987) — e.g. ../項目?id=1",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/international_resource_iri_reference"
+   }
+  },
+  {
+   "name": "api_uri_template",
+   "category": "General",
+   "description": "URI template for API endpoints",
+   "type": "URI template",
+   "format": "URI Template (RFC 6570) — e.g. https://example.org/patients/{id}",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/api_uri_template"
+   }
+  },
+  {
+   "name": "data_json_pointer",
+   "category": "General",
+   "description": "JSON Pointer to specific data in document",
+   "type": "JSON Pointer",
+   "format": "JSON Pointer (RFC 6901) — e.g. /items/0/id",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/data_json_pointer"
+   }
+  },
+  {
+   "name": "relative_data_pointer",
+   "category": "General",
+   "description": "Relative JSON pointer for navigation",
+   "type": "relative JSON Pointer",
+   "format": "Relative JSON Pointer — e.g. 1/name",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/relative_data_pointer"
+   }
+  },
+  {
+   "name": "validation_regex",
+   "category": "General",
+   "description": "Regular expression pattern for validation",
+   "type": "regular expression",
+   "format": "ECMA-262 regular expression — e.g. ^[A-Z]{2}$",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/validation_regex"
+   }
+  },
+  {
+   "name": "status",
+   "category": "General",
+   "description": "Processing status of the record",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "pending",
+     "value",
+     null,
+     "Awaiting processing",
+     null
+    ],
+    [
+     "processing",
+     "value",
+     null,
+     "Currently being processed",
+     null
+    ],
+    [
+     "completed",
+     "value",
+     null,
+     "Successfully completed",
+     null
+    ],
+    [
+     "failed",
+     "value",
+     null,
+     "Failed during processing",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/status"
+   }
+  },
+  {
+   "name": "priority",
+   "category": "General",
+   "description": "Priority level (1-10, where 1 is highest)",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "1 ≤ value ≤ 10",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/priority"
+   }
+  },
+  {
+   "name": "confidence_score",
+   "category": "General",
+   "description": "Confidence score as a percentage",
+   "type": "number",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 100",
+     null
+    ],
+    [
+     "multipleOf",
+     "Multiple of 0.01",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/confidence_score"
+   }
+  },
+  {
+   "name": "is_active",
+   "category": "General",
+   "description": "Whether the record is currently active",
+   "type": "boolean",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/is_active"
+   }
+  },
+  {
+   "name": "tags",
+   "category": "General",
+   "description": "Tags associated with the record",
+   "type": "array of string",
+   "format": "Matches pattern ^[a-z0-9-]+$",
+   "values": [],
+   "constraints": [
+    [
+     "items",
+     "0–10 items",
+     null
+    ],
+    [
+     "uniqueItems",
+     "Items must be unique",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/tags"
+   }
+  },
+  {
+   "name": "metadata",
+   "category": "General",
+   "description": "Additional metadata for the record",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: version, checksum",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/metadata"
+   }
+  },
+  {
+   "name": "metadata.version",
+   "category": "General",
+   "description": "",
+   "type": "string",
+   "format": "Matches pattern ^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/metadata/properties/version"
+   }
+  },
+  {
+   "name": "metadata.checksum",
+   "category": "General",
+   "description": "",
+   "type": "string",
+   "format": "Matches pattern ^[a-f0-9]{64}$",
+   "values": [],
+   "constraints": [],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/metadata/properties/checksum"
+   }
+  },
+  {
+   "name": "notes",
+   "category": "General",
+   "description": "Optional notes about the record",
+   "type": "string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "length",
+     "At most 500 character(s)",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/format-showcase-dataset.json",
+    "pointer": "/properties/notes"
+   }
+  }
+ ],
+ "conditionalRules": [],
+ "warnings": []
+}
