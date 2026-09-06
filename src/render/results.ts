@@ -12,7 +12,7 @@ import type { RowMarkupOptions } from "./rowMarkup";
 import { createHighlighter, PLAIN } from "./highlight";
 import type { Highlighter } from "./highlight";
 import { formatCount } from "./markup";
-import { activeElement, eventTarget, focusRow } from "./dom";
+import { activeElement, eventTarget, focusRow, insertRows } from "./dom";
 import type { Root } from "./dom";
 import type { SearchResult } from "../search/types";
 
@@ -83,7 +83,7 @@ export function createResultsView(root: Root, vm: ViewModel, opts: ResultsViewOp
     const from = shown;
     shown = Math.min(total, shown + pageSize);
     const focused = more !== null && activeElement(root) === more;
-    body.insertAdjacentHTML("beforeend", pageHtml(from, shown));
+    insertRows(body, pageHtml(from, shown), null);
     updateFoot();
     // When the button disappears under the reader's focus, continue from the first new row.
     if (focused && shown >= total) focusRow(body.children[from] ?? null);

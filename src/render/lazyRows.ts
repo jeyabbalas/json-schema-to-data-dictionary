@@ -2,13 +2,14 @@
 // first page of rows up front; every incomplete category keeps a sentinel row at the end of
 // its <tbody>. One IntersectionObserver (600 px ahead of the viewport) pages rows in as a
 // section approaches, and the sentinel's "Show more" button is the fallback when there is
-// no observer (or the user prefers clicking). A page is inserted as one HTML string.
+// no observer (or the user prefers clicking). A page is built as one HTML string and
+// inserted in one go.
 
 import type { RowVM, ViewModel } from "./viewModel";
 import { rowMarkup } from "./rowMarkup";
 import type { RowMarkupOptions } from "./rowMarkup";
 import { moreLabel } from "./markup";
-import { activeElement, eventTarget, focusRow } from "./dom";
+import { activeElement, eventTarget, focusRow, insertRows } from "./dom";
 import type { Root } from "./dom";
 
 export interface LazyRowsOptions {
@@ -60,8 +61,7 @@ export function attachLazyRows(root: Root, vm: ViewModel, opts: LazyRowsOptions)
     let html = "";
     for (let i = next; i < end; i += 1) html += rowMarkup(category.rows[i] as RowVM, vm, opts.rowOptions);
     const sentinel = sentinelOf(tbody);
-    if (sentinel) sentinel.insertAdjacentHTML("beforebegin", html);
-    else tbody.insertAdjacentHTML("beforeend", html);
+    insertRows(tbody, html, sentinel ?? null);
     section.dataset.ddNext = String(end);
 
     if (sentinel) {

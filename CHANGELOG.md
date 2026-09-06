@@ -67,6 +67,18 @@ Variables of any JSON type.
   (`string or object`, `number (nullable)`, `date` with its code).
 - `type: ["string", "object"]` read `string`; it now reads `string or object`.
 
+### Maintenance
+
+- Lazy paging and the results list insert each page of rows through a `<template>` fragment
+  rather than `insertAdjacentHTML`. Browsers parse both identically; the change lets the
+  component tests run on happy-dom 20, which parses `insertAdjacentHTML` text without the
+  context element and dropped the rows.
+- Dev dependencies: `@happy-dom/global-registrator` 20 (Node 20+ for development; the
+  published package still supports Node 18), and `overrides` pinning the transitive packages
+  behind every `npm audit` finding and deprecation warning (adm-zip, sharp, global-agent,
+  esbuild, uuid, archiver, unzipper, fast-csv, glob). `npm ci` reports no vulnerabilities and
+  no deprecated packages. None of these ship with the library, which has no runtime dependencies.
+
 ## 0.5.0 - 2026-09-05
 
 ### Fixed
