@@ -3,134 +3,125 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JSON Schema → Data Dictionary — demo</title>
-  <meta name="description" content="Turn interlinked JSON Schema documents that describe a tabular dataset into a searchable data dictionary table." />
+  <title>JSON Schema → Data Dictionary</title>
+  <meta name="description" content="Turn interlinked JSON Schema documents that describe a tabular dataset into a searchable data dictionary." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M8 11h16M8 16h16M8 21h16M13 8v16' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <h1>JSON&nbsp;Schema&nbsp;→&nbsp;Data&nbsp;Dictionary</h1>
-    <p class="tagline">
-      Turn one or more interlinked <strong>JSON Schema</strong> documents that describe a tabular
-      dataset (an array of objects) into a flat, searchable <strong>data dictionary</strong>.
-      Pick an example or upload your own schema files — everything runs in your browser.
-    </p>
-    <p class="links">
-      <a href="https://github.com/jeyabbalas/json-schema-to-data-dictionary" target="_blank" rel="noopener">GitHub repository</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://www.npmjs.com/package/json-schema-data-dictionary" target="_blank" rel="noopener">npm package</a>
-    </p>
+  <header class="appbar">
+    <a class="brand" href="./" aria-label="JSON Schema to Data Dictionary — reload">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M8 11h16M8 16h16M8 21h16M13 8v16"/></svg>
+      <span class="brand-name">JSON Schema <span class="brand-arrow">→</span> Data Dictionary</span>
+    </a>
+
+    <button id="source-btn" class="source-btn" type="button" popovertarget="source-menu" aria-haspopup="dialog" title="Choose an example or open your own schemas">
+      <span id="source-name" class="source-name">Examples</span>
+      <span id="source-meta" class="source-meta"></span>
+      <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+    </button>
+
+    <div class="appbar-end">
+      <span id="semantic-status" class="semantic-status" role="status" hidden></span>
+      <label class="switch" for="semantic" title="Also finds related variables (“smoking” → the tobacco rows). Downloads a small embedding model once; everything stays in your browser.">
+        <input type="checkbox" id="semantic" role="switch" />
+        <span class="switch-track" aria-hidden="true"></span>
+        <span class="switch-label">Semantic search</span>
+      </label>
+      <button id="export-btn" class="btn" type="button" popovertarget="export-menu" aria-haspopup="menu" disabled>
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8m0 0-3-3m3 3 3-3M3 13.5h10"/></svg>
+        <span>Export</span>
+      </button>
+      <button id="settings-btn" class="icon-btn" type="button" popovertarget="settings-menu" aria-haspopup="dialog" aria-label="Settings" title="Settings">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6m3 0h2M2.5 11.5h2m3 0h6"/><circle cx="10" cy="4.5" r="1.5"/><circle cx="6" cy="11.5" r="1.5"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/jeyabbalas/json-schema-to-data-dictionary" target="_blank" rel="noopener" aria-label="GitHub repository" title="GitHub">
+        <svg class="icon icon-fill" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .2a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.33.66.07-.52.28-.87.5-1.07-1.77-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.22 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 .2Z"/></svg>
+      </a>
+    </div>
   </header>
 
-  <div id="missing-bundle" class="banner banner-error" hidden>
-    The library bundle didn’t load. Build it first with <code>npm run demo</code>, then reload this page.
+  <div id="messages" class="messages" aria-live="polite"></div>
+
+  <main class="stage">
+    <div id="missing-bundle" class="notice notice-error" hidden>
+      The library bundle didn’t load. Build it with <code>npm run demo</code>, then reload.
+    </div>
+    <!-- Shown when nothing is loaded. -->
+    <section id="empty" class="empty" hidden>
+      <svg class="empty-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="5" width="26" height="22" rx="4"/><path d="M3 12h26M12 12v15"/></svg>
+      <h1>Drop JSON Schema files here</h1>
+      <p>Or <button type="button" class="link" data-open="files">open files</button> or a <button type="button" class="link" data-open="folder">folder</button>. Everything stays in your browser.</p>
+      <div id="empty-presets" class="empty-presets"></div>
+    </section>
+    <div id="output" class="dict"></div>
+  </main>
+
+  <!-- Menus (popover API: light-dismiss and Escape for free; positioned under their button by app.js). -->
+  <div id="source-menu" class="menu menu-source" popover>
+    <div class="menu-label">Examples</div>
+    <div id="preset-list" class="preset-list"></div>
+    <div class="menu-sep"></div>
+    <div class="menu-label">Your schemas</div>
+    <div class="menu-actions">
+      <button type="button" class="btn" data-open="files">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5H4.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5.5l-3-3Z"/><path d="M9.5 2.5v3h3"/></svg>Open files…
+      </button>
+      <button type="button" class="btn" data-open="folder">
+        <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5a1 1 0 0 1 1-1h3l1.5 1.5h4.5a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-7.5Z"/></svg>Open folder…
+      </button>
+    </div>
+    <p class="menu-hint">Or drop <code>.json</code> files or a folder anywhere. Choose the folder that holds them all, so relative <code>$ref</code>s resolve.</p>
+    <div id="doc-section" class="doc-section" hidden>
+      <div class="doc-head">
+        <span id="doc-count" class="doc-count"></span>
+        <button id="clear-btn" type="button" class="link">Clear</button>
+      </div>
+      <ul id="doc-list" class="doc-list"></ul>
+      <label class="field" for="root-select">
+        <span>Root document</span>
+        <select id="root-select"><option value="">Auto-detect</option></select>
+      </label>
+    </div>
   </div>
 
-  <main class="layout" id="layout">
-    <!-- INPUT -->
-    <section class="panel inputs" id="input-panel" aria-label="Input">
-      <div class="field">
-        <label class="field-label" for="preset-select">Load an example</label>
-        <select id="preset-select"></select>
-        <p id="preset-description" class="hint"></p>
-      </div>
+  <div id="export-menu" class="menu menu-export" popover>
+    <button type="button" class="menu-item" data-export="html">HTML page<span class="menu-item-note">.html</span></button>
+    <button type="button" class="menu-item" data-export="xlsx">Excel workbook<span class="menu-item-note">.xlsx</span></button>
+    <button type="button" class="menu-item" data-export="csv">CSV<span class="menu-item-note">.csv</span></button>
+    <div class="menu-sep"></div>
+    <button type="button" class="menu-item" data-export="copy">Copy as CSV</button>
+  </div>
 
-      <div class="field">
-        <span class="field-label">…or upload your own schema(s)</span>
-        <div id="drop-zone" class="drop-zone">
-          <p class="drop-hint">Drag &amp; drop <code>.json</code> files or a folder here</p>
-          <div class="drop-actions">
-            <label class="btn">
-              Choose files
-              <input id="file-input" type="file" multiple accept=".json,application/json" hidden />
-            </label>
-            <label class="btn">
-              Choose folder
-              <input id="folder-input" type="file" webkitdirectory hidden />
-            </label>
-          </div>
-        </div>
-        <p class="hint">
-          For a multi-file set with subfolders (e.g.&nbsp;<code>categories/</code>,&nbsp;<code>common/</code>),
-          choose or drop the <em>folder</em> so relative <code>$ref</code> paths are preserved. Any
-          folder above the schemas works — the root document is detected wherever it sits, and
-          <em>Root document</em> under <em>Display options</em> lists the tables that were found.
-        </p>
-      </div>
+  <div id="settings-menu" class="menu menu-settings" popover>
+    <div class="menu-label">Theme</div>
+    <div class="segmented" role="radiogroup" aria-label="Theme">
+      <label><input type="radio" name="theme" value="auto" checked /><span>Auto</span></label>
+      <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
+      <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+    </div>
+    <div class="menu-sep"></div>
+    <div class="menu-label">Semantic search model</div>
+    <select id="semantic-model" aria-label="Embedding model"></select>
+    <p id="semantic-device" class="menu-hint" hidden></p>
+    <p id="semantic-notice" class="menu-hint menu-warn" hidden></p>
+    <div class="menu-sep"></div>
+    <div class="menu-label">Display</div>
+    <label class="check"><input type="checkbox" id="expand-categories" checked /> Expand categories</label>
+    <label class="check"><input type="checkbox" id="expand-additional" /> Expand additional information</label>
+    <label class="check"><input type="checkbox" id="shadow" checked /> Isolate styles (Shadow DOM)</label>
+  </div>
 
-      <div class="field" id="doc-list-field" hidden>
-        <div class="field-head">
-          <span class="field-label">Loaded documents (<span id="doc-count">0</span>)</span>
-          <button id="clear-btn" type="button" class="btn btn-ghost">Clear all</button>
-        </div>
-        <ul id="doc-list" class="doc-list"></ul>
-      </div>
-
-      <details class="field options">
-        <summary>Display options</summary>
-        <div class="options-grid">
-          <label class="opt" for="root-select">
-            <span>Root document</span>
-            <select id="root-select"><option value="">Auto-detect</option></select>
-          </label>
-          <label class="opt" for="theme">
-            <span>Theme</span>
-            <select id="theme">
-              <option value="auto">auto</option>
-              <option value="light">light</option>
-              <option value="dark">dark</option>
-            </select>
-          </label>
-          <label class="opt-check"><input type="checkbox" id="shadow" checked /> Style isolation (Shadow&nbsp;DOM)</label>
-          <label class="opt-check"><input type="checkbox" id="expand-categories" checked /> Expand category sections</label>
-          <label class="opt-check"><input type="checkbox" id="expand-additional" /> Expand “Additional information”</label>
-        </div>
-      </details>
-
-      <p class="hint synthetic-note">
-        Relative <code>$ref</code>s resolve against a synthetic base
-        <code>https://demo.local/&lt;path&gt;</code>, mirroring each document’s file path.
-      </p>
-    </section>
-
-    <!-- OUTPUT -->
-    <section class="panel output" aria-label="Output">
-      <div class="output-toolbar">
-        <button id="toggle-input-btn" type="button" class="btn btn-ghost panel-toggle"
-                aria-controls="input-panel" aria-expanded="true" title="Hide input panel">
-          <span class="panel-toggle-icon" aria-hidden="true">‹</span>
-          <span class="panel-toggle-label">Hide panel</span>
-        </button>
-        <!-- Semantic search lives here (not in the collapsible sidebar) so it is always visible. -->
-        <div class="semantic-control">
-          <label class="semantic-toggle" for="semantic"
-                 title="Also finds related variables (“smoking” → the tobacco rows) and ranks results. Downloads the chosen model from huggingface.co once (22–124 MB, see the picker); embeddings are cached in your browser.">
-            <input type="checkbox" id="semantic" />
-            <span>Semantic search</span>
-            <span class="opt-note">experimental</span>
-          </label>
-          <select id="semantic-model" aria-label="Embedding model"></select>
-          <span id="semantic-device" class="semantic-device" hidden></span>
-          <span id="semantic-status" class="semantic-status" role="status" hidden></span>
-        </div>
-        <div id="messages" class="messages" aria-live="polite"></div>
-        <div class="export-actions">
-          <button id="download-html-btn" type="button" class="btn" disabled>Download HTML</button>
-          <button id="download-csv-btn" type="button" class="btn" disabled>Download CSV</button>
-          <button id="download-excel-btn" type="button" class="btn" disabled>Download Excel</button>
-        </div>
-      </div>
-      <!-- Shown by app.js: the licence notice for the selected model, and (while semantic search
-           is on) what the “related” badge in the results means. -->
-      <p id="semantic-notice" class="hint semantic-notice" hidden></p>
-      <p id="semantic-hint" class="hint semantic-hint" hidden>Rows badged <em>related</em> were found by the embedding model, not by keyword.</p>
-      <div id="output" class="dict-output"></div>
-    </section>
-  </main>
+  <div id="drop-overlay" class="drop-overlay" hidden>
+    <div class="drop-card">Drop JSON Schema files or a folder</div>
+  </div>
+  <input id="file-input" type="file" multiple accept=".json,application/json" hidden />
+  <input id="folder-input" type="file" webkitdirectory hidden />
 
   <!-- Load order matters: bundle (defines window.JsonSchemaDataDictionary and the
        <json-data-dictionary> element) → presets (window.DEMO_PRESETS) →
-       ExcelJS (window.ExcelJS, used by the “Download Excel” export) → app. -->
+       ExcelJS (window.ExcelJS, used by the Excel export) → app. -->
   <script src="json-schema-data-dictionary.global.js"></script>
   <script src="presets.js"></script>
   <script src="exceljs.min.js"></script>

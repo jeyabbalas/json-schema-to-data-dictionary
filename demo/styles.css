@@ -1,283 +1,266 @@
-/* Demo chrome only. The rendered dictionary isolates its own styles in a Shadow DOM,
-   so nothing here needs to (or can) reach inside the <json-data-dictionary> element —
-   except the --dd-* custom properties, which pierce the shadow boundary (see #output). */
+/* Demo chrome only. The dictionary isolates its own styles in a Shadow DOM, so nothing here
+   reaches inside <json-data-dictionary> except the --dd-* custom properties, which pierce the
+   shadow boundary. The page is a slim app bar over a stage the dictionary fills: the
+   component takes the stage's height and scrolls inside it under a sticky column header. */
 
 :root {
-  --bg: #f6f8fb;
-  --panel-bg: #ffffff;
-  --fg: #1b2330;
-  --muted: #5b6675;
-  --border: #e2e7ee;
-  --border-strong: #cbd3df;
-  --accent: #2563eb;
+  --bg: #ffffff;
+  --surface: #f7f7f8;
+  --fg: #1a1a1f;
+  --muted: #6e6e78;
+  --border: #e7e7eb;
+  --border-strong: #d6d6dc;
+  --accent: #4f46e5;
+  --accent-weak: #eef0fe;
   --accent-fg: #ffffff;
-  --code-bg: #eef1f6;
-  --error-bg: #fdecec;
-  --error-fg: #9b1c1c;
-  --error-border: #f5c2c2;
-  --warn-bg: #fff7e6;
-  --warn-fg: #8a5a00;
-  --warn-border: #f3d99b;
-  --info-bg: #eef4ff;
-  --info-fg: #1e40af;
-  --info-border: #c7d7fe;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --error: #b42318;
+  --error-bg: #fef2f1;
+  --warn: #b45309;
+  --warn-bg: #fdf4e8;
+  --shadow-menu: 0 12px 32px rgba(20, 20, 30, .12), 0 2px 6px rgba(20, 20, 30, .06);
+  --radius: 8px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
 }
-
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f141b;
-    --panel-bg: #171d26;
-    --fg: #e7ecf3;
-    --muted: #9aa6b6;
-    --border: #29313d;
-    --border-strong: #3a4350;
-    --accent: #5b8cff;
-    --accent-fg: #0b1118;
-    --code-bg: #232b36;
-    --error-bg: #3a1d1d;
-    --error-fg: #ffb4b4;
-    --error-border: #5e2b2b;
-    --warn-bg: #352a12;
-    --warn-fg: #ffd98a;
-    --warn-border: #5a481f;
-    --info-bg: #16233f;
-    --info-fg: #b9ccff;
-    --info-border: #2c3f66;
-    --shadow: none;
+  :root:not([data-theme="light"]) {
+    --bg: #111114;
+    --surface: #18181c;
+    --fg: #ececf0;
+    --muted: #9898a3;
+    --border: #2a2a31;
+    --border-strong: #3a3a43;
+    --accent: #9b9cf6;
+    --accent-weak: #23233d;
+    --accent-fg: #111114;
+    --error: #ff9b91;
+    --error-bg: #3a1c19;
+    --warn: #f2a65a;
+    --warn-bg: #2c2116;
+    --shadow-menu: 0 12px 32px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .04);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #111114;
+  --surface: #18181c;
+  --fg: #ececf0;
+  --muted: #9898a3;
+  --border: #2a2a31;
+  --border-strong: #3a3a43;
+  --accent: #9b9cf6;
+  --accent-weak: #23233d;
+  --accent-fg: #111114;
+  --error: #ff9b91;
+  --error-bg: #3a1c19;
+  --warn: #f2a65a;
+  --warn-bg: #2c2116;
+  --shadow-menu: 0 12px 32px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .04);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-
+html, body { height: 100%; }
 body {
   margin: 0;
-  padding: 24px;
-  max-width: 1800px;
-  margin-inline: auto;
-  font: 15px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
+  font: 13px/1.5 var(--font);
   color: var(--fg);
   background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
 }
-
-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.88em;
-  background: var(--code-bg);
-  padding: 1px 5px;
-  border-radius: 5px;
-}
-
+code { font-family: var(--mono); font-size: .92em; }
 a { color: var(--accent); }
+[hidden] { display: none !important; }
 
-/* ---------- Header ---------- */
-.site-header { margin-bottom: 20px; }
-.site-header h1 { font-size: 1.45rem; margin: 0 0 6px; }
-.tagline { margin: 0 0 8px; max-width: 70ch; color: var(--fg); }
-.links { margin: 0; color: var(--muted); font-size: 0.92rem; }
-.links a { text-decoration: none; }
-.links a:hover { text-decoration: underline; }
+.icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.icon-fill { fill: currentColor; stroke: none; }
 
-/* ---------- Banner ---------- */
-.banner {
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  margin-bottom: 18px;
-}
-.banner-error { background: var(--error-bg); color: var(--error-fg); border-color: var(--error-border); }
-
-/* ---------- Layout ---------- */
-.layout {
-  display: grid;
-  grid-template-columns: minmax(300px, 360px) 1fr;
-  gap: 20px;
-  align-items: start;
-}
-@media (max-width: 860px) {
-  .layout { grid-template-columns: 1fr; }
-}
-
-/* Collapsing the input panel hands its column to the table (toggle in the output toolbar). */
-.layout.inputs-collapsed { grid-template-columns: 1fr; }
-.layout.inputs-collapsed .inputs { display: none; }
-.panel-toggle { flex: none; }
-
-.panel {
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.inputs { padding: 18px; display: flex; flex-direction: column; gap: 18px; }
-.output { padding: 14px; min-width: 0; /* allow inner table to scroll instead of overflowing the grid */ }
-
-/* ---------- Fields ---------- */
-.field { display: flex; flex-direction: column; gap: 7px; }
-.field-label { font-weight: 600; font-size: 0.92rem; }
-.field-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.hint { margin: 0; color: var(--muted); font-size: 0.82rem; line-height: 1.45; }
-.synthetic-note { border-top: 1px dashed var(--border); padding-top: 12px; }
-
-select {
-  font: inherit;
-  color: var(--fg);
-  background: var(--panel-bg);
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 7px 9px;
-  width: 100%;
-}
-
-/* ---------- Drop zone ---------- */
-.drop-zone {
-  border: 1.5px dashed var(--border-strong);
-  border-radius: var(--radius);
-  padding: 18px 14px;
-  text-align: center;
-  transition: border-color 0.15s, background 0.15s;
-}
-.drop-zone.dragover { border-color: var(--accent); background: var(--info-bg); }
-.drop-hint { margin: 0 0 12px; color: var(--muted); }
-.drop-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
-/* ---------- Buttons ---------- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-radius: 8px;
-  padding: 7px 13px;
-  white-space: nowrap;
-}
-.btn:hover { filter: brightness(1.06); }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
-.btn-ghost {
-  background: transparent;
-  color: var(--accent);
-}
-.btn-ghost:hover { background: var(--info-bg); filter: none; }
-
-/* ---------- Loaded-documents manifest ---------- */
-.doc-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  max-height: 220px;
-  overflow: auto;
-}
-.doc-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px 6px 11px;
+/* ---------- App bar ---------- */
+.appbar {
+  flex: none;
+  display: flex; align-items: center; gap: 14px;
+  height: 52px; padding: 0 16px 0 20px;
   border-bottom: 1px solid var(--border);
 }
-.doc-list li:last-child { border-bottom: 0; }
-.doc-path {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.82rem;
-  word-break: break-all;
-}
-.doc-remove {
-  flex: none;
-  cursor: pointer;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 1.15rem;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: 6px;
-}
-.doc-remove:hover { color: var(--error-fg); background: var(--error-bg); }
+.brand { display: flex; align-items: center; gap: 9px; color: inherit; text-decoration: none; min-width: 0; }
+.brand-mark { width: 22px; height: 22px; flex: none; }
+.brand-mark rect { fill: var(--accent); }
+.brand-mark path { fill: none; stroke: var(--accent-fg); stroke-width: 2.2; stroke-linecap: round; }
+.brand-name { font-weight: 600; font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
+.brand-arrow { color: var(--muted); font-weight: 400; }
 
-/* ---------- Options ---------- */
-.options summary {
+.source-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+  height: 32px; padding: 0 10px 0 12px; margin-left: 6px;
+  font: inherit; color: var(--fg);
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.92rem;
-  padding: 2px 0;
 }
-.options-grid { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; }
-.opt { display: flex; flex-direction: column; gap: 5px; font-size: 0.88rem; color: var(--muted); }
-.opt > span { font-weight: 500; }
-.opt-check { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
-.opt-note { color: var(--muted); font-size: 0.8em; }
+.source-btn:hover { background: var(--surface); }
+.source-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 26ch; }
+.source-meta { color: var(--muted); white-space: nowrap; font-size: 12px; }
+.source-meta:empty { display: none; }
+.chev { width: 14px; height: 14px; flex: none; fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
-/* Semantic-search controls: in the always-visible output toolbar, like the panel toggle.
-   Toggle + model picker + device chip + status wrap onto a second line when the toolbar is narrow. */
-.semantic-control {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  flex: 0 1 auto;
-  min-width: 0;
-  margin-right: auto;
-}
-.semantic-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 7px 11px;
-  white-space: nowrap;
-}
-.semantic-toggle:hover { background: var(--info-bg); }
-.semantic-toggle input { margin: 0; }
-#semantic-model { width: auto; max-width: 36ch; padding: 6px 8px; font-size: 0.86rem; }
-.semantic-status { color: var(--accent); font-size: 0.82rem; }
-/* Resolved runtime ("WebGPU · fp16", "WASM · q8"); the GPU path is called out in the accent colour. */
-.semantic-device {
-  font-size: 0.78rem;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 2px 8px;
-  white-space: nowrap;
-}
-.semantic-device[data-device="webgpu"] { color: var(--accent); }
-/* Under the toolbar: the licence notice for the selected model, and the "related" badge hint. */
-.semantic-notice, .semantic-hint { margin: -4px 0 12px; }
-.semantic-notice { color: var(--warn-fg); }
+.appbar-end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
-/* ---------- Output toolbar + messages ---------- */
-.output-toolbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 12px;
+  font: inherit; font-weight: 500; color: var(--fg); white-space: nowrap;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+  cursor: pointer; transition: background .12s;
 }
-.messages { flex: 1 1 280px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.btn .icon { color: var(--muted); }
+.btn:hover { background: var(--surface); }
+.btn:disabled { opacity: .45; cursor: default; background: var(--bg); }
+.icon-btn {
+  display: inline-grid; place-items: center; width: 32px; height: 32px;
+  color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); background: transparent;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.icon-btn:hover { background: var(--surface); color: var(--fg); }
+:is(.btn, .icon-btn, .source-btn):focus-visible, .link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+:is(.btn, .icon-btn, .source-btn):popover-open, :is(.btn, .icon-btn, .source-btn)[aria-expanded="true"] { background: var(--surface); }
+
+.link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+
+/* Semantic search switch + its status. */
+.switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 0 4px; height: 32px; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch-track {
+  position: relative; width: 28px; height: 16px; flex: none; border-radius: 999px;
+  background: var(--border-strong); transition: background .15s;
+}
+.switch-track::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .2); transition: transform .15s;
+}
+.switch input:checked + .switch-track { background: var(--accent); }
+.switch input:checked + .switch-track::after { transform: translateX(12px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.switch-label { font-weight: 500; white-space: nowrap; }
+.semantic-status { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.semantic-status[data-state="error"] { color: var(--error); }
+
+/* ---------- Messages (under the app bar) ---------- */
+.messages { flex: none; display: flex; flex-direction: column; }
 .messages:empty { display: none; }
 .message {
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 8px 11px;
-  font-size: 0.86rem;
-  word-break: break-word;
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 16px 8px 20px; font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
 }
-.message.error { background: var(--error-bg); color: var(--error-fg); border-color: var(--error-border); }
-.message.warning { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-border); }
-.message.info { background: var(--info-bg); color: var(--info-fg); border-color: var(--info-border); }
-.export-actions { display: flex; gap: 8px; flex: none; }
+.message-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.message.error { background: var(--error-bg); color: var(--error); }
+.message.warning { background: var(--warn-bg); color: var(--warn); }
+.message.info { background: var(--surface); color: var(--muted); }
+.message-close { flex: none; font: inherit; line-height: 1; padding: 2px 4px; color: inherit; opacity: .7; background: none; border: 0; cursor: pointer; }
+.message-close:hover { opacity: 1; }
 
-/* The rendered component reads --dd-accent through the shadow boundary; align it
-   with the demo accent so the embedded widget matches the page. */
-.dict-output { --dd-accent: var(--accent); min-height: 120px; }
+/* ---------- Stage: the dictionary fills it ---------- */
+.stage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 18px 20px 20px; }
+.dict { flex: 1 1 auto; min-height: 0; }
+.notice { padding: 10px 12px; border-radius: var(--radius); margin-bottom: 12px; }
+.notice-error { background: var(--error-bg); color: var(--error); }
+
+.empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  border: 1.5px dashed var(--border-strong); border-radius: 12px; padding: 32px; color: var(--muted);
+}
+.empty-mark { width: 40px; height: 40px; fill: none; stroke: var(--muted); stroke-width: 1.5; margin-bottom: 10px; }
+.empty h1 { margin: 0; font-size: 16px; font-weight: 600; color: var(--fg); }
+.empty p { margin: 6px 0 18px; }
+.empty-presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+/* ---------- Menus ---------- */
+.menu {
+  position: fixed; inset: auto; margin: 0;
+  min-width: 220px; max-width: min(380px, calc(100vw - 16px)); max-height: calc(100vh - 80px); overflow: auto;
+  padding: 6px; color: var(--fg); font: 13px/1.5 var(--font);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-menu);
+}
+.menu-source { width: 380px; }
+.menu-settings { width: 280px; padding: 6px 12px 10px; }
+.menu-label { padding: 8px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.menu-settings .menu-label { padding: 8px 0 6px; }
+.menu-sep { height: 1px; background: var(--border); margin: 6px 0; }
+.menu-hint { margin: 6px 8px 4px; font-size: 12px; color: var(--muted); }
+.menu-settings .menu-hint { margin: 6px 0 0; }
+.menu-warn { color: var(--warn); }
+.menu-actions { display: flex; gap: 6px; padding: 2px 8px; }
+.menu-actions .btn { flex: 1; justify-content: center; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 7px 10px; font: inherit; color: inherit; text-align: left;
+  background: none; border: 0; border-radius: 6px; cursor: pointer;
+}
+.menu-item:hover, .menu-item:focus-visible { background: var(--surface); outline: none; }
+.menu-item-note { margin-left: auto; color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+.preset-list { display: flex; flex-direction: column; }
+.preset {
+  display: grid; grid-template-columns: 16px 1fr auto; column-gap: 8px; align-items: baseline;
+  width: 100%; padding: 7px 10px 7px 8px; font: inherit; color: inherit; text-align: left;
+  background: none; border: 0; border-radius: 6px; cursor: pointer;
+}
+.preset:hover, .preset:focus-visible { background: var(--surface); outline: none; }
+.preset-check { grid-row: span 2; align-self: center; width: 14px; height: 14px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.preset[aria-current="true"] .preset-check { visibility: visible; }
+.preset-name { font-weight: 500; }
+.preset-files { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.preset-desc { grid-column: 2 / -1; color: var(--muted); font-size: 12px; }
+
+.doc-section { margin: 8px 8px 4px; }
+.doc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.doc-count { font-size: 12px; color: var(--muted); }
+.doc-list { list-style: none; margin: 0 0 10px; padding: 0; max-height: 180px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.doc-list li { display: flex; align-items: center; gap: 6px; padding: 3px 4px 3px 9px; border-bottom: 1px solid var(--border); }
+.doc-list li:last-child { border-bottom: 0; }
+.doc-path { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+.doc-remove { flex: none; width: 22px; height: 22px; display: grid; place-items: center; color: var(--muted); background: none; border: 0; border-radius: 5px; cursor: pointer; }
+.doc-remove:hover { color: var(--error); background: var(--error-bg); }
+.doc-remove .icon { width: 12px; height: 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+
+select {
+  width: 100%; height: 32px; padding: 0 8px; font: inherit; color: var(--fg);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+}
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.segmented { display: flex; padding: 2px; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.segmented label { flex: 1; }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented span { display: block; text-align: center; padding: 4px 0; border-radius: 6px; cursor: pointer; color: var(--muted); font-weight: 500; }
+.segmented input:checked + span { background: var(--bg); color: var(--fg); box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.segmented input:focus-visible + span { outline: 2px solid var(--accent); }
+
+.check { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
+.check input { margin: 0; accent-color: var(--accent); }
+
+/* ---------- Drop overlay ---------- */
+.drop-overlay {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(2px);
+}
+.drop-card {
+  padding: 28px 40px; border: 2px dashed var(--accent); border-radius: 14px;
+  background: var(--bg); color: var(--accent); font-size: 15px; font-weight: 600; pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .appbar { gap: 8px; padding: 0 10px 0 12px; }
+  .brand-name, .switch-label { display: none; }
+  .source-btn { margin-left: 0; }
+  .stage { padding: 12px 12px 14px; }
+}
+
+/* The app bar reports semantic-search status beside its switch, so the dictionary's own chip
+   (exposed as a CSS part; a plain class in light-DOM mode) stays hidden here. */
+json-data-dictionary::part(semantic-status), #output .dd-semantic-status { display: none; }

@@ -24,40 +24,35 @@ const VECTORS_MANIFEST = join(HERE, "vectors", "manifest.json");
 const SOURCES = [
   {
     key: "covid",
-    label: "COVID-19 surveillance — single schema",
-    description:
-      "One self-contained array schema: enums with labels, string formats, ranges, and dependentRequired.",
+    label: "COVID-19 surveillance",
+    description: "Labelled enums, formats, ranges, dependentRequired",
     dir: "single_schema",
     only: "covid-patient-dataset.json"
   },
   {
     key: "formats",
-    label: "Format showcase — single schema",
-    description:
-      "A single schema exercising every built-in string format and value kind (date, email, uuid, ip, …).",
+    label: "Format showcase",
+    description: "Every built-in string format and value kind",
     dir: "single_schema",
     only: "format-showcase-dataset.json"
   },
   {
     key: "longitudinal",
-    label: "Longitudinal cohort — nested arrays and objects",
-    description:
-      "One schema whose variables are any JSON type: repeated visits (an array of objects, three levels deep), arrays of values with missing codes, a genotype tuple, an open biomarker map and a recursive event definition. Nested fields become indented rows named by path.",
+    label: "Longitudinal cohort",
+    description: "Nested arrays and objects, tuples, maps, recursion",
     dir: "single_schema",
     only: "longitudinal-cohort-dataset.json"
   },
   {
     key: "trial",
-    label: "Clinical trial — 5 interlinked schemas",
-    description:
-      "A root dataset whose row schema composes demographics, lab results and adverse events via allOf + relative $ref.",
+    label: "Clinical trial",
+    description: "Schemas composed with allOf and relative $refs",
     dir: "multiple_schema_1"
   },
   {
     key: "bcrpp",
-    label: "BCRPP CORE — 13 interlinked schemas",
-    description:
-      "A real breast-cancer cohort: 11 category files + shared $defs, JSON-Pointer $refs, sentinel codes and if/then skip patterns.",
+    label: "BCRPP CORE",
+    description: "A breast-cancer cohort with special codes and skip logic",
     dir: "multiple_schema_2"
   }
 ];
