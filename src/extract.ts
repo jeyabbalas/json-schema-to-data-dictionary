@@ -699,8 +699,10 @@ function applySkipPatterns(name: string, validValues: ValidValue[], constraints:
   for (const cond of conds) {
     constraints.push({
       keyword: "conditional",
+      ...(cond.value !== undefined ? { value: cond.value } : {}),
       text: cond.constraintText,
       condition: cond.condition,
+      ...(cond.triggers.length > 0 ? { triggers: cond.triggers } : {}),
       ...(cond.source ? { source: cond.source } : {})
     });
     if (cond.value === undefined) continue;

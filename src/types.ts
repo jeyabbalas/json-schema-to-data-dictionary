@@ -166,12 +166,17 @@ export interface ValidValue {
 export interface ConstraintItem {
   /** The originating JSON Schema keyword (e.g. "minimum", "pattern", "required"). */
   keyword: string;
-  /** The raw keyword value, kept for tooling. */
+  /**
+   * The raw keyword value, kept for tooling. For a skip pattern that pins the variable, the
+   * value (`const`) or set of values (`enum`) it is pinned to.
+   */
   value?: unknown;
   /** Human-readable rendering (e.g. "20 ≤ value ≤ 65"). */
   text: string;
   /** Conditional context, when the constraint only applies under an `if`/dependency. */
   condition?: string | undefined;
+  /** Variables `condition` reads, by row name (`["parous", "parity"]`). */
+  triggers?: string[] | undefined;
   source?: SourceInfo | undefined;
 }
 
@@ -227,6 +232,8 @@ export interface ConditionalEffect {
 export interface ConditionalRule {
   /** Human-readable trigger, e.g. "parous = 0" or "parous = 1 and parity = 1". */
   condition: string;
+  /** Variables the condition reads, by row name, in the order it names them (`["parous", "parity"]`). */
+  triggers?: string[] | undefined;
   /** Authoring prose for the rule, typically from the block's `$comment`. */
   description?: string | undefined;
   effects: ConditionalEffect[];
