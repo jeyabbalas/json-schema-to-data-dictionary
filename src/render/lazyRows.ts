@@ -22,9 +22,16 @@ export interface LazyRows {
   materializePage(section: HTMLElement): number;
   /** Materialise the first page of a section that has no rows yet (used when it is expanded). */
   ensureFirstPage(section: HTMLElement): void;
+  /** Materialise `section` up to (and including) its `position`-th row, in whole pages. */
+  materializeThrough(section: HTMLElement, position: number): void;
   /** Materialise every remaining row of every section (e.g. before printing). */
   materializeAll(): void;
   dispose(): void;
+}
+
+/** The variable rows of a body, without the detail rows that follow some of them. */
+function dataRows(tbody: HTMLElement): Element[] {
+  return Array.prototype.filter.call(tbody.children, (el: Element) => el.hasAttribute("data-dd-row")) as Element[];
 }
 
 export function attachLazyRows(root: Root, vm: ViewModel, opts: LazyRowsOptions): LazyRows {
@@ -69,7 +76,7 @@ export function attachLazyRows(root: Root, vm: ViewModel, opts: LazyRowsOptions)
         observer?.unobserve(sentinel);
         const focused = sentinel.contains(activeElement(root));
         sentinel.remove();
-        if (focused) focusRow(tbody.children[next] ?? null);
+        if (focused) focusRow(dataRows(tbody)[next] ?? null);
       } else {
         const button = sentinel.querySelector<HTMLElement>("[data-dd-more-btn]");
         if (button) button.textContent = moreLabel(total - end, pageSize);
@@ -99,6 +106,11 @@ export function attachLazyRows(root: Root, vm: ViewModel, opts: LazyRowsOptions)
     materializePage: (section) => materialize(section, pageSize),
     ensureFirstPage(section) {
       if ((Number(section.dataset.ddNext) || 0) === 0) materialize(section, pageSize);
+    },
+    materializeThrough(section, position) {
+      const next = Number(section.dataset.ddNext) || 0;
+      if (position < next) return;
+      materialize(section, Math.ceil((position + 1 - next) / pageSize) * pageSize);
     },
     materializeAll() {
       root.querySelectorAll<HTMLElement>("[data-dd-category][data-dd-cat]").forEach((section) => materialize(section, Infinity));

@@ -85,8 +85,10 @@ export function createResultsView(root: Root, vm: ViewModel, opts: ResultsViewOp
     const focused = more !== null && activeElement(root) === more;
     insertRows(body, pageHtml(from, shown), null);
     updateFoot();
-    // When the button disappears under the reader's focus, continue from the first new row.
-    if (focused && shown >= total) focusRow(body.children[from] ?? null);
+    // When the button disappears under the reader's focus, continue from the first new row
+    // (counting variable rows only: a skip-pattern detail row can follow any of them).
+    const rows = Array.prototype.filter.call(body.children, (el: Element) => el.hasAttribute("data-dd-row")) as Element[];
+    if (focused && shown >= total) focusRow(rows[from] ?? null);
   }
 
   return {

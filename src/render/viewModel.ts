@@ -3,6 +3,7 @@
 
 import type {
   ConditionalRule,
+  ConstraintItem,
   DataDictionaryRow,
   DataDictionaryTable,
   JsonValue,
@@ -12,7 +13,9 @@ import type {
 } from "../types";
 import type { SearchFields } from "../search/ranking";
 import { additionalInfoText, constraintsText, validValuesText } from "../serialize";
-import { displayValue } from "../utils";
+import { displayValue, valueKey } from "../utils";
+import { widthsByKey } from "./columns";
+import type { WidthsByKey } from "./columns";
 
 /** Render options plus the component-only settings (the static HTML never sets them). */
 export type ViewModelOptions = RenderHtmlOptions & {
@@ -35,18 +38,36 @@ export interface ResolvedOptions {
   pageSize: number;
   /** Result rows per page in the component's ranked results list. */
   resultsPageSize: number;
+  /** Starting column widths by column key (`{ description: 420 }`). */
+  columnWidths: WidthsByKey;
+}
+
+/** A skip-pattern condition, with the variables it reads (each a row the reader can jump to). */
+export interface ConditionVM {
+  text: string;
+  triggers: string[];
 }
 
 export interface ValueVM {
   display: string;
   label?: string | undefined;
   description?: string | undefined;
+  /** Every condition the value is used under, joined by "; " (as on the `ValidValue`). */
   condition?: string | undefined;
+  /** The same conditions one by one: the skip patterns that set the variable to this value. */
+  conditions: ConditionVM[];
 }
 
 export interface ConstraintVM {
   text: string;
   conditional: boolean;
+  /** Variables a conditional constraint's condition reads. */
+  triggers: string[];
+  /**
+   * A skip pattern that pins the variable to a value: the renderer shows its condition on that
+   * value (Valid values) instead of repeating it as a constraint.
+   */
+  onValues: boolean;
 }
 
 export interface RowVM {
@@ -74,6 +95,8 @@ export interface RowVM {
   sentinels: ValueVM[];
   constraints: ConstraintVM[];
   additionalInformation: JsonValue | null;
+  /** Positions in `ViewModel.rules` of the skip patterns whose condition reads this variable. */
+  skipRules: number[];
   searchText: string;
   /** Lower-cased per-field text used by the ranked search. */
   searchFields: SearchFields;
@@ -86,10 +109,23 @@ export interface CategoryVM {
   rows: RowVM[];
 }
 
+/** The variables one skip pattern sets to the same value(s). */
+export interface RuleGroupVM {
+  /** The value it pins them to, displayed; several for an `enum`, none when merely constrained. */
+  values: string[];
+  label?: string | undefined;
+  variables: string[];
+}
+
 export interface RuleVM {
   condition: string;
   description?: string | undefined;
+  /** One line per effect: "age_preg1 = 777 (Nonparous)". */
   effects: string[];
+  /** Variables the condition reads. */
+  triggers: string[];
+  /** The effects grouped by the value they set, in order of first appearance. */
+  groups: RuleGroupVM[];
 }
 
 export interface ViewModel {
@@ -99,6 +135,8 @@ export interface ViewModel {
   variableCount: number;
   categories: CategoryVM[];
   rules: RuleVM[];
+  /** Every variable name that has a row (what a skip-pattern reference can jump to). */
+  names: ReadonlySet<string>;
   additionalInformation: JsonValue | null;
   warnings: string[];
   options: ResolvedOptions;
@@ -115,7 +153,8 @@ export function resolveOptions(options: ViewModelOptions, table: DataDictionaryT
     theme: options.theme ?? "auto",
     semanticSearch: Boolean(options.semanticSearch),
     pageSize: positiveOrDefault(options.pageSize, 100),
-    resultsPageSize: positiveOrDefault(options.resultsPageSize, 50)
+    resultsPageSize: positiveOrDefault(options.resultsPageSize, 50),
+    columnWidths: widthsByKey(options.columnWidths)
   };
 }
 
@@ -152,14 +191,28 @@ export function buildViewModel(table: DataDictionaryTable, options: ViewModelOpt
   // Rows are identified by object identity: categories hold the same row objects as table.rows.
   const rowIndex = new Map<DataDictionaryRow, number>(table.rows.map((row, i) => [row, i]));
 
+  const rules: RuleVM[] = table.conditionalRules.map(buildRuleVM);
+  // Which rules each variable triggers, and the variables a bare condition string reads (for
+  // values of a table built without `triggers` on its constraints).
+  const rulesByTrigger = new Map<string, number[]>();
+  const triggersByCondition = new Map<string, string[]>();
+  rules.forEach((rule, i) => {
+    if (!triggersByCondition.has(rule.condition)) triggersByCondition.set(rule.condition, rule.triggers);
+    for (const name of rule.triggers) {
+      const list = rulesByTrigger.get(name) ?? [];
+      list.push(i);
+      rulesByTrigger.set(name, list);
+    }
+  });
+
   const categories: CategoryVM[] = table.categories.map((category) => ({
     id: category.id,
     title: category.title,
     ...(category.description ? { description: category.description } : {}),
-    rows: category.rows.map((row) => buildRowVM(row, rowIndex.get(row) ?? -1, category.title))
+    rows: category.rows.map((row) =>
+      buildRowVM(row, rowIndex.get(row) ?? -1, category.title, rulesByTrigger.get(row["Variable name"]) ?? [], triggersByCondition)
+    )
   }));
-
-  const rules: RuleVM[] = table.conditionalRules.map(buildRuleVM);
 
   return {
     title: resolved.title,
@@ -168,6 +221,7 @@ export function buildViewModel(table: DataDictionaryTable, options: ViewModelOpt
     variableCount: table.rows.length,
     categories,
     rules,
+    names: new Set(table.rows.map((row) => row["Variable name"])),
     additionalInformation: table.additionalInformation ?? null,
     warnings: table.warnings,
     options: resolved
@@ -205,7 +259,13 @@ function bracketGroupEnd(rest: string): number {
   return rest.charAt(i) === '"' && rest.charAt(i + 1) === "]" ? i + 1 : -1;
 }
 
-function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, category: string): RowVM {
+function buildRowVM(
+  row: DataDictionaryTable["rows"][number],
+  index: number,
+  category: string,
+  skipRules: number[],
+  triggersByCondition: ReadonlyMap<string, string[]>
+): RowVM {
   const depth = typeof row.__depth === "number" && Number.isInteger(row.__depth) && row.__depth > 0 ? row.__depth : 0;
   const parent = typeof row.__parent === "string" && row.__parent ? row.__parent : undefined;
   const [namePrefix, nameLeaf] = splitVariableName(row["Variable name"], parent);
@@ -213,8 +273,27 @@ function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, cat
   const values: ValueVM[] = [];
   const sentinels: ValueVM[] = [];
 
+  // Skip patterns that pin this variable to a value (or a set of values): the conditions each
+  // value is used under come from them, with the variables each condition reads. A pin whose
+  // value is listed is then shown there, and needs no repeating among the constraints.
+  const pins = row["Constraints"].filter((c) => c.keyword === "conditional" && c.value !== undefined && c.condition);
+  const shown = new Set<ConstraintItem>();
+  const conditionsOf = (v: ValidValue): ConditionVM[] => {
+    const key = valueKey(v.value);
+    const out: ConditionVM[] = [];
+    for (const pin of pins) {
+      const set = Array.isArray(pin.value) ? pin.value : [pin.value];
+      if (!set.some((x) => valueKey(x) === key)) continue;
+      shown.add(pin);
+      if (!out.some((o) => o.text === pin.condition)) out.push({ text: pin.condition as string, triggers: pin.triggers ?? [] });
+    }
+    if (out.length > 0 || !v.condition) return out;
+    // A table without the structured pins: fall back to the joined condition text.
+    return v.condition.split("; ").map((text) => ({ text, triggers: triggersByCondition.get(text) ?? [] }));
+  };
+
   for (const v of row["Valid values"]) {
-    const vm = toValueVM(v);
+    const vm = toValueVM(v, v.kind === "measurement" ? [] : conditionsOf(v));
     if (v.kind === "measurement") measurements.push(vm);
     else if (v.kind === "sentinel") sentinels.push(vm);
     else values.push(vm);
@@ -222,7 +301,9 @@ function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, cat
 
   const constraints: ConstraintVM[] = row["Constraints"].map((c) => ({
     text: c.text,
-    conditional: c.keyword === "conditional" || c.keyword === "if/then" || c.keyword === "dependentRequired" || !!c.condition
+    conditional: c.keyword === "conditional" || c.keyword === "if/then" || c.keyword === "dependentRequired" || !!c.condition,
+    triggers: c.triggers ?? (c.condition ? triggersByCondition.get(c.condition) ?? [] : []),
+    onValues: shown.has(c)
   }));
 
   const searchText = rowSearchText(row);
@@ -242,6 +323,7 @@ function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, cat
     sentinels,
     constraints,
     additionalInformation: row["Additional information"],
+    skipRules,
     searchText,
     searchFields: {
       name: row["Variable name"].toLowerCase(),
@@ -252,12 +334,13 @@ function buildRowVM(row: DataDictionaryTable["rows"][number], index: number, cat
   };
 }
 
-function toValueVM(v: ValidValue): ValueVM {
+function toValueVM(v: ValidValue, conditions: ConditionVM[]): ValueVM {
   return {
     display: v.kind === "measurement" ? v.label ?? "measured value" : displayValue(v.value),
     ...(v.kind !== "measurement" && v.label ? { label: v.label } : {}),
     ...(v.description ? { description: v.description } : {}),
-    ...(v.condition ? { condition: v.condition } : {})
+    ...(v.condition ? { condition: v.condition } : {}),
+    conditions
   };
 }
 
@@ -271,10 +354,25 @@ function buildRuleVM(rule: ConditionalRule): RuleVM {
     const label = e.label ? ` (${e.label})` : "";
     return `${e.variable} ${value}${label}`;
   });
+  const groups: RuleGroupVM[] = [];
+  const byKey = new Map<string, RuleGroupVM>();
+  for (const e of rule.effects) {
+    const values = Array.isArray(e.value) ? e.value : [e.value];
+    const key = JSON.stringify([values.map(valueKey), e.label ?? null]);
+    let group = byKey.get(key);
+    if (!group) {
+      group = { values: values.map(displayValue), ...(e.label ? { label: e.label } : {}), variables: [] };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    if (!group.variables.includes(e.variable)) group.variables.push(e.variable);
+  }
   return {
     condition: rule.condition,
     ...(rule.description ? { description: rule.description } : {}),
-    effects
+    effects,
+    triggers: rule.triggers ?? [],
+    groups
   };
 }
 

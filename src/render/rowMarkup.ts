@@ -1,13 +1,13 @@
 // Markup for one data-dictionary row, plus the cell helpers (valid values, constraints,
-// JSON tree). Shared by the initial page, lazily materialised pages and the ranked results
-// list, so a row renders identically wherever it appears. Every value derived from the
-// schema is HTML-escaped before interpolation — the highlighter escapes as it marks.
+// skip patterns, JSON tree). Shared by the initial page, lazily materialised pages and the
+// ranked results list, so a row renders identically wherever it appears. Every value derived
+// from the schema is HTML-escaped before interpolation — the highlighter escapes as it marks.
 
 import type { JsonValue } from "../types";
 import { escapeHtml } from "../utils";
 import { PLAIN } from "./highlight";
 import type { Highlighter } from "./highlight";
-import type { ConstraintVM, RowVM, ValueVM, ViewModel } from "./viewModel";
+import type { ConditionVM, ConstraintVM, RowVM, RuleVM, ValueVM, ViewModel } from "./viewModel";
 
 export interface RowMarkupOptions {
   /** Emit the `data-search` blob the static inline script filters on. */
@@ -27,6 +27,11 @@ export interface RowMarkupOptions {
   match?: "exact" | "related" | undefined;
   /** Results list only: similarity shown in a related row's tooltip. */
   similarity?: number | undefined;
+  /**
+   * Render the skip-pattern detail row of a variable that patterns read up front (hidden), as
+   * the static output must. The component leaves it out and builds it when first opened.
+   */
+  skipDetails?: boolean | undefined;
 }
 
 export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): string {
@@ -40,23 +45,25 @@ export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): st
   const categoryTag = opts.categoryTag ? `<span class="dd-row-cat">${escapeHtml(row.category)}</span>` : "";
   const depthAttr = opts.indent && row.depth > 0 ? ` data-dd-depth="${row.depth}"` : "";
   // A nested field shows its parent path muted and its own name bold; both halves live inside
-  // the one <code>, so the cell still reads (and copies) as the full path.
+  // the one <code>, so the cell still reads (and copies) as the full path. A narrow column
+  // breaks the line between them rather than inside a name.
   const name = row.namePrefix
-    ? `<span class="dd-name-prefix">${hl(row.namePrefix)}</span><span class="dd-name-leaf">${hl(row.nameLeaf)}</span>`
+    ? `<span class="dd-name-prefix">${hl(row.namePrefix)}</span><wbr><span class="dd-name-leaf">${hl(row.nameLeaf)}</span>`
     : hl(row.name);
+  const skips = skipsToggle(row, vm, opts.skipDetails ?? false);
   return `
           <tr class="dd-row" data-dd-row${indexAttr}${depthAttr}${matchAttr}${searchAttr}>
-            <th class="dd-col-name" scope="row"${titleAttr}><code>${name}</code>${categoryTag}</th>
+            <th class="dd-col-name" scope="row"${titleAttr}><code>${name}</code>${categoryTag}${skips.toggle}</th>
             <td class="dd-desc">${row.description ? multiline(row.description, hl) : empty}</td>
             <td class="dd-type">${row.dataType ? `<span class="dd-badge" data-mixed="${mixed}">${hl(row.dataType)}</span>` : empty}</td>
             <td class="dd-format">${row.format ? multiline(row.format, hl) : empty}</td>
-            <td class="dd-values">${validValues(row, hl) || empty}</td>
-            <td class="dd-constraints">${constraints(row.constraints, hl) || empty}</td>
+            <td class="dd-values">${validValues(row, vm, hl) || empty}</td>
+            <td class="dd-constraints">${constraintsCell(row, vm, hl) || empty}</td>
             <td class="dd-additional">${row.additionalInformation === null ? empty : `<div class="dd-tree">${jsonTree(row.additionalInformation, vm.options.expandAdditionalInfo)}</div>`}</td>
-          </tr>`;
+          </tr>${skips.detail}`;
 }
 
-function validValues(row: RowVM, hl: Highlighter): string {
+function validValues(row: RowVM, vm: ViewModel, hl: Highlighter): string {
   if (row.measurements.length === 0 && row.values.length === 0 && row.sentinels.length === 0) return "";
   const parts: string[] = [`<dl class="dd-vv">`];
 
@@ -65,36 +72,140 @@ function validValues(row: RowVM, hl: Highlighter): string {
       `<div class="dd-vv-row dd-measure"><dt><span class="dd-measure-label">${hl(m.display)}</span></dt><dd>${hl(m.description ?? "measured value")}</dd></div>`
     );
   }
-  for (const v of row.values) parts.push(valueRow(v, false, hl));
+  for (const v of row.values) parts.push(valueRow(v, false, row, vm, hl));
   if (row.sentinels.length) {
     // The separator divides real values from special codes, so it only earns its place when
     // there is something above it -- a variable whose only declared values are sentinels
     // (a sparse coding table) would otherwise open with a heading and nothing before it.
     if (row.measurements.length || row.values.length) parts.push(`<div class="dd-vv-sep">special codes</div>`);
-    for (const v of row.sentinels) parts.push(valueRow(v, true, hl));
+    for (const v of row.sentinels) parts.push(valueRow(v, true, row, vm, hl));
   }
 
   parts.push(`</dl>`);
   return parts.join("");
 }
 
-function valueRow(v: ValueVM, sentinel: boolean, hl: Highlighter): string {
+function valueRow(v: ValueVM, sentinel: boolean, row: RowVM, vm: ViewModel, hl: Highlighter): string {
   const text = v.label ?? v.description ?? "";
-  const when = v.condition ? ` <span class="dd-when">${hl(v.condition)}</span>` : "";
-  const dd = text || when ? `<dd>${hl(text)}${when}</dd>` : `<dd></dd>`;
-  return `<div class="dd-vv-row${sentinel ? " dd-sentinel" : ""}"><dt><code class="dd-code">${hl(v.display)}</code></dt>${dd}</div>`;
+  // One line per skip pattern that sets the variable to this value: "if parous = 0".
+  const when = v.conditions
+    .map((c) => `<span class="dd-when"><span class="dd-kw">if</span> ${condition(c, vm, row.name, hl)}</span>`)
+    .join("");
+  return `<div class="dd-vv-row${sentinel ? " dd-sentinel" : ""}"><dt><code class="dd-code">${hl(v.display)}</code></dt><dd>${hl(text)}${when}</dd></div>`;
 }
 
-function constraints(items: ConstraintVM[], hl: Highlighter): string {
-  if (items.length === 0) return "";
-  const lis = items
-    .map((c) => {
-      const badge = c.conditional ? `<span class="dd-cond-badge">conditional</span>` : "";
-      return `<li class="${c.conditional ? "dd-conditional" : ""}"><span>${hl(c.text)}${badge}</span></li>`;
-    })
-    .join("");
-  return `<ul class="dd-constraints-list">${lis}</ul>`;
+function constraintsCell(row: RowVM, vm: ViewModel, hl: Highlighter): string {
+  // A skip pattern that pins the value is already shown on that value (Valid values).
+  const items = row.constraints.filter((c) => !c.onValues);
+  return items.length ? `<ul class="dd-constraints-list">${items.map((c) => constraintItem(c, vm, row.name, hl)).join("")}</ul>` : "";
 }
+
+function constraintItem(c: ConstraintVM, vm: ViewModel, self: string, hl: Highlighter): string {
+  if (!c.conditional) return `<li>${hl(c.text)}</li>`;
+  return `<li class="dd-conditional">${linkNames(c.text, c.triggers, vm, self, hl)}</li>`;
+}
+
+let detailCounter = 0;
+
+/**
+ * On a variable that skip patterns read: a chip under its name ("Skips 22") that opens a
+ * full-width row beneath it listing those patterns -- what each answer sets, and where. With
+ * `withDetail` the row is rendered (hidden) right away; otherwise `skipsDetailMarkup` builds it
+ * on demand.
+ */
+function skipsToggle(row: RowVM, vm: ViewModel, withDetail: boolean): { toggle: string; detail: string } {
+  if (row.skipRules.length === 0) return { toggle: "", detail: "" };
+  const rules = rulesOf(row, vm);
+  const affected = new Set<string>();
+  for (const rule of rules) for (const g of rule.groups) for (const name of g.variables) affected.add(name);
+  const count = affected.size;
+  const label = count > 0 ? `Skips ${count}` : `${rules.length} rule${rules.length === 1 ? "" : "s"}`;
+  const title =
+    count > 0 ? `Answers to ${row.name} set ${count} other variable${count === 1 ? "" : "s"} (skip patterns)` : `Skip patterns that read ${row.name}`;
+  const detail = withDetail ? skipsDetailMarkup(row, vm) : undefined;
+  const controls = detail ? ` aria-controls="${detail.id}"` : "";
+  return {
+    toggle: `<button type="button" class="dd-skips-toggle" data-dd-skips aria-expanded="false"${controls} title="${escapeHtml(title)}">${ICON_SKIP}<span>${label}</span></button>`,
+    detail: detail?.html ?? ""
+  };
+}
+
+/** The (hidden) row listing the skip patterns that read `row`'s variable, and its id. */
+export function skipsDetailMarkup(row: RowVM, vm: ViewModel): { id: string; html: string } {
+  const id = `dd-skips-${(detailCounter += 1)}`;
+  return {
+    id,
+    html: `<tr class="dd-detail" id="${id}" data-dd-detail hidden><td colspan="7"><div class="dd-pin">${rulesMarkup(rulesOf(row, vm), vm, row.name)}</div></td></tr>`
+  };
+}
+
+function rulesOf(row: RowVM, vm: ViewModel): RuleVM[] {
+  return row.skipRules.map((i) => vm.rules[i]).filter((r): r is RuleVM => r !== undefined);
+}
+
+/** A list of skip patterns: "if <condition>  →  <value> <label>  <variables>". */
+export function rulesMarkup(rules: RuleVM[], vm: ViewModel, self: string | undefined): string {
+  let lastTrigger: string | undefined;
+  const items = rules.map((rule) => {
+    const first = rule.triggers[0];
+    const opens = first !== lastTrigger;
+    lastTrigger = first;
+    const title = rule.description ? ` title="${escapeHtml(rule.description)}"` : "";
+    const groups = rule.groups
+      .map((g) => {
+        const values = g.values.length
+          ? g.values.map((value) => `<code class="dd-code">${escapeHtml(value)}</code>`).join("")
+          : `<span class="dd-muted">constrained</span>`;
+        const label = g.label ? ` <span class="dd-rule-label">${escapeHtml(g.label)}</span>` : "";
+        const variables = g.variables.map((name) => reference(name, vm, name === self, PLAIN)).join("");
+        return `<div class="dd-rule-group"><div class="dd-rule-set"><span class="dd-kw" aria-hidden="true">→</span>${values}${label}</div><div class="dd-rule-vars">${variables}</div></div>`;
+      })
+      .join("");
+    const cond = condition({ text: rule.condition, triggers: rule.triggers }, vm, self, PLAIN);
+    return `<div class="dd-rule${opens ? " dd-rule-opens" : ""}"${title}><div class="dd-rule-if"><span class="dd-kw">if</span> ${cond}</div><div class="dd-rule-then">${groups}</div></div>`;
+  });
+  return `<div class="dd-rules">${items.join("")}</div>`;
+}
+
+/** A condition, with each variable it reads that has a row as a link to that row. */
+function condition(c: ConditionVM, vm: ViewModel, self: string | undefined, hl: Highlighter): string {
+  return `<span class="dd-cond">${linkNames(c.text, c.triggers, vm, self, hl)}</span>`;
+}
+
+/**
+ * `text` with every occurrence of the `names` (as whole names, longest first) turned into a
+ * reference to that variable's row. `self` is the row being rendered: named, never linked.
+ */
+function linkNames(text: string, names: string[], vm: ViewModel, self: string | undefined, hl: Highlighter): string {
+  const candidates = [...new Set(names)].filter((n) => n.length > 0).sort((a, b) => b.length - a.length);
+  if (candidates.length === 0) return hl(text);
+  let out = "";
+  let plain = "";
+  for (let i = 0; i < text.length; ) {
+    const name = candidates.find((n) => text.startsWith(n, i) && !isNameChar(text.charAt(i - 1)) && !isNameChar(text.charAt(i + n.length)));
+    if (name === undefined) {
+      plain += text.charAt(i);
+      i += 1;
+      continue;
+    }
+    out += hl(plain) + reference(name, vm, name === self, hl);
+    plain = "";
+    i += name.length;
+  }
+  return out + hl(plain);
+}
+
+function isNameChar(ch: string): boolean {
+  return ch !== "" && /[\w$.[\]"]/.test(ch);
+}
+
+/** A variable named in a skip pattern: a button that jumps to its row, or plain code without one. */
+function reference(name: string, vm: ViewModel, self: boolean, hl: Highlighter): string {
+  if (self || !vm.names.has(name)) return `<code class="dd-ref-self">${hl(name)}</code>`;
+  return `<button type="button" class="dd-ref" data-dd-goto="${escapeHtml(name)}" title="Go to ${escapeHtml(name)}">${hl(name)}</button>`;
+}
+
+const ICON_SKIP = `<svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v4.5A2.5 2.5 0 0 0 5.5 10H12m0 0-2.5-2.5M12 10l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 // ---------------------------------------------------------------------------
 

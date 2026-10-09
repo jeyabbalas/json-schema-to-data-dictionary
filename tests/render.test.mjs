@@ -73,7 +73,9 @@ test("validValuesText: renders measurement + coded values", () => {
 test("tableToHtml: fixed column layout, static sections, no component-only markup", () => {
   const html = tableToHtml(table);
   const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
-  assert.ok((markup.match(/<colgroup>/g) ?? []).length === table.categories.length, "one colgroup per category table");
+  assert.equal((markup.match(/<thead class="dd-sr-head">/g) ?? []).length, table.categories.length, "every category table has its own (hidden) header row");
+  assert.equal((markup.match(/<th class="dd-h-description"/g) ?? []).length, table.categories.length + 1, "whose cells size the columns, as the column header's do");
+  assert.equal((markup.match(/data-dd-resize="/g) ?? []).length, 7, "one resize handle per column, in the column header only");
   assert.match(markup, /data-dd-categories/);
   assert.match(markup, /data-dd-category data-dd-cat="0" data-dd-next="(\d+)" data-total="\1"/, "every row is materialised");
   assert.match(markup, /aria-controls="dd\d+-c0"[^>]*data-dd-category-toggle/);

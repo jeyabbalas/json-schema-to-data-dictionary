@@ -29,6 +29,6 @@ export function tableToHtml(table: DataDictionaryTable, options: RenderHtmlOptio
   return [
     `<style>${STYLES}</style>`,
     `<div class="dd-embed" id="${id}">${buildMarkup(vm, "static")}</div>`,
-    `<script>${inlineScript(id, csv, filename)}</script>`
+    `<script>${inlineScript(id, csv, filename, vm.options.columnWidths)}</script>`
   ].join("\n");
 }

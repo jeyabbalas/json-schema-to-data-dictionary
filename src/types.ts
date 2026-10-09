@@ -317,6 +317,27 @@ export interface PlainRowsOptions {
   emptyCell?: string | undefined;
 }
 
+/** A column of the rendered table, named like its header (and the row key it shows). */
+export type DataDictionaryColumn =
+  | "Variable name"
+  | "Description"
+  | "Data type"
+  | "Format"
+  | "Valid values"
+  | "Constraints"
+  | "Additional information";
+
+/** Column widths in CSS pixels. A column left out keeps its default, proportional width. */
+export type ColumnWidths = Partial<Record<DataDictionaryColumn, number>>;
+
+/** `detail` of the `dd-column-resize` event a rendered table dispatches when a reader resizes a column. */
+export interface ColumnResizeDetail {
+  /** The column that changed, or `null` when every width was reset. */
+  column: DataDictionaryColumn | null;
+  /** Every width the reader has set, to hand back as `columnWidths` on a later render. */
+  widths: ColumnWidths;
+}
+
 /** Options shared by the static HTML string and the interactive component. */
 export interface RenderHtmlOptions {
   /** Override the dataset title shown in the header. */
@@ -333,6 +354,12 @@ export interface RenderHtmlOptions {
   expandAdditionalInfo?: boolean | undefined;
   /** Colour theme. Default: "auto" (follows prefers-color-scheme). */
   theme?: "light" | "dark" | "auto" | undefined;
+  /**
+   * Start with these column widths (px). Readers resize columns by dragging the header edges
+   * (double-click fits a column to its content); the table reports every change in a
+   * `dd-column-resize` event, whose `detail.widths` can be handed back here to keep them.
+   */
+  columnWidths?: ColumnWidths | undefined;
 }
 
 /**
