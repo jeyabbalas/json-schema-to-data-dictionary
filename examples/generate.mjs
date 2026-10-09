@@ -26,7 +26,13 @@ const page = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeAttr(table.title ?? "Data dictionary")}</title>
-  <style>body { margin: 0; padding: 24px; max-width: 1200px; margin: 0 auto; background: #fafbfc; }</style>
+  <!-- The dictionary fills the window and scrolls inside it, under its column header. -->
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { box-sizing: border-box; padding: 20px 24px; background: #ffffff; }
+    @media (prefers-color-scheme: dark) { body { background: #111114; } }
+    .dd-embed { height: 100%; }
+  </style>
 </head>
 <body>
 ${tableToHtml(table)}

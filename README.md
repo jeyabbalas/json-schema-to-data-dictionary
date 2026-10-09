@@ -174,15 +174,26 @@ becomes a single, readable row:
 Data type     number + coded values
 Valid values  20–65            (measured value)
               ── special codes ──
-              777  Premenopausal at questionnaire   ↳ when meno_status = 2
+              777  Premenopausal at questionnaire
+                   if meno_status = 2
               888  Missing/Unknown
-Constraints   Required · Measured value: 20 ≤ value ≤ 65 · When meno_status = 2, value = 777
+Constraints   Required · Measured value: 20 ≤ value ≤ 65
 ```
 
 The measurement range goes to **Constraints**; the codes go to **Valid values**, badged apart
-from real categories, each carrying the condition that triggers it. `dependentRequired` and
-`dependentSchemas` are surfaced as conditional constraints too, and all `if/then` rules are
-collected into `table.conditionalRules` for a dataset-level *skip patterns* panel.
+from real categories, each carrying the condition that sets it. In the data the pattern is also
+a constraint (`When meno_status = 2, value = 777 (Premenopausal/NA).`, with the pinned `value`),
+which exports and search keep; the rendered table shows it once, on the code.
+`dependentRequired` and `dependentSchemas` are surfaced as conditional constraints too, and all
+`if/then` rules are collected into `table.conditionalRules`. Every rule, and every conditional
+constraint, names the variables its condition reads (`triggers: ["parous", "parity"]`), and a
+range reads as an inequality (`parous = 1 and 1 ≤ parity ≤ 2`).
+
+The rendered table lets you follow a pattern from either end: the variable named in a condition
+is a link to its row, a variable that patterns read carries a **Skips N** chip under its name
+that opens a row listing what each of its answers sets (`if meno_status = 2 → 777
+Premenopausal/NA · meno_age, meno_reason`), and the toolbar's **Skip logic** panel lists every
+rule that way, grouped by the variable it reads.
 
 ### Saying which codes are special: `x-value-kind`
 
@@ -226,9 +237,19 @@ renderDataDictionary(container, table, options?);
 
 Mounts a `<json-data-dictionary>` web component. By default it uses a **Shadow DOM** so its
 styles never collide with your app. Features: instant search with highlighting + counts +
-empty state (`/` to focus, `Esc` to clear), collapsible category sections, a frozen variable
-column, collapsible JSON trees, copy / download-CSV, and optional
+empty state (`/` to focus, `Esc` to clear), collapsible category sections, a sticky column
+header and frozen variable column, [resizable columns](#column-widths), skip patterns you can
+follow from either end (see [Mixed types & skip patterns](#mixed-types--skip-patterns)),
+collapsible JSON trees, copy / download-CSV, and optional
 [semantic search](#semantic-search-opt-in).
+
+Give the element a height — or put it in a container that has one — and the dictionary fills it:
+the title and toolbar stay put while the table scrolls inside, under its column header, with
+the horizontal scrollbar always in reach. Without a height it is as tall as its content.
+
+```css
+#dict { height: 80vh; }   /* renderDataDictionary(#dict, …) fills it */
+```
 
 While a query is typed the table becomes **one ranked results list**: rows whose variable name
 equals the query first, then the other matches by relevance, each showing its category and,
@@ -236,9 +257,9 @@ with semantic search on, the *related* rows badged. Clearing the box restores th
 sections. Large dictionaries render lazily: the first `pageSize` rows (default 100) are
 materialised up front and each category fills in as it scrolls into view (or via its *Show
 more* button). Measured in Chrome on a 10,070-variable dictionary (1,045 categories): first
-paint 0.3 s (was 7.4 s in 0.2), 34k DOM nodes (was 380k), 22–46 ms of script per keystroke
-(was 0.4–1.1 s), 8 ms to clear the search box (was 2.4–3.3 s). Small dictionaries (up to five
-pages) are rendered in full. Nested fields (see [Nested variables](#nested-variables-arrays-and-objects))
+paint 0.2 s (was 7.4 s in 0.2), 35k elements (was 380k), 18–29 ms of script per keystroke
+(was 0.4–1.1 s), 6 ms to clear the search box (was 2.4–3.3 s), 10 ms per step of a column
+resize. Small dictionaries (up to five pages) are rendered in full. Nested fields (see [Nested variables](#nested-variables-arrays-and-objects))
 sit indented under their parent with the parent path muted; the results list shows them
 unindented with their full path, since it lists rows out of context.
 
@@ -246,6 +267,7 @@ Theme it from your page with CSS custom properties (they pierce the shadow bound
 
 ```css
 #dict { --dd-accent: #2563eb; }            /* also: --dd-bg, --dd-fg, --dd-border, … */
+json-data-dictionary::part(semantic-status) { display: none; }   /* if your page shows its own */
 ```
 
 Need your app's CSS to cascade in instead? Opt out of isolation:
@@ -254,10 +276,32 @@ Need your app's CSS to cascade in instead? Opt out of isolation:
 renderDataDictionary(container, table, { shadow: false });
 ```
 
-Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, searchPlaceholder, emptyCell, title, pageSize, resultsPageSize }`
+Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, searchPlaceholder, emptyCell, title, pageSize, resultsPageSize, columnWidths }`
 (`pageSize: Infinity` disables lazy rendering; `resultsPageSize` is how many results are shown
 before *Show more*, default 50). Rows are materialised on demand, so read the data through
 `toPlainRows(table)` rather than by scraping the DOM.
+
+#### Column widths
+
+Readers resize a column by dragging the edge of its header; a double-click (or `Enter` on the
+focused edge) fits the column to its content, the arrow keys nudge it (`Shift` for bigger
+steps), `Delete` returns it to its default, and *Reset widths* in the toolbar clears them all.
+Columns nobody has sized share the table's width; a sized one keeps its width, and the table
+scrolls sideways when the columns outgrow it.
+
+The table reports every change in a `dd-column-resize` event (bubbling and composed). Hand the
+widths back to keep them across renders or visits:
+
+```ts
+const saved = JSON.parse(localStorage.getItem("widths") ?? "{}");
+renderDataDictionary(container, table, { columnWidths: saved });   // { "Description": 420, … } in px
+container.addEventListener("dd-column-resize", (e) => {
+  localStorage.setItem("widths", JSON.stringify(e.detail.widths)); // detail: { column, widths }
+});
+```
+
+From CSS, `--dd-col-name`, `--dd-col-description`, `--dd-col-type`, `--dd-col-format`,
+`--dd-col-values`, `--dd-col-constraints` and `--dd-col-additional` set a column's width.
 
 You can also use the element directly:
 
@@ -410,8 +454,9 @@ without the widget. The static `tableToHtml` output stays keyword-only.
 const html = tableToHtml(table, options?);   // inline <style> + markup + a small inline <script>
 ```
 
-Self-contained and interactive (search/collapse/export) without any framework — good for SSR
-or writing a report to disk.
+Self-contained and interactive (search, collapse, column resizing, skip-pattern links,
+export) without any framework — good for SSR or writing a report to disk. `columnWidths` works
+here too.
 
 ### Spreadsheet export
 

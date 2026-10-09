@@ -4,6 +4,76 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## 0.7.0 - Unreleased
+
+A calmer table that you can size, and skip patterns you can follow.
+
+### Added
+
+- **Resizable columns.** Drag the edge of a column header to resize the column; double-click
+  it (or press `Enter` on the focused edge) to fit the column to its content; the arrow keys
+  nudge it, `Delete` returns it to its default, and *Reset widths* in the toolbar clears them
+  all. The edges are focusable separators announced with their width. One custom property per
+  column (`--dd-col-name`, `--dd-col-description`, …) sizes every table of the dictionary at
+  once, so a resize costs one style write (10 ms per step on a 10,070-variable dictionary). The
+  table dispatches `dd-column-resize` (`detail: { column, widths }`, bubbling and composed) and
+  the new `columnWidths` option — on `renderDataDictionary` and `tableToHtml` alike — starts
+  from saved widths. The element keeps the reader's widths across its own re-renders. The static
+  HTML inlines the component's own resize code, so it behaves the same.
+- **Skip patterns you can follow.** A code that a skip pattern sets says when, on the code
+  itself (`777 Nonparous · if parous = 0`), with the variable it depends on as a link to its
+  row. A variable that skip patterns read carries a *Skips N* chip under its name that opens a
+  row beneath it listing what each of its answers sets (`if parous = 0 → 777 Nonparous ·
+  age_preg1 … breastfeed_dur_b10`). The toolbar's *Skip logic* panel lists every rule the same
+  way, grouped by the variable it reads. Following a link expands the target's section, pages
+  its row in if it is not rendered yet, leaves a search that does not show it, and flashes it.
+- `ConditionalRule.triggers` and, on conditional constraints, `ConstraintItem.triggers`: the
+  variables a condition reads, by row name (`["parous", "parity"]`). A conditional constraint
+  that pins the variable now carries the pinned value (or set) in `ConstraintItem.value`.
+- View model: `ValueVM.conditions` (each skip pattern that sets the value, with its triggers),
+  `ConstraintVM.triggers` and `onValues`, `RowVM.skipRules`, `RuleVM.triggers` and `groups`
+  (effects grouped by the value they set), `ViewModel.names`; types `ConditionVM`,
+  `RuleGroupVM`, `DataDictionaryColumn`, `ColumnWidths` and `ColumnResizeDetail`.
+- The semantic-search status chip is exposed as `part="semantic-status"`.
+
+### Changed
+
+- **A quieter look.** Neutral greys with one accent (indigo by default; `--dd-accent` still
+  themes it), hairline rules instead of a card per category, neutral type badges (amber still
+  marks mixed types and special codes), and a compact toolbar of icon buttons. *Expand all* and
+  *Collapse all* are one button.
+- **One sheet.** The tables scroll together in one viewport under a single sticky column header,
+  with sticky category bars and the frozen variable column. Each category table keeps a header
+  row for assistive technology, visually hidden. Give the element a height and the dictionary
+  fills it, scrolling inside; without one it is as tall as its content, as before.
+- Columns nobody has sized share out only the width beyond each column's minimum, so the table
+  fits its viewport exactly whenever it can and scrolls sideways only when it cannot.
+- The skip-pattern rules, the dataset metadata and the extraction warnings open as panels from
+  the toolbar instead of collapsible bars above the table (the warnings were a footer).
+- In the rendered table, a skip pattern that pins a value is shown on that value only, no longer
+  repeated as a constraint (`When parous = 0, value = 777 (Nonparous).`). `table.rows`, the CSV
+  and spreadsheet exports and the search index are unchanged.
+- A range in a skip-pattern condition reads as an inequality — `parous = 1 and 1 ≤ parity ≤ 2`
+  (was `parity 1–2`) — and exclusive bounds are described (`x > 5`, `1 ≤ x < 3`) instead of
+  `x is constrained`.
+- Demo: rebuilt around the dictionary. A slim app bar holds the source menu (examples, open
+  files or a folder, the loaded documents and the root document), the semantic-search switch
+  and its status, an Export menu (HTML, Excel, CSV, copy) and settings (theme, model, display
+  options); files and folders drop anywhere on the window; the dictionary fills the rest. Theme
+  and column widths are remembered, and the exported HTML page uses the same full-window layout.
+
+### Fixed
+
+- The column header now stays in view while the table scrolls. It was sticky inside a
+  container that never scrolled vertically, so it scrolled away with the rows.
+- A data type no longer breaks inside a word in a narrow column (`categoric` / `al
+  (integer)`), and a nested field's name breaks between its parent path and its own name.
+
+### Maintenance
+
+- `tests/perf-smoke.test.mjs` times the better of two renders, so a render that lands on a busy
+  core while other test files run does not fail the budget.
+
 ## 0.6.0 - 2026-09-05
 
 Variables of any JSON type.
