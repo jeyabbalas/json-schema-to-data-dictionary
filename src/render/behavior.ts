@@ -320,7 +320,7 @@ function toggleDetail(button: HTMLElement): void {
   const row = button.closest<HTMLElement>("tr");
   const detail = row?.nextElementSibling as HTMLElement | null | undefined;
   if (!row || !detail || !detail.hasAttribute("data-dd-detail")) return;
-  const open = detail.hidden;
+  const open = !!detail.hidden; // `hidden` may also be "until-found", which is hidden too
   detail.hidden = !open;
   button.setAttribute("aria-expanded", String(open));
   row.classList.toggle("dd-row-open", open);

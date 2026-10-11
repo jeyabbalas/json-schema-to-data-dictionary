@@ -131,6 +131,12 @@ A calmer table that you can size, and skip patterns you can follow.
 
 - `tests/perf-smoke.test.mjs` times the better of two renders, so a render that lands on a busy
   core while other test files run does not fail the budget.
+- Development dependencies updated: TypeScript 6.0.3 (was 5.9.3), tsup 8.5.1 and happy-dom
+  20.14.6, and the overrides that keep `npm ci` clean now resolve archiver 8, uuid 14 and fast-csv
+  5.0.8. `npm audit` finds no vulnerabilities (a high-severity advisory in brace-expansion is
+  gone), and `npm ci` prints no warnings. The type declarations are byte-for-byte what TypeScript
+  5.9 produced. TypeScript 7 is not adopted yet: tsup bundles the declarations through
+  TypeScript's JavaScript API, which 7.0 no longer ships.
 
 ## 0.6.0 - 2026-09-05
 
