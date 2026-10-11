@@ -45,6 +45,8 @@ A calmer table that you can size, and skip patterns you can follow.
   replaced before the model loads, read through the module's `AutoConfig` (a new optional
   member of `TransformersModuleLike`). EmbeddingGemma 2 sets its vision and audio encoders to
   `null`, so only the 157 MB text model and its tokenizer are downloaded.
+- `PropertyShape.unionObjects`: how many branches of the property's `oneOf`/`anyOf` can be an
+  object.
 
 ### Changed
 
@@ -69,6 +71,26 @@ A calmer table that you can size, and skip patterns you can follow.
 - A range in a skip-pattern condition reads as an inequality — `parous = 1 and 1 ≤ parity ≤ 2`
   (was `parity 1–2`) — and exclusive bounds are described (`x > 5`, `1 ≤ x < 3`) instead of
   `x is constrained`.
+- **Nested types read one way only.** Elements that may be null read `array of nullable
+  integer` (was `array of integer or null`), so an array of arrays reads `array of nullable
+  array of nullable integer (nullable)` (was `array of array of integer or null or null
+  (nullable)`). An element type that is a union is parenthesised — `array of (number or string
+  or null)` — and in a union of shapes the array comes last: `integer or object or array of
+  integer` (was `integer or array of integer or object`).
+- A field of a union's only object alternative says so: `When contact is an object` and
+  `Required when contact is an object` (were `In variant 2 of contact`, and `Required in variant
+  2 of contact` followed by it). With several object alternatives a field still names its
+  branch by position (`In variant 2 of c`), and `Required in variant 2 of c` is no longer
+  followed by it. A union of an array's elements is named by them: `When events[] is an
+  object` (was `… of events`).
+- An array or object that must be empty says so: `maxProperties: 0` reads `Must be empty (no
+  properties allowed)` (was `At most 0 properties`), and `maxItems: 0` reads like `items: false`.
+- **Additional information** and the dataset metadata list their keywords directly instead of
+  behind an `Object (N)` toggle. A value whose JSON fits in 60 characters is written out on its
+  line (`examples: [[1, 2, 3]]`); a longer one collapses, its key in the summary
+  (`▸ examples: Array (1)`); a string's own double quotes are shown as they are
+  (`"STRUCT("name" VARCHAR)"`, was `"STRUCT(\"name\" VARCHAR)"`). *Expand additional
+  information* (`expandAdditionalInfo`) opens those longer values one level.
 - Demo: rebuilt around the dictionary. A slim app bar holds the source menu (examples, open
   files or a folder, the loaded documents and the root document), the semantic-search switch, an
   Export menu (HTML, Excel, CSV, copy) and settings (theme, display options); files and folders
@@ -78,7 +100,6 @@ A calmer table that you can size, and skip patterns you can follow.
   the device it runs on; the loading and indexing status follows it. Turning semantic search on
   or off, switching models or changing a display option keeps the query. Theme and column
   widths are remembered, and the exported HTML page uses the same full-window layout.
-
 - Transformers.js 4.3.1 (was 4.2.0) in the demo, the README examples and the dev dependency.
   `npm run eval` evaluates LEAF-IR alone unless `--model` names others.
 
@@ -94,7 +115,8 @@ A calmer table that you can size, and skip patterns you can follow.
 - The column header now stays in view while the table scrolls. It was sticky inside a
   container that never scrolled vertically, so it scrolled away with the rows.
 - A data type no longer breaks inside a word in a narrow column (`categoric` / `al
-  (integer)`), and a nested field's name breaks between its parent path and its own name.
+  (integer)`), and a nested field's name breaks between its parent path and its own name, or
+  after a `.` of the parent path (`depth5.l2.l3.` / `l4.l5`), not inside a name.
 
 ### Maintenance
 

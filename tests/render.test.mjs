@@ -5,6 +5,12 @@ import { loadDir, findRow } from "./_helpers.mjs";
 
 const table = schemaDocumentsToTable(loadDir("multiple_schema_2"));
 
+/** The Additional information cell of the row named `name` in `html`. */
+function additionalCell(html, name) {
+  const row = html.split('<tr class="dd-row"').find((r) => r.includes(`<code>${name}</code>`));
+  return row?.match(/<td class="dd-additional">([\s\S]*?)<\/td>/)?.[1];
+}
+
 test("tableToHtml: self-contained, searchable markup", () => {
   const html = tableToHtml(table);
   assert.match(html, /<style/);
@@ -104,6 +110,38 @@ test("tableToHtml: with nothing to open, the table's controls stay beside the se
   const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
   assert.doesNotMatch(markup, /data-dd-panel-toggle|class="dd-tools"/);
   assert.match(markup, /<div class="dd-searchbar">[\s\S]*data-dd-search[\s\S]*<div class="dd-actions">/);
+});
+
+test("tableToHtml: Additional information lists its entries, short values inline, long ones collapsible", () => {
+  const row = (name, info) => ({ "Variable name": name, "Description": "", "Data type": "array", "Format": "", "Valid values": [], "Constraints": [], "Additional information": info });
+  const people = [{ name: "Ada", age: 36, langs: ["en", "fr"] }, { name: "Linus", age: 54, langs: ["fi", "sv", "en"] }];
+  const rows = [
+    row("counts", { examples: [[1, 2, 3], [4, null, 17]], "x-duckdb-type": "BIGINT[]" }),
+    row("people", { examples: [people], "x-duckdb-type": 'STRUCT("name" VARCHAR, age BIGINT, langs VARCHAR[])[]' }),
+    row("escapes", { q: 'say "hi"', b: "ends\\", n: "line\nbreak", o: { 'q"k': true } })
+  ];
+  const showcase = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [String(i), `Showcase row ${i}: one kind of edge case`]));
+  const synthetic = { title: "Info", rows, categories: [{ id: "all", title: "All", rows }], conditionalRules: [], warnings: [], additionalInformation: { "x-showcase-rows": showcase } };
+  const html = tableToHtml(synthetic);
+  const num = (n) => `<span class="dd-num">${n}</span>`;
+
+  const counts = additionalCell(html, "counts");
+  assert.ok(counts.startsWith('<div class="dd-tree"><ul class="dd-tree-root">'), "no summary to open first");
+  assert.ok(counts.includes(`<span class="dd-key">examples:</span> [[${num(1)}, ${num(2)}, ${num(3)}], [${num(4)}, ${num("null")}, ${num(17)}]]`));
+  assert.ok(counts.includes('<span class="dd-key">x-duckdb-type:</span> <span class="dd-str">&quot;BIGINT[]&quot;</span>'));
+  assert.ok(!counts.includes("<details"));
+
+  const struct = additionalCell(html, "people");
+  assert.ok(struct.includes('<details><summary><span class="dd-key">examples:</span> Array (1)</summary>'), "a long value is collapsed, its key in the summary");
+  assert.ok(struct.includes("&quot;STRUCT(&quot;name&quot; VARCHAR, age BIGINT, langs VARCHAR[])[]&quot;"), "a string's own quotes are not backslash-escaped");
+  assert.ok(additionalCell(tableToHtml(synthetic, { expandAdditionalInfo: true }), "people").includes('<details open><summary><span class="dd-key">examples:</span>'));
+  assert.ok(html.includes('<details open><summary><span class="dd-key">x-showcase-rows:</span> Object (12)</summary>'), "the metadata panel opens one level");
+
+  const escapes = additionalCell(html, "escapes");
+  assert.ok(escapes.includes("&quot;say &quot;hi&quot;&quot;"));
+  assert.ok(escapes.includes("&quot;ends\\\\&quot;"), "an escaped backslash before the closing quote stays escaped");
+  assert.ok(escapes.includes("&quot;line\\nbreak&quot;"));
+  assert.ok(escapes.includes('{<span class="dd-key">&quot;q&quot;k&quot;:</span> <span class="dd-num">true</span>}'), "an inline key reads like a string");
 });
 
 test("tableToHtml: a value cannot break out of the embedded script", () => {

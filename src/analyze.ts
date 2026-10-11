@@ -42,6 +42,7 @@ import {
   jsonTypeOf,
   normalizeTypeArray,
   stableStringify,
+  typeAlternatives,
   valueKey
 } from "./utils";
 
@@ -77,6 +78,11 @@ export interface PropertyShape {
   self: SchemaRef;
   /** Union branches that declared object fields (their rules are conditional on the branch). */
   variants: SchemaRef[];
+  /**
+   * How many branches of the property's `oneOf`/`anyOf` can be an object, fields or not. When
+   * one can, its fields are named by that ("when contact is an object").
+   */
+  unionObjects: ReadonlyMap<"oneOf" | "anyOf", number>;
   /** Field name -> every schema declaring it, in declaration order. */
   properties: Map<string, SchemaRef[]>;
   patternProperties: Map<string, SchemaRef[]>;
@@ -112,6 +118,7 @@ interface NumericBounds {
 interface ShapeDraft {
   identities: Set<JsonSchemaObject>;
   variants: SchemaRef[];
+  unionObjects: Map<"oneOf" | "anyOf", number>;
   properties: Map<string, SchemaRef[]>;
   patternProperties: Map<string, SchemaRef[]>;
   additionalProperties?: SchemaRef | false | undefined;
@@ -298,6 +305,7 @@ function newAccumulator(self: SchemaRef): Accumulator {
     shape: {
       identities: new Set(),
       variants: [],
+      unionObjects: new Map(),
       properties: new Map(),
       patternProperties: new Map(),
       prefixItems: [],
@@ -497,6 +505,7 @@ function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: In
     index,
     analysis: analyzeBranch(branch, { ...ctx, at: sourceAt(ctx.at, ctx.base, [keyword, String(index)]) })
   }));
+  acc.shape.unionObjects.set(keyword, analyzed.filter((b) => b.analysis.acc.hasObjectShape).length);
 
   // Every categorical value -- in a mixed union or a pure one -- resolves its kind here, so the
   // same code with the same label cannot come out `sentinel` in one field and `value` in another
@@ -804,7 +813,7 @@ function collectAdditional(schema: JsonSchemaObject, acc: Accumulator): void {
 
 /**
  * `mode` says how nullability reads: a nullable property is "integer (nullable)", a nullable
- * item is "array of integer or null" -- the suffix belongs to the array as a whole.
+ * item is "array of nullable integer" -- the suffix belongs to the array as a whole.
  */
 function materialize(acc: Accumulator, mode: "row" | "item"): PropertyAnalysis {
   // Values from a bare `const`/`enum` never passed through a union, so nothing has classified
@@ -838,6 +847,7 @@ function finalizeShape(acc: Accumulator, item: PropertyAnalysis | undefined): Pr
     identities: s.identities,
     self: acc.self,
     variants: s.variants,
+    unionObjects: s.unionObjects,
     properties: s.properties,
     patternProperties: s.patternProperties,
     ...(s.additionalProperties !== undefined ? { additionalProperties: s.additionalProperties } : {}),
@@ -849,7 +859,14 @@ function finalizeShape(acc: Accumulator, item: PropertyAnalysis | undefined): Pr
 }
 
 function dataTypeText(acc: Accumulator, itemLabel: string | undefined, mode: "row" | "item"): string {
-  const nn = (s: string): string => (acc.nullable ? (mode === "item" ? `${s} or null` : `${s} (nullable)`) : s);
+  // A nullable element reads "nullable integer", or -- in a union -- lists null as one more
+  // alternative, so that it cannot be mistaken for the array's own "(nullable)": an array of
+  // arrays reads "array of nullable array of nullable integer".
+  const nn = (s: string): string => {
+    if (!acc.nullable) return s;
+    if (mode === "row") return `${s} (nullable)`;
+    return isUnionLabel(s) ? `${s} or null` : `nullable ${s}`;
+  };
 
   if (acc.mixed) {
     const base = [...acc.measurementBaseTypes].filter(Boolean);
@@ -861,15 +878,21 @@ function dataTypeText(acc: Accumulator, itemLabel: string | undefined, mode: "ro
     return nn(enc ? `binary (${enc})` : "binary");
   }
 
-  // The scalar, array and object faces of the value are listed side by side ("string or
-  // object"): a union of shapes is a real thing in a JSON dataset.
+  // The scalar, object and array faces of the value are listed side by side ("string or
+  // object"): a union of shapes is a real thing in a JSON dataset. The array comes last, so
+  // that nothing after it reads as part of its element type, and an element type that is a
+  // union is parenthesised: "integer or object or array of (string or null)".
   const parts: string[] = [];
   const scalar = scalarTypeText(acc);
   if (scalar) parts.push(scalar);
-  if (acc.hasArray) parts.push(itemLabel ? `array of ${itemLabel}` : "array");
   if (acc.hasObjectShape) parts.push("object");
+  if (acc.hasArray) parts.push(itemLabel ? `array of ${isUnionLabel(itemLabel) ? `(${itemLabel})` : itemLabel}` : "array");
   if (parts.length === 0) return acc.nullable ? "null" : "any";
   return nn([...new Set(parts)].join(" or "));
+}
+
+function isUnionLabel(label: string): boolean {
+  return typeAlternatives(label).length > 1;
 }
 
 function scalarTypeText(acc: Accumulator): string {
@@ -955,7 +978,10 @@ function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined):
 
   if (acc.hasObjectShape) {
     if (typeof acc.object.minProperties === "number") out.push({ keyword: "minProperties", text: `At least ${acc.object.minProperties} propert${acc.object.minProperties === 1 ? "y" : "ies"}` });
-    if (typeof acc.object.maxProperties === "number") out.push({ keyword: "maxProperties", text: `At most ${acc.object.maxProperties} propert${acc.object.maxProperties === 1 ? "y" : "ies"}` });
+    if (typeof acc.object.maxProperties === "number") {
+      const max = acc.object.maxProperties;
+      out.push({ keyword: "maxProperties", text: max === 0 ? "Must be empty (no properties allowed)" : `At most ${max} propert${max === 1 ? "y" : "ies"}` });
+    }
     const fields = [...acc.shape.properties.keys()];
     if (fields.length > 0) {
       const listed = fields.length > MAX_LISTED_FIELDS ? `${fields.slice(0, MAX_LISTED_FIELDS).join(", ")}, … (+${fields.length - MAX_LISTED_FIELDS} more)` : fields.join(", ");
@@ -1085,6 +1111,7 @@ function lengthRangeText(min?: number, max?: number): string {
 }
 
 function itemsRangeText(min?: number, max?: number): string {
+  if (max === 0) return "Must be empty (no items allowed)";
   if (min !== undefined && max !== undefined) return `${min}–${max} items`;
   if (min !== undefined) return `At least ${min} item(s)`;
   return `At most ${max} item(s)`;

@@ -46,9 +46,10 @@ export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): st
   const depthAttr = opts.indent && row.depth > 0 ? ` data-dd-depth="${row.depth}"` : "";
   // A nested field shows its parent path muted and its own name bold; both halves live inside
   // the one <code>, so the cell still reads (and copies) as the full path. A narrow column
-  // breaks the line between them rather than inside a name.
+  // breaks the line between them, or after a `.` of the parent path, rather than inside a name.
+  // (Escaped and highlighted text has no `.` but the path's own.)
   const name = row.namePrefix
-    ? `<span class="dd-name-prefix">${hl(row.namePrefix)}</span><wbr><span class="dd-name-leaf">${hl(row.nameLeaf)}</span>`
+    ? `<span class="dd-name-prefix">${hl(row.namePrefix).replaceAll(".", ".<wbr>")}</span><wbr><span class="dd-name-leaf">${hl(row.nameLeaf)}</span>`
     : hl(row.name);
   const skips = skipsToggle(row, vm, opts.skipDetails ?? false);
   return `
@@ -209,29 +210,62 @@ const ICON_SKIP = `<svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true"><
 
 // ---------------------------------------------------------------------------
 
-/** Render a JSON value as a collapsible tree (objects/arrays) or inline scalar. Never highlighted. */
+/** Objects and arrays whose JSON text is at most this long are written out on the line: `[1, 2, 3]`. */
+const INLINE_JSON = 60;
+
+/**
+ * Render a JSON value as a tree: scalars and short containers inline, longer objects and arrays
+ * collapsible. An object at the root lists its entries directly -- the cell or panel already
+ * contains it, so a summary to open first would only hide them. `open` expands the containers
+ * among those entries (or a root container) one level. Never highlighted.
+ */
 export function jsonTree(value: JsonValue, open: boolean): string {
-  return node(value, open, 0);
+  const entries = entriesOf(value);
+  if (entries && entries.length > 0 && !Array.isArray(value)) {
+    return `<ul class="dd-tree-root">${entries.map(([key, val]) => entry(key, val, open, 0)).join("")}</ul>`;
+  }
+  return node(value, open, 0, "");
 }
 
-function node(value: JsonValue, open: boolean, depth: number): string {
-  if (value === null) return `<span class="dd-num">null</span>`;
-  if (typeof value === "string") return `<span class="dd-str">${escapeHtml(JSON.stringify(value))}</span>`;
-  if (typeof value === "number" || typeof value === "boolean") return `<span class="dd-num">${escapeHtml(String(value))}</span>`;
+function entriesOf(value: JsonValue): Array<[string, JsonValue]> | undefined {
+  if (value === null || typeof value !== "object") return undefined;
+  return Array.isArray(value) ? value.map((v, i): [string, JsonValue] => [String(i), v]) : Object.entries(value);
+}
 
+/** One `key: value` line; a container too long for the line carries its key in its summary ("▸ examples: Array (2)"). */
+function entry(key: string, value: JsonValue, open: boolean, depth: number): string {
+  return `<li>${node(value, open, depth, `<span class="dd-key">${escapeHtml(key)}:</span> `)}</li>`;
+}
+
+function node(value: JsonValue, open: boolean, depth: number, label: string): string {
   const isArray = Array.isArray(value);
-  const entries: Array<[string, JsonValue]> = isArray
-    ? (value as JsonValue[]).map((v, i) => [String(i), v])
-    : Object.entries(value as Record<string, JsonValue>);
-
-  if (entries.length === 0) return `<span class="dd-num">${isArray ? "[]" : "{}"}</span>`;
+  const entries = entriesOf(value);
+  if (entries === undefined || JSON.stringify(value).length <= INLINE_JSON) return `${label}${inline(value)}`;
 
   const summary = isArray ? `Array (${entries.length})` : `Object (${entries.length})`;
   const openAttr = open && depth < 1 ? " open" : "";
-  const lis = entries
-    .map(([key, val]) => `<li><span class="dd-key">${escapeHtml(key)}:</span> ${node(val, open && depth < 1, depth + 1)}</li>`)
-    .join("");
-  return `<details${openAttr}><summary>${summary}</summary><ul>${lis}</ul></details>`;
+  const lis = entries.map(([key, val]) => entry(key, val, open, depth + 1)).join("");
+  return `<details${openAttr}><summary>${label}${summary}</summary><ul>${lis}</ul></details>`;
+}
+
+/**
+ * A value on one line, as JSON with its scalars coloured: `{"x": 1.5, "tier": "gold"}`. A
+ * string's own quotes are left unescaped -- `"STRUCT("name" VARCHAR)"` reads better than
+ * `"STRUCT(\"name\" VARCHAR)"`, and the quotes around it still mark it as a string.
+ */
+function inline(value: JsonValue): string {
+  if (value === null) return `<span class="dd-num">null</span>`;
+  if (typeof value === "string") return `<span class="dd-str">${quoted(value)}</span>`;
+  if (typeof value === "number" || typeof value === "boolean") return `<span class="dd-num">${escapeHtml(String(value))}</span>`;
+  if (Array.isArray(value)) return `[${value.map(inline).join(", ")}]`;
+  const members = Object.entries(value).map(([key, v]) => `<span class="dd-key">${quoted(key)}:</span> ${inline(v)}`);
+  return `{${members.join(", ")}}`;
+}
+
+/** `text` as a JSON string, escaped for HTML, with its own `"` left as they are. */
+function quoted(text: string): string {
+  // Each escape is a backslash and one character, so `\\` stays whole and only `\"` changes.
+  return escapeHtml(JSON.stringify(text).replace(/\\(.)/g, (escape, ch: string) => (ch === '"' ? ch : escape)));
 }
 
 /** Escaped (and optionally highlighted) text with line breaks preserved as `<br>`. */

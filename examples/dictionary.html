@@ -355,6 +355,7 @@
 .dd-tree summary::before { content: "▸ "; color: var(--_faint); }
 .dd-tree details[open] > summary::before { content: "▾ "; }
 .dd-tree ul { list-style: none; margin: 0 0 0 5px; padding: 0 0 0 10px; border-left: 1px solid var(--_border); }
+.dd-tree ul.dd-tree-root { margin: 0; padding: 0; border-left: 0; }
 .dd-tree .dd-key { color: var(--_muted); }
 .dd-tree .dd-str { color: var(--_accent); }
 .dd-tree .dd-num { color: var(--_sentinel); }
@@ -421,7 +422,7 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
     </section>
     <section class="dd-panel" id="dd1-meta" data-dd-panel="meta" aria-label="Dataset metadata" hidden>
       <div class="dd-panel-head"><span class="dd-panel-title">Dataset metadata</span><button class="dd-btn dd-btn-icon dd-panel-close" type="button" data-dd-panel-close aria-label="Close"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button></div>
-      <div class="dd-panel-body"><div class="dd-tree"><details open><summary>Object (2)</summary><ul><li><span class="dd-key">$id:</span> <span class="dd-str">&quot;https://raw.githubusercontent.com/jeyabbalas/epi-schemas/refs/heads/main/bcrpp/json_schema/core/core.schema.json&quot;</span></li><li><span class="dd-key">$schema:</span> <span class="dd-str">&quot;https://json-schema.org/draft/2020-12/schema&quot;</span></li></ul></details></div></div>
+      <div class="dd-panel-body"><div class="dd-tree"><ul class="dd-tree-root"><li><span class="dd-key">$id:</span> <span class="dd-str">&quot;https://raw.githubusercontent.com/jeyabbalas/epi-schemas/refs/heads/main/bcrpp/json_schema/core/core.schema.json&quot;</span></li><li><span class="dd-key">$schema:</span> <span class="dd-str">&quot;https://json-schema.org/draft/2020-12/schema&quot;</span></li></ul></div></div>
     </section>
   </header>
   <div class="dd-empty" data-dd-empty hidden>No variables match “<span data-dd-empty-q></span>”.</div>

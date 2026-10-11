@@ -81,7 +81,7 @@ Each variable becomes one row with these columns:
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
 | **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. |
 | **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds (`Each item: …` for the items of an array, `Fields: …` for an object), and **conditional** rules from skip patterns. |
-| **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a collapsible JSON tree. |
+| **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a JSON tree: each keyword on a line of its own, short values written out (`examples: [[1, 2, 3]]`) and longer ones collapsible. |
 
 The dataset's own `title`/`description` are shown as a header, and each externally `$ref`'d
 object schema becomes a **sub-heading** (e.g. *Demographics*, *Lab measurements*).
@@ -125,7 +125,10 @@ weights             array of number + coded values   Each item: Measured value: 
 - **Arrays of scalars are not split.** The item schema's codes, ranges and format are the
   variable's own: they land in **Valid values**, **Constraints** (prefixed *Each item:*) and
   **Format**, and the type reads `array of date`, `array of categorical (integer)` or
-  `array of number + coded values`.
+  `array of number + coded values`. Elements that may be null read `array of nullable integer`
+  (the array's own `(nullable)` comes last: `array of nullable array of nullable integer
+  (nullable)`), and an element type that is itself a union is parenthesised:
+  `array of (number or string or null)`.
 - **Nested rows follow their parent**, indented in the rendered table with the parent path
   muted and the field's own name bold. They carry `__parent` (the parent's variable name),
   `__depth` (0 for a top-level variable) and `__path` (the structured path). Objects nest the
@@ -135,11 +138,13 @@ weights             array of number + coded values   Each item: Measured value: 
   `biomarkers./^il_[0-9]+$/`; a property name that is not a plain identifier is written
   `parent["odd name"]`. The parent row summarises the container (`Fields: date, weight`,
   `No other properties allowed`, item counts).
-- A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`) and the fields of
-  its object branches (badged `In variant 2 of contact`). A field the enclosing object requires
-  reads `Required within visits[]` (`Required in variant 2 of contact` when only a union branch
-  requires it); `if`/`then` and `dependentRequired` inside a nested object are qualified by the
-  path (`visits[].fasting = 0`) and join `table.conditionalRules`.
+- A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`, an array last:
+  `integer or object or array of integer`) and the fields of its object branches, badged
+  `When contact is an object` — or `In variant 2 of contact` when several alternatives are
+  objects. A field the enclosing object requires reads `Required within visits[]`
+  (`Required when contact is an object` when only a union branch requires it); `if`/`then` and
+  `dependentRequired` inside a nested object are qualified by the path (`visits[].fasting = 0`)
+  and join `table.conditionalRules`.
 - A **recursive** definition (an event whose `follow_ups` are events) is expanded once and then
   noted (`Recursive structure: same shape as events[]`), and `maxNestingDepth` (default 6)
   bounds how deep the rows go. `expandNested: false` keeps one row per top-level property; the

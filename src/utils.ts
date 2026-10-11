@@ -81,6 +81,28 @@ export function normalizeTypeArray(type: unknown): string[] {
   return [];
 }
 
+/**
+ * The alternatives of a data-type label: split at each " or " outside parentheses, so that a
+ * grouped element type stays whole ("array of (integer or null) or object" -> two).
+ */
+export function typeAlternatives(label: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < label.length; i += 1) {
+    const ch = label.charAt(i);
+    if (ch === "(") depth += 1;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && label.startsWith(" or ", i)) {
+      out.push(label.slice(start, i));
+      start = i + 4;
+      i += 3;
+    }
+  }
+  out.push(label.slice(start));
+  return out;
+}
+
 /** The JSON Schema instance type of a concrete value (numbers split into integer/number). */
 export function jsonTypeOf(value: unknown): string {
   if (value === null) return "null";

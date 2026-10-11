@@ -351,6 +351,7 @@ export const STYLES = `
 .dd-tree summary::before { content: "▸ "; color: var(--_faint); }
 .dd-tree details[open] > summary::before { content: "▾ "; }
 .dd-tree ul { list-style: none; margin: 0 0 0 5px; padding: 0 0 0 10px; border-left: 1px solid var(--_border); }
+.dd-tree ul.dd-tree-root { margin: 0; padding: 0; border-left: 0; }
 .dd-tree .dd-key { color: var(--_muted); }
 .dd-tree .dd-str { color: var(--_accent); }
 .dd-tree .dd-num { color: var(--_sentinel); }
