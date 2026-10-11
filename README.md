@@ -81,7 +81,7 @@ Each variable becomes one row with these columns:
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
 | **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. |
 | **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds (`Each item: …` for the items of an array, `Fields: …` for an object), and **conditional** rules from skip patterns. |
-| **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a collapsible JSON tree. |
+| **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a JSON tree: each keyword on a line of its own, short values written out (`examples: [[1, 2, 3]]`) and longer ones collapsible. |
 
 The dataset's own `title`/`description` are shown as a header, and each externally `$ref`'d
 object schema becomes a **sub-heading** (e.g. *Demographics*, *Lab measurements*).
@@ -125,7 +125,10 @@ weights             array of number + coded values   Each item: Measured value: 
 - **Arrays of scalars are not split.** The item schema's codes, ranges and format are the
   variable's own: they land in **Valid values**, **Constraints** (prefixed *Each item:*) and
   **Format**, and the type reads `array of date`, `array of categorical (integer)` or
-  `array of number + coded values`.
+  `array of number + coded values`. Elements that may be null read `array of nullable integer`
+  (the array's own `(nullable)` comes last: `array of nullable array of nullable integer
+  (nullable)`), and an element type that is itself a union is parenthesised:
+  `array of (number or string or null)`.
 - **Nested rows follow their parent**, indented in the rendered table with the parent path
   muted and the field's own name bold. They carry `__parent` (the parent's variable name),
   `__depth` (0 for a top-level variable) and `__path` (the structured path). Objects nest the
@@ -135,11 +138,13 @@ weights             array of number + coded values   Each item: Measured value: 
   `biomarkers./^il_[0-9]+$/`; a property name that is not a plain identifier is written
   `parent["odd name"]`. The parent row summarises the container (`Fields: date, weight`,
   `No other properties allowed`, item counts).
-- A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`) and the fields of
-  its object branches (badged `In variant 2 of contact`). A field the enclosing object requires
-  reads `Required within visits[]` (`Required in variant 2 of contact` when only a union branch
-  requires it); `if`/`then` and `dependentRequired` inside a nested object are qualified by the
-  path (`visits[].fasting = 0`) and join `table.conditionalRules`.
+- A `oneOf`/`anyOf` of shapes lists every alternative (`string or object`, an array last:
+  `integer or object or array of integer`) and the fields of its object branches, badged
+  `When contact is an object` — or `In variant 2 of contact` when several alternatives are
+  objects. A field the enclosing object requires reads `Required within visits[]`
+  (`Required when contact is an object` when only a union branch requires it); `if`/`then` and
+  `dependentRequired` inside a nested object are qualified by the path (`visits[].fasting = 0`)
+  and join `table.conditionalRules`.
 - A **recursive** definition (an event whose `follow_ups` are events) is expanded once and then
   noted (`Recursive structure: same shape as events[]`), and `maxNestingDepth` (default 6)
   bounds how deep the rows go. `expandNested: false` keeps one row per top-level property; the
@@ -174,15 +179,26 @@ becomes a single, readable row:
 Data type     number + coded values
 Valid values  20–65            (measured value)
               ── special codes ──
-              777  Premenopausal at questionnaire   ↳ when meno_status = 2
+              777  Premenopausal at questionnaire
+                   if meno_status = 2
               888  Missing/Unknown
-Constraints   Required · Measured value: 20 ≤ value ≤ 65 · When meno_status = 2, value = 777
+Constraints   Required · Measured value: 20 ≤ value ≤ 65
 ```
 
 The measurement range goes to **Constraints**; the codes go to **Valid values**, badged apart
-from real categories, each carrying the condition that triggers it. `dependentRequired` and
-`dependentSchemas` are surfaced as conditional constraints too, and all `if/then` rules are
-collected into `table.conditionalRules` for a dataset-level *skip patterns* panel.
+from real categories, each carrying the condition that sets it. In the data the pattern is also
+a constraint (`When meno_status = 2, value = 777 (Premenopausal/NA).`, with the pinned `value`),
+which exports and search keep; the rendered table shows it once, on the code.
+`dependentRequired` and `dependentSchemas` are surfaced as conditional constraints too, and all
+`if/then` rules are collected into `table.conditionalRules`. Every rule, and every conditional
+constraint, names the variables its condition reads (`triggers: ["parous", "parity"]`), and a
+range reads as an inequality (`parous = 1 and 1 ≤ parity ≤ 2`).
+
+The rendered table lets you follow a pattern from either end: the variable named in a condition
+is a link to its row, a variable that patterns read carries a **Skips N** chip under its name
+that opens a row listing what each of its answers sets (`if meno_status = 2 → 777
+Premenopausal/NA · meno_age, meno_reason`), and the **Skip logic** button under the search box
+opens a panel listing every rule that way, grouped by the variable it reads.
 
 ### Saying which codes are special: `x-value-kind`
 
@@ -226,9 +242,19 @@ renderDataDictionary(container, table, options?);
 
 Mounts a `<json-data-dictionary>` web component. By default it uses a **Shadow DOM** so its
 styles never collide with your app. Features: instant search with highlighting + counts +
-empty state (`/` to focus, `Esc` to clear), collapsible category sections, a frozen variable
-column, collapsible JSON trees, copy / download-CSV, and optional
+empty state (`/` to focus, `Esc` to clear), collapsible category sections, a sticky column
+header and frozen variable column, [resizable columns](#column-widths), skip patterns you can
+follow from either end (see [Mixed types & skip patterns](#mixed-types--skip-patterns)),
+collapsible JSON trees, copy / download-CSV, and optional
 [semantic search](#semantic-search-opt-in).
+
+Give the element a height — or put it in a container that has one — and the dictionary fills it:
+the title and toolbar stay put while the table scrolls inside, under its column header, with
+the horizontal scrollbar always in reach. Without a height it is as tall as its content.
+
+```css
+#dict { height: 80vh; }   /* renderDataDictionary(#dict, …) fills it */
+```
 
 While a query is typed the table becomes **one ranked results list**: rows whose variable name
 equals the query first, then the other matches by relevance, each showing its category and,
@@ -236,9 +262,9 @@ with semantic search on, the *related* rows badged. Clearing the box restores th
 sections. Large dictionaries render lazily: the first `pageSize` rows (default 100) are
 materialised up front and each category fills in as it scrolls into view (or via its *Show
 more* button). Measured in Chrome on a 10,070-variable dictionary (1,045 categories): first
-paint 0.3 s (was 7.4 s in 0.2), 34k DOM nodes (was 380k), 22–46 ms of script per keystroke
-(was 0.4–1.1 s), 8 ms to clear the search box (was 2.4–3.3 s). Small dictionaries (up to five
-pages) are rendered in full. Nested fields (see [Nested variables](#nested-variables-arrays-and-objects))
+paint 0.2 s (was 7.4 s in 0.2), 35k elements (was 380k), 18–29 ms of script per keystroke
+(was 0.4–1.1 s), 6 ms to clear the search box (was 2.4–3.3 s), 10 ms per step of a column
+resize. Small dictionaries (up to five pages) are rendered in full. Nested fields (see [Nested variables](#nested-variables-arrays-and-objects))
 sit indented under their parent with the parent path muted; the results list shows them
 unindented with their full path, since it lists rows out of context.
 
@@ -246,6 +272,7 @@ Theme it from your page with CSS custom properties (they pierce the shadow bound
 
 ```css
 #dict { --dd-accent: #2563eb; }            /* also: --dd-bg, --dd-fg, --dd-border, … */
+json-data-dictionary::part(semantic-status) { display: none; }   /* if your page shows its own */
 ```
 
 Need your app's CSS to cascade in instead? Opt out of isolation:
@@ -254,10 +281,32 @@ Need your app's CSS to cascade in instead? Opt out of isolation:
 renderDataDictionary(container, table, { shadow: false });
 ```
 
-Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, searchPlaceholder, emptyCell, title, pageSize, resultsPageSize }`
+Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, searchPlaceholder, emptyCell, title, pageSize, resultsPageSize, columnWidths }`
 (`pageSize: Infinity` disables lazy rendering; `resultsPageSize` is how many results are shown
 before *Show more*, default 50). Rows are materialised on demand, so read the data through
 `toPlainRows(table)` rather than by scraping the DOM.
+
+#### Column widths
+
+Readers resize a column by dragging the edge of its header; a double-click (or `Enter` on the
+focused edge) fits the column to its content, the arrow keys nudge it (`Shift` for bigger
+steps), `Delete` returns it to its default, and *Reset widths* in the toolbar clears them all.
+Columns nobody has sized share the table's width; a sized one keeps its width, and the table
+scrolls sideways when the columns outgrow it.
+
+The table reports every change in a `dd-column-resize` event (bubbling and composed). Hand the
+widths back to keep them across renders or visits:
+
+```ts
+const saved = JSON.parse(localStorage.getItem("widths") ?? "{}");
+renderDataDictionary(container, table, { columnWidths: saved });   // { "Description": 420, … } in px
+container.addEventListener("dd-column-resize", (e) => {
+  localStorage.setItem("widths", JSON.stringify(e.detail.widths)); // detail: { column, widths }
+});
+```
+
+From CSS, `--dd-col-name`, `--dd-col-description`, `--dd-col-type`, `--dd-col-format`,
+`--dd-col-values`, `--dd-col-constraints` and `--dd-col-additional` set a column's width.
 
 You can also use the element directly:
 
@@ -328,26 +377,28 @@ related ones well above it, which is what makes one floor work across models.
 
 #### Choosing a model
 
-`createTransformersEmbedder(moduleOrLoader, { model, dtype, device, pooling, queryPrefix, documentPrefix, dims, maxLength, minScore, batchSize, modelOptions, tokenizerOptions })`
+`createTransformersEmbedder(moduleOrLoader, { model, dtype, device, pooling, queryPrefix, documentPrefix, dims, maxLength, minScore, batchSize, configOverrides, modelOptions, tokenizerOptions })`
 has verified configurations (`KNOWN_EMBEDDING_MODELS`) for these models. Throughput was
 measured in Chrome 152 on an Intel MacBook on real dictionary text (≈ 180 characters per
-chunk, batches of 16); a 10,000-variable dictionary is about 13,000 chunks.
+chunk, batches of 16) unless noted; a 10,000-variable dictionary is about 13,000 chunks.
+EmbeddingGemma 2 needs Transformers.js 4.3.1 or later.
 
 | Model | Params | Download | Licence | WASM | WebGPU | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `MongoDB/mdbr-leaf-ir` (default) | 23M | 23 MB q8 · 46 MB fp16 | Apache-2.0 | 16 texts/s single-threaded, ~70 texts/s with threads (10k vars ≈ 3 min) | **~800 texts/s** fp16 (10k vars ≈ 16 s) | Best retrieval quality under 100M params (BEIR nDCG@10 53.6); uses the model's `sentence_embedding` output. |
 | `jinaai/jina-embeddings-v5-text-nano-retrieval` | 239M | 124 MB q4f16 | **CC-BY-NC-4.0** (non-commercial use only) | impractical | ~60 texts/s q4f16 (10k vars ≈ 4 min) | Highest quality (MTEB-English-v2 71.0; best MRR on the labelled set), multilingual, 8k context. WebGPU only. |
-| `Xenova/bge-small-en-v1.5` | 33M | 34 MB q8 | MIT | 8 texts/s single-threaded | ~200 texts/s fp16 | The 0.2 default; weaker on abbreviations (*BMI*). |
-| `Xenova/all-MiniLM-L6-v2` | 23M | 22 MB q8 | Apache-2.0 | ~16 texts/s | ~330 texts/s | Fastest; lowest retrieval quality. |
+| `onnx-community/embeddinggemma-2-ONNX` | 270M (text model) | 157 MB q4f16 + 32 MB tokenizer | Apache-2.0 | impractical | ~70 texts/s q4f16 on an M1 Pro, where LEAF-IR runs ~270 and Jina ~110 (10k vars ≈ 3 min) | The text model of Google's multimodal EmbeddingGemma 2 (Gemma 4): its vision and audio encoders are left out of the config, so their weights are never downloaded. Second-best MRR on the labelled set, 100+ languages, 8k context, Matryoshka 128–768. WebGPU only. |
 
 Once embedded, the vectors of a 10,000-variable dictionary (13,400 chunks, 39 MB) come back from
 IndexedDB in about 0.4 s on the next visit. On the labelled BCRPP query set (`npm run eval`),
-hybrid ranking reaches MRR 0.90 with LEAF-IR, 0.89 with bge-small and 0.94 with Jina v5 nano,
-against 0.82 for keyword search alone.
+hybrid ranking reaches MRR 0.90 with LEAF-IR, 0.92 with EmbeddingGemma 2 and 0.94 with Jina v5
+nano, against 0.82 for keyword search alone.
 
 Any other Transformers.js embedding model works if you pass `pooling` (`"cls"`, `"mean"`,
 `"last_token"` — mask-aware, so right-padded batches are correct — or `"sentence_embedding"`
-for exports that include their pooling head), the prefixes and `minScore` explicitly. To not
+for exports that include their pooling head), the prefixes and `minScore` explicitly; a
+multimodal checkpoint loads as a text model with `configOverrides` set to `null` for each
+encoder it should leave out (`{ vision_config: null, audio_config: null }`). To not
 depend on a third-party Hub repo, mirror the model files (`config.json`, `tokenizer.json`,
 `tokenizer_config.json`, `special_tokens_map.json`, `onnx/model_*.onnx` and their
 `.onnx_data` sidecars) into your own Hugging Face account and set `model: "<account>/<repo>"`.
@@ -360,7 +411,7 @@ If you publish the dictionary, embed it once and ship the vectors next to the sc
 browser then only embeds the query:
 
 ```bash
-npm install --no-save @huggingface/transformers@4.2.0   # once, for the build step
+npm install --no-save @huggingface/transformers@4.3.1   # once, for the build step
 node scripts/build-snapshot.mjs path/to/schemas dictionary.jsddvec --int8   # ~1,500 texts/s on a CPU
 ```
 
@@ -384,7 +435,7 @@ Run the model off the main thread by serving it from a Web Worker (this is what 
 importScripts("json-schema-data-dictionary.global.js");
 const { serveEmbedder, createTransformersEmbedder } = JsonSchemaDataDictionary;
 const params = new URLSearchParams(self.location.search);          // e.g. ?model=…&device=auto
-serveEmbedder(createTransformersEmbedder(() => import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0"), {
+serveEmbedder(createTransformersEmbedder(() => import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1"), {
   model: params.get("model") ?? undefined, device: params.get("device") ?? "auto"
 }));
 
@@ -410,8 +461,9 @@ without the widget. The static `tableToHtml` output stays keyword-only.
 const html = tableToHtml(table, options?);   // inline <style> + markup + a small inline <script>
 ```
 
-Self-contained and interactive (search/collapse/export) without any framework — good for SSR
-or writing a report to disk.
+Self-contained and interactive (search, collapse, column resizing, skip-pattern links,
+export) without any framework — good for SSR or writing a report to disk. `columnWidths` works
+here too.
 
 ### Spreadsheet export
 

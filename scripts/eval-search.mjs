@@ -24,7 +24,7 @@ const { schemaDocumentsToTable, createLexicalIndex, lexicalDocumentsFromTable, c
 const args = parseArgs(process.argv.slice(2));
 const fixtureDir = resolve(ROOT, args.fixture ?? "tests/fixtures/multiple_schema_2");
 const queriesFile = resolve(ROOT, args.queries ?? "tests/fixtures/search-eval.json");
-const models = args.model?.length ? args.model : [DEFAULT_EMBEDDING_MODEL, "Xenova/bge-small-en-v1.5"];
+const models = args.model?.length ? args.model : [DEFAULT_EMBEDDING_MODEL];
 const weights = (args.weights ?? "0.5,0.8,1").split(",").map(Number).filter((w) => Number.isFinite(w));
 const dtype = args.dtype ?? "fp32";
 const maxRelated = Number(args["max-related"] ?? 10);
@@ -58,7 +58,7 @@ if (!args["lexical-only"]) {
   try {
     transformers = await import("@huggingface/transformers");
   } catch {
-    console.error("The eval needs the optional devDependency: npm install --no-save @huggingface/transformers@4.2.0");
+    console.error("The eval needs the optional devDependency: npm install --no-save @huggingface/transformers@4.3.1");
     process.exit(2);
   }
   transformers.env.cacheDir = join(ROOT, ".cache", "transformers");

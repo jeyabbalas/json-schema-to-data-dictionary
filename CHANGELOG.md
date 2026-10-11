@@ -4,6 +4,140 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## 0.7.0 - 2026-10-11
+
+A calmer table that you can size, and skip patterns you can follow.
+
+### Added
+
+- **Resizable columns.** Drag the edge of a column header to resize the column; double-click
+  it (or press `Enter` on the focused edge) to fit the column to its content; the arrow keys
+  nudge it, `Delete` returns it to its default, and *Reset widths* in the toolbar clears them
+  all. The edges are focusable separators announced with their width. One custom property per
+  column (`--dd-col-name`, `--dd-col-description`, …) sizes every table of the dictionary at
+  once, so a resize costs one style write (10 ms per step on a 10,070-variable dictionary). The
+  table dispatches `dd-column-resize` (`detail: { column, widths }`, bubbling and composed) and
+  the new `columnWidths` option — on `renderDataDictionary` and `tableToHtml` alike — starts
+  from saved widths. The element keeps the reader's widths across its own re-renders. The static
+  HTML inlines the component's own resize code, so it behaves the same.
+- **Skip patterns you can follow.** A code that a skip pattern sets says when, on the code
+  itself (`777 Nonparous · if parous = 0`), with the variable it depends on as a link to its
+  row. A variable that skip patterns read carries a *Skips N* chip under its name that opens a
+  row beneath it listing what each of its answers sets (`if parous = 0 → 777 Nonparous ·
+  age_preg1 … breastfeed_dur_b10`). The toolbar's *Skip logic* panel lists every rule the same
+  way, grouped by the variable it reads. Following a link expands the target's section, pages
+  its row in if it is not rendered yet, leaves a search that does not show it, and flashes it.
+- `ConditionalRule.triggers` and, on conditional constraints, `ConstraintItem.triggers`: the
+  variables a condition reads, by row name (`["parous", "parity"]`). A conditional constraint
+  that pins the variable now carries the pinned value (or set) in `ConstraintItem.value`.
+- View model: `ValueVM.conditions` (each skip pattern that sets the value, with its triggers),
+  `ConstraintVM.triggers` and `onValues`, `RowVM.skipRules`, `RuleVM.triggers` and `groups`
+  (effects grouped by the value they set), `ViewModel.names`; types `ConditionVM`,
+  `RuleGroupVM`, `DataDictionaryColumn`, `ColumnWidths` and `ColumnResizeDetail`.
+- The semantic-search status chip is exposed as `part="semantic-status"`.
+- **EmbeddingGemma 2** (`onnx-community/embeddinggemma-2-ONNX`) is a verified model: the text
+  model of Google's multimodal EmbeddingGemma 2, read from its `sentence_embedding` output with
+  its task prefixes (`task: search result | query: `, `title: none | text: `), q4f16 on WebGPU
+  (q4 without `shader-f16` and on WASM), a `minScore` of 0.20 (noise ceiling 0.195) and WebGPU
+  only, like Jina v5 nano. It needs Transformers.js 4.3.1. On the labelled BCRPP queries,
+  hybrid ranking reaches MRR 0.92, between LEAF-IR (0.90) and Jina v5 nano (0.94).
+- `configOverrides` — an embedder option and a `KnownEmbeddingModel` field: config fields
+  replaced before the model loads, read through the module's `AutoConfig` (a new optional
+  member of `TransformersModuleLike`). EmbeddingGemma 2 sets its vision and audio encoders to
+  `null`, so only the 157 MB text model and its tokenizer are downloaded.
+- Demo: a *Nested stress tests* example (`?preset=nested`), the dictionary of the JSON file of
+  [data-table](https://github.com/jeyabbalas/data-table)'s nested stress-test fixture: 21
+  columns of lists, structs, maps and JSON values in five sections, 48 rows with the nested
+  fields, each with the DuckDB type data-table gives it (`x-duckdb-type`) and examples from the
+  data. The schema validates all 1,000 records of the file. A golden file pins its output.
+- `PropertyShape.unionObjects`: how many branches of the property's `oneOf`/`anyOf` can be an
+  object.
+
+### Changed
+
+- **A quieter look.** Neutral greys with one accent (indigo by default; `--dd-accent` still
+  themes it), hairline rules instead of a card per category, neutral type badges (amber still
+  marks mixed types and special codes), and a compact toolbar of icon buttons. *Expand all* and
+  *Collapse all* are one button.
+- **One sheet.** The tables scroll together in one viewport under a single sticky column header,
+  with sticky category bars and the frozen variable column. Each category table keeps a header
+  row for assistive technology, visually hidden. Give the element a height and the dictionary
+  fills it, scrolling inside; without one it is as tall as its content, as before.
+- Columns nobody has sized share out only the width beyond each column's minimum, so the table
+  fits its viewport exactly whenever it can and scrolls sideways only when it cannot.
+- The skip-pattern rules, the dataset metadata and the extraction warnings open as panels from
+  the toolbar instead of collapsible bars above the table (the warnings were a footer). Their
+  buttons — *Skip logic*, *Metadata*, *N warnings* — sit on a line of their own right under the
+  search box, with the table's own controls (*Reset widths*, expand/collapse all, copy, CSV) at
+  the far end of it; a dictionary with nothing to open keeps those controls beside the search box.
+- In the rendered table, a skip pattern that pins a value is shown on that value only, no longer
+  repeated as a constraint (`When parous = 0, value = 777 (Nonparous).`). `table.rows`, the CSV
+  and spreadsheet exports and the search index are unchanged.
+- A range in a skip-pattern condition reads as an inequality — `parous = 1 and 1 ≤ parity ≤ 2`
+  (was `parity 1–2`) — and exclusive bounds are described (`x > 5`, `1 ≤ x < 3`) instead of
+  `x is constrained`.
+- **Nested types read one way only.** Elements that may be null read `array of nullable
+  integer` (was `array of integer or null`), so an array of arrays reads `array of nullable
+  array of nullable integer (nullable)` (was `array of array of integer or null or null
+  (nullable)`). An element type that is a union is parenthesised — `array of (number or string
+  or null)` — and in a union of shapes the array comes last: `integer or object or array of
+  integer` (was `integer or array of integer or object`).
+- A field of a union's only object alternative says so: `When contact is an object` and
+  `Required when contact is an object` (were `In variant 2 of contact`, and `Required in variant
+  2 of contact` followed by it). With several object alternatives a field still names its
+  branch by position (`In variant 2 of c`), and `Required in variant 2 of c` is no longer
+  followed by it. A union of an array's elements is named by them: `When events[] is an
+  object` (was `… of events`).
+- An array or object that must be empty says so: `maxProperties: 0` reads `Must be empty (no
+  properties allowed)` (was `At most 0 properties`), and `maxItems: 0` reads like `items: false`.
+- **Additional information** and the dataset metadata list their keywords directly instead of
+  behind an `Object (N)` toggle. A value whose JSON fits in 60 characters is written out on its
+  line (`examples: [[1, 2, 3]]`); a longer one collapses, its key in the summary
+  (`▸ examples: Array (1)`); a string's own double quotes are shown as they are
+  (`"STRUCT("name" VARCHAR)"`, was `"STRUCT(\"name\" VARCHAR)"`). *Expand additional
+  information* (`expandAdditionalInfo`) opens those longer values one level.
+- Demo: rebuilt around the dictionary. A slim app bar holds the source menu (examples, open
+  files or a folder, the loaded documents and the root document), the semantic-search switch, an
+  Export menu (HTML, Excel, CSV, copy) and settings (theme, display options); files and folders
+  drop anywhere on the window; the dictionary fills the rest. While semantic search is on, the
+  model in use sits beside its switch (*LEAF-IR*, *Jina v5 nano* or *EmbeddingGemma 2*) and
+  opens a menu to switch models, each with its download size, parameter count and licence, and
+  the device it runs on; the loading and indexing status follows it. Turning semantic search on
+  or off, switching models or changing a display option keeps the query. Theme and column
+  widths are remembered, and the exported HTML page uses the same full-window layout.
+- Demo: a logo that shows what the app does: the JSON Schema logo (its braces, check and x), an
+  arrow, then a spreadsheet, in the theme's accent. In an app bar narrower than 540 px it
+  becomes a tile, which is also the favicon, and on a phone the example's name shortens before
+  the model's does.
+- Transformers.js 4.3.1 (was 4.2.0) in the demo, the README examples and the dev dependency.
+  `npm run eval` evaluates LEAF-IR alone unless `--model` names others.
+
+### Removed
+
+- `Xenova/bge-small-en-v1.5` and `Xenova/all-MiniLM-L6-v2` are no longer verified models (in
+  `KNOWN_EMBEDDING_MODELS` or the demo). They still load as unverified models when given their
+  settings: `pooling: "cls"` for bge-small or `"mean"` for MiniLM, and `minScore: 0.25`.
+  Without them the embedder warns and pools by mean.
+
+### Fixed
+
+- The column header now stays in view while the table scrolls. It was sticky inside a
+  container that never scrolled vertically, so it scrolled away with the rows.
+- A data type no longer breaks inside a word in a narrow column (`categoric` / `al
+  (integer)`), and a nested field's name breaks between its parent path and its own name, or
+  after a `.` of the parent path (`depth5.l2.l3.` / `l4.l5`), not inside a name.
+
+### Maintenance
+
+- `tests/perf-smoke.test.mjs` times the better of two renders, so a render that lands on a busy
+  core while other test files run does not fail the budget.
+- Development dependencies updated: TypeScript 6.0.3 (was 5.9.3), tsup 8.5.1 and happy-dom
+  20.14.6, and the overrides that keep `npm ci` clean now resolve archiver 8, uuid 14 and fast-csv
+  5.0.8. `npm audit` finds no vulnerabilities (a high-severity advisory in brace-expansion is
+  gone), and `npm ci` prints no warnings. The type declarations are byte-for-byte what TypeScript
+  5.9 produced. TypeScript 7 is not adopted yet: tsup bundles the declarations through
+  TypeScript's JavaScript API, which 7.0 no longer ships.
+
 ## 0.6.0 - 2026-09-05
 
 Variables of any JSON type.

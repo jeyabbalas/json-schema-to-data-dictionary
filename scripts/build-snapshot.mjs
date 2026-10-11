@@ -21,7 +21,7 @@ export const ROOT = join(HERE, "..");
 export const MODEL_CACHE_DIR = join(ROOT, ".cache", "transformers");
 export const INSTALL_HINT =
   "@huggingface/transformers (a dev dependency) is not installed. Run `npm install`, or\n" +
-  "`npm install --no-save @huggingface/transformers@^4.2.0`, then try again.";
+  "`npm install --no-save @huggingface/transformers@^4.3.1`, then try again.";
 
 const USAGE = `usage: node scripts/build-snapshot.mjs <schema file or dir> <out.jsddvec> [options]
 

@@ -24,8 +24,8 @@ function tensor(type, data, dims) {
   return t;
 }
 
-function createStub({ hidden = 4, sentence = 6, failDevices = [], padSide = "right", withSentence = true, delayMs = 2 } = {}) {
-  const seen = { tokenizer: [], model: [], calls: [], forwards: 0, disposed: 0, tensors: [] };
+function createStub({ hidden = 4, sentence = 6, failDevices = [], padSide = "right", withSentence = true, delayMs = 2, withConfig = true } = {}) {
+  const seen = { tokenizer: [], model: [], config: [], calls: [], forwards: 0, disposed: 0, tensors: [] };
   const vocab = new Map();
   const idOf = (w) => {
     if (!vocab.has(w)) vocab.set(w, vocab.size + 1);
@@ -104,6 +104,15 @@ function createStub({ hidden = 4, sentence = 6, failDevices = [], padSide = "rig
         return model;
       }
     },
+    // A multimodal config: a text model plus two encoders (see configOverrides).
+    AutoConfig: withConfig
+      ? {
+          async from_pretrained(name, opts) {
+            seen.config.push({ name, opts });
+            return { model_type: "multimodal", text_config: { hidden_size: hidden }, vision_config: { patch: 16 }, audio_config: { mel: 128 } };
+          }
+        }
+      : undefined,
     env: {}
   };
   return { module, seen, stats, ids, hidden, sentence };
@@ -169,8 +178,17 @@ test("model table: LEAF is the default; every entry is complete", () => {
   assert.deepEqual(jina.devices, ["webgpu"]);
   assert.equal(jina.license, "CC-BY-NC-4.0");
   assert.equal(jina.dtype.webgpu, "q4f16");
-  assert.equal(KNOWN_EMBEDDING_MODELS["Xenova/bge-small-en-v1.5"].pooling, "cls");
-  assert.equal(KNOWN_EMBEDDING_MODELS["Xenova/all-MiniLM-L6-v2"].pooling, "mean");
+  const gemma = KNOWN_EMBEDDING_MODELS["onnx-community/embeddinggemma-2-ONNX"];
+  assert.equal(gemma.pooling, "sentence_embedding");
+  assert.deepEqual([gemma.queryPrefix, gemma.documentPrefix], ["task: search result | query: ", "title: none | text: "]);
+  assert.deepEqual(gemma.devices, ["webgpu"]);
+  assert.equal(gemma.dtype.webgpu, "q4f16");
+  assert.deepEqual(gemma.configOverrides, { vision_config: null, audio_config: null }, "loaded as a text model");
+  assert.equal(gemma.license, "Apache-2.0");
+  assert.deepEqual(
+    Object.keys(KNOWN_EMBEDDING_MODELS).sort(),
+    [DEFAULT_EMBEDDING_MODEL, "jinaai/jina-embeddings-v5-text-nano-retrieval", "onnx-community/embeddinggemma-2-ONNX"].sort()
+  );
   for (const [id, m] of Object.entries(KNOWN_EMBEDDING_MODELS)) {
     assert.ok(["cls", "mean", "last_token", "sentence_embedding"].includes(m.pooling), id);
     assert.equal(typeof m.queryPrefix, "string", id);
@@ -428,6 +446,53 @@ test("Jina outside WebGPU warns once; unknown models warn about missing options"
   assert.equal(again.warnings.length, 0, "only once per model");
   const complete = await captureWarnings(() => createTransformersEmbedder(createStub().module, { model: "someone/other-model", pooling: "cls", minScore: 0.2 }));
   assert.equal(complete.warnings.length, 0, "explicit pooling + minScore: no warning");
+});
+
+test("configOverrides: EmbeddingGemma 2 loads as a text model, its config read through AutoConfig", async () => {
+  const GEMMA = "onnx-community/embeddinggemma-2-ONNX";
+  const stub = createStub();
+  const { warnings } = await captureWarnings(async () => {
+    const embedder = createTransformersEmbedder(stub.module, { model: GEMMA });
+    await embedder.load();
+    assert.deepEqual(stub.seen.config.map((c) => c.name), [GEMMA], "the config is read once, before the model");
+    const { config } = stub.seen.model[0].opts;
+    assert.equal(config.vision_config, null);
+    assert.equal(config.audio_config, null);
+    assert.deepEqual(config.text_config, { hidden_size: stub.hidden }, "the text model's config is untouched");
+    assert.deepEqual([embedder.info.pooling, embedder.info.license, embedder.info.dims], ["sentence_embedding", "Apache-2.0", 768]);
+    await embedder.embed(["smoking"], "query");
+    assert.deepEqual(stub.seen.calls.at(-1).texts, ["task: search result | query: smoking"]);
+    await embedder.embed(["smoking"], "document");
+    assert.deepEqual(stub.seen.calls.at(-1).texts, ["title: none | text: smoking"]);
+  });
+  assert.equal(warnings.filter((w) => /webgpu only/.test(w)).length, 1, "verified on WebGPU only, like Jina");
+
+  // On WebGPU: q4f16 with shader-f16; a failing session retries on WASM (q4) with the same config.
+  await withFakeGpu(["shader-f16"], async () => {
+    const gpu = createStub({ failDevices: ["webgpu"] });
+    await captureWarnings(() => createTransformersEmbedder(gpu.module, { model: GEMMA }).load());
+    assert.deepEqual(
+      gpu.seen.model.map((m) => [m.opts.device, m.opts.dtype, m.opts.config.vision_config, m.opts.config.audio_config]),
+      [["webgpu", "q4f16", null, null], ["wasm", "q4", null, null]]
+    );
+    assert.equal(gpu.seen.config.length, 1);
+  });
+
+  // A model without overrides never reads the config; explicit overrides work for any model.
+  const leaf = createStub();
+  await createTransformersEmbedder(leaf.module, {}).load();
+  assert.equal(leaf.seen.config.length, 0);
+  assert.equal("config" in leaf.seen.model[0].opts, false);
+  const own = createStub();
+  await custom(own, { configOverrides: { audio_config: null } }).load();
+  assert.equal(own.seen.model[0].opts.config.audio_config, null);
+  assert.deepEqual(own.seen.model[0].opts.config.vision_config, { patch: 16 });
+
+  // A module without AutoConfig: one warning, and the model loads with its own config.
+  const bare = createStub({ withConfig: false });
+  const noConfig = await captureWarnings(() => createTransformersEmbedder(bare.module, { model: "custom/bare", pooling: "mean", minScore: 0.1, configOverrides: { vision_config: null } }).load());
+  assert.equal(noConfig.warnings.filter((w) => /no AutoConfig/.test(w)).length, 1);
+  assert.equal("config" in bare.seen.model[0].opts, false);
 });
 
 test("pipelineOptions is a deprecated alias of modelOptions; both reach AutoModel.from_pretrained", async () => {

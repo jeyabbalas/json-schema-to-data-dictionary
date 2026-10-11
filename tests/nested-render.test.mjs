@@ -203,6 +203,15 @@ test("tableToHtml: nested rows carry data-dd-depth and the prefix/leaf, and the 
   document.body.innerHTML = "";
 });
 
+test("tableToHtml: a deep path may break after each `.` of its parent path, never inside a name", () => {
+  const html = tableToHtml(nestedTable());
+  const name = (prefix, leaf) => `<code><span class="dd-name-prefix">${prefix}</span><wbr><span class="dd-name-leaf">${leaf}</span></code>`;
+  assert.ok(html.includes(name("contact.<wbr>address.<wbr>", "zip")));
+  assert.ok(html.includes(name("visits[].<wbr>labs[].<wbr>", "name")));
+  assert.ok(html.includes(name("genotype", "[0]")), "a prefix without a `.` gets no extra break");
+  assert.ok(html.includes(name("biomarkers.<wbr>", "/^il_[0-9]+$/")), "the leaf is left whole");
+});
+
 test("lazy rows: a page boundary inside a nested group keeps the category order", { skip }, () => {
   const table = nestedBigTable();
   const expected = table.rows.map((r) => r["Variable name"]);

@@ -4,7 +4,7 @@
 // The element class is created lazily so importing this module in a non-DOM environment
 // (Node, SSR) does not reference HTMLElement at evaluation time.
 
-import type { DataDictionaryTable, RenderOptions } from "../types";
+import type { ColumnResizeDetail, DataDictionaryTable, RenderOptions } from "../types";
 import type { Embedder, SemanticIndex } from "../search/types";
 import { createSemanticIndex } from "../search/semanticIndex";
 import { slugify } from "../utils";
@@ -14,6 +14,8 @@ import type { ViewModel } from "./viewModel";
 import { buildMarkup } from "./markup";
 import { STYLES } from "./styles";
 import { attachBehavior } from "./behavior";
+import { columnOfKey, widthsByColumn } from "./columns";
+import type { WidthsByKey } from "./columns";
 import { createSearchEngine } from "../search/engine";
 import type { SearchEngine } from "../search/types";
 
@@ -48,6 +50,8 @@ function getElementClass(): new () => DataDictionaryElement {
     private _cleanup: (() => void) | undefined;
     private _semantic: SemanticState | undefined;
     private _engine: SearchEngine | undefined;
+    /** Column widths the reader set since `options` was last assigned (they survive re-renders). */
+    private _widths: WidthsByKey | undefined;
 
     get semanticIndex(): SemanticIndex | undefined {
       return this._semantic?.index;
@@ -70,6 +74,7 @@ function getElementClass(): new () => DataDictionaryElement {
     }
     set options(value: RenderOptions) {
       this._options = value ?? {};
+      this._widths = undefined;
       this.renderNow();
     }
 
@@ -131,6 +136,7 @@ function getElementClass(): new () => DataDictionaryElement {
       const table = this._table;
       this.syncSemanticIndex();
       const vm = buildViewModel(table, this._options);
+      if (this._widths) vm.options.columnWidths = this._widths;
       const useShadow = this._options.shadow !== false;
       const markup = buildMarkup(vm, "component");
       const filename = `${slugify(vm.title)}.csv`;
@@ -152,7 +158,12 @@ function getElementClass(): new () => DataDictionaryElement {
         this.innerHTML = markup;
         container = this;
       }
-      const detach = attachBehavior(container, { vm, csv, filename, engine, semanticIndex: this._semantic?.index });
+      const onColumnsChange = (widths: WidthsByKey, key: string | null): void => {
+        this._widths = widths;
+        const detail: ColumnResizeDetail = { column: columnOfKey(key), widths: widthsByColumn(widths) };
+        this.dispatchEvent(new CustomEvent("dd-column-resize", { detail, bubbles: true, composed: true }));
+      };
+      const detach = attachBehavior(container, { vm, csv, filename, engine, semanticIndex: this._semantic?.index, onColumnsChange });
       this._cleanup = () => {
         detach();
         engine.dispose();

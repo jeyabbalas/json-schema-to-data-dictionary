@@ -859,12 +859,7 @@
    "constraints": [
     [
      "required",
-     "Required in variant 2 of contact",
-     null
-    ],
-    [
-     "oneOf",
-     "In variant 2 of contact",
+     "Required when contact is an object",
      null
     ]
    ],
@@ -884,7 +879,7 @@
    "constraints": [
     [
      "oneOf",
-     "In variant 2 of contact",
+     "When contact is an object",
      null
     ]
    ],
@@ -1280,7 +1275,7 @@
    "name": "daily_steps",
    "category": "General",
    "description": "Daily step counts\nAccelerometer step counts for the wear period; a day without wear is null.",
-   "type": "array of integer or null",
+   "type": "array of nullable integer",
    "format": "",
    "values": [],
    "constraints": [
@@ -1663,6 +1658,9 @@
  "conditionalRules": [
   {
    "condition": "vital_status = 0",
+   "triggers": [
+    "vital_status"
+   ],
    "description": "Skip pattern: alive (vital_status=0) => death_year is Not applicable (777).",
    "effects": [
     {
@@ -1674,6 +1672,9 @@
   },
   {
    "condition": "visits[].fasting = 0",
+   "triggers": [
+    "visits[].fasting"
+   ],
    "description": "Skip pattern: non-fasting visit (fasting=0) => plasma glucose is recorded as Missing (999).",
    "effects": [
     {
@@ -1685,6 +1686,9 @@
   },
   {
    "condition": "baseline.fasting = 0",
+   "triggers": [
+    "baseline.fasting"
+   ],
    "description": "Skip pattern: non-fasting visit (fasting=0) => plasma glucose is recorded as Missing (999).",
    "effects": [
     {

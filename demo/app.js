@@ -2,14 +2,17 @@
  * Demo app for json-schema-data-dictionary.
  *
  * No schema editor: users either pick a built-in preset (window.DEMO_PRESETS,
- * generated from tests/fixtures by build-presets.mjs) or upload their own .json
- * files / folders. Each document is handed to the library as { uri, name, schema }
+ * generated from tests/fixtures by build-presets.mjs) or open / drop their own .json
+ * files and folders. Each document is handed to the library as { uri, name, schema }
  * with a synthetic uri of https://demo.local/<path> so that relative $refs between
  * documents resolve exactly as they would on disk.
  *
- * Semantic search is opt-in: a model picker (DEMO_MODELS) feeds an embedding worker, and a
- * preset that ships precomputed vectors (demo/vectors, see build-presets.mjs) is searchable
- * without embedding anything in the browser.
+ * The page is an app bar over the dictionary, which fills the rest of the window. The menus
+ * (source, model, export, settings) are popovers positioned under their buttons.
+ *
+ * Semantic search is opt-in: while its switch is on, a model menu beside it (DEMO_MODELS)
+ * chooses what the embedding worker runs, and a preset that ships precomputed vectors
+ * (demo/vectors, see build-presets.mjs) is searchable without embedding anything in the browser.
  *
  * Automation hooks: session-only URL overrides (see readOverrides) and window.ddDemo.
  */
@@ -20,6 +23,7 @@
   var SYNTH_BASE = "https://demo.local/";
 
   var $ = function (sel) { return document.querySelector(sel); };
+  var $$ = function (sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); };
 
   // --- State --------------------------------------------------------------
   var docs = [];            // [{ path, schema }]
@@ -33,12 +37,18 @@
   // Session-only URL overrides (see readOverrides), populated once in start().
   var OVERRIDES = {};
 
+  // Reader preferences kept across visits.
+  var THEME_KEY = "dd-demo:theme";
+  var COLUMNS_KEY = "dd-demo:columns";
+  var theme = "auto";
+  var columnWidths = {};    // the widths the reader dragged the columns to (ColumnWidths)
+
   // Semantic search (opt-in). The model runs in demo/embed-worker.js when Workers are
   // available (not on file://), otherwise on the main thread. The embedder is created once
   // per model and reused across re-renders; the library caches row embeddings in IndexedDB.
   var SEMANTIC_KEY = "dd-demo:semantic";
   var MODEL_KEY = "dd-demo:model";
-  var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+  var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1";
   // The Pages deploy appends ?v=<commit> to every asset URL (cache-busting). Forward it to
   // the worker so a fresh app.js never pairs with a stale embed-worker.js.
   var ASSET_QUERY = (function () {
@@ -48,24 +58,17 @@
       return m ? m[0] : "";
     } catch (e) { return ""; }
   })();
-  // Models offered by the picker (#semantic-model). Every id must be in the library's
-  // KNOWN_EMBEDDING_MODELS table (pooling, prefixes, per-device dtype, cosine floor); ids the
-  // running build doesn't know are dropped at start-up. `size` is the download per device.
+  // Models offered by the model menu (#model-menu). Every id must be in the library's
+  // KNOWN_EMBEDDING_MODELS table (pooling, prefixes, per-device dtype, cosine floor), which also
+  // supplies the parameter count and licence the menu shows; ids the running build doesn't know
+  // are dropped at start-up. `size` is the download per precision.
   var DEMO_MODELS = [
-    { id: "MongoDB/mdbr-leaf-ir", label: "LEAF-IR · 23M · Apache-2.0", size: "23 MB q8 / 46 MB fp16", isDefault: true },
-    { id: "Xenova/bge-small-en-v1.5", label: "BGE small v1.5 · 33M · MIT", size: "34 MB q8" },
-    { id: "Xenova/all-MiniLM-L6-v2", label: "all-MiniLM-L6-v2 · 23M · Apache-2.0", size: "22 MB q8" },
-    {
-      id: "jinaai/jina-embeddings-v5-text-nano-retrieval",
-      label: "Jina v5 nano retrieval · 239M · CC-BY-NC-4.0 · needs WebGPU",
-      size: "124 MB q4f16",
-      nonCommercial: true,
-      needsWebGPU: true,
-      notice: "Jina v5 nano is licensed CC-BY-NC-4.0: non-commercial use only."
-    }
+    { id: "MongoDB/mdbr-leaf-ir", name: "LEAF-IR", size: "23 MB q8 / 46 MB fp16", isDefault: true },
+    { id: "jinaai/jina-embeddings-v5-text-nano-retrieval", name: "Jina v5 nano", size: "124 MB q4f16", nonCommercial: true, needsWebGPU: true },
+    { id: "onnx-community/embeddinggemma-2-ONNX", name: "EmbeddingGemma 2", size: "157 MB q4f16", needsWebGPU: true }
   ];
   var MODELS = [];               // DEMO_MODELS cross-checked against the library at start-up
-  var selectedModel = null;      // the picker's (persisted) choice; the ?model= override wins over it
+  var selectedModel = null;      // the menu's (persisted) choice; the ?model= override wins over it
   var semanticEmbedder = null;   // set once the embedder is loaded and the box is still ticked
   var semanticWorker = null;
   var embedderPromise = null;
@@ -75,13 +78,67 @@
   var eta = null;                // { t0, done0 }: first indexing sample of the current run (ETA baseline)
   var WEBGPU = false;            // a WebGPU adapter can be acquired (probed once in start(); see probeWebGpu)
 
+  // --- Icons (inline SVG, so the page needs no icon font) -------------------
+  var ICON_CHECK = '<svg class="option-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>';
+  var ICON_X = '<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg>';
+
   // --- Messages -----------------------------------------------------------
+  // A slim, dismissible line under the app bar per message. The dictionary reports its own
+  // extraction warnings in its toolbar, so only what the demo itself learns lands here.
   function clearMessages() { $("#messages").replaceChildren(); }
   function addMessage(type, text) {
     var div = document.createElement("div");
     div.className = "message " + type;
-    div.textContent = text;
+    div.setAttribute("role", type === "error" ? "alert" : "status");
+    var span = document.createElement("span");
+    span.className = "message-text";
+    span.textContent = text;
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "message-close";
+    close.setAttribute("aria-label", "Dismiss");
+    close.textContent = "×";
+    close.addEventListener("click", function () { div.remove(); });
+    div.append(span, close);
     $("#messages").appendChild(div);
+  }
+
+  // --- Menus ----------------------------------------------------------------
+  // Popovers live in the top layer, centred by default; place each under the button that
+  // opened it, left-aligned on the left of the bar (source, model) and right-aligned on the
+  // right (export, settings), inside the window.
+  function placeMenu(menu, button) {
+    var r = button.getBoundingClientRect();
+    var alignRight = r.left + r.width / 2 > window.innerWidth / 2;
+    menu.style.top = Math.round(r.bottom + 6) + "px";
+    if (alignRight) {
+      menu.style.left = "auto";
+      menu.style.right = Math.max(8, Math.round(window.innerWidth - r.right)) + "px";
+    } else {
+      menu.style.right = "auto";
+      menu.style.left = Math.max(8, Math.round(r.left)) + "px";
+    }
+  }
+
+  function wireMenus() {
+    $$("[popovertarget]").forEach(function (button) {
+      var menu = document.getElementById(button.getAttribute("popovertarget"));
+      if (!menu) return;
+      menu.addEventListener("beforetoggle", function (e) {
+        if (e.newState === "open") placeMenu(menu, button);
+        button.setAttribute("aria-expanded", String(e.newState === "open"));
+      });
+    });
+    window.addEventListener("resize", function () {
+      $$(".menu").forEach(function (menu) {
+        try { if (menu.matches(":popover-open")) menu.hidePopover(); } catch (e) {}
+      });
+    });
+  }
+
+  function closeMenu(id) {
+    var menu = document.getElementById(id);
+    try { if (menu && menu.matches(":popover-open")) menu.hidePopover(); } catch (e) {}
   }
 
   // --- Presets ------------------------------------------------------------
@@ -99,25 +156,49 @@
     return -1;
   }
 
-  function presetValue(p, i) { return p.key || String(i); }
+  function fileCount(n) { return n + (n === 1 ? " file" : " files"); }
 
-  function populatePresetSelect() {
-    var sel = $("#preset-select");
-    var presets = allPresets();
-    sel.replaceChildren();
-    if (!presets.length) {
-      var o = document.createElement("option");
-      o.textContent = "(no examples available — run npm run demo)";
-      sel.appendChild(o);
-      sel.disabled = true;
-      return;
-    }
-    presets.forEach(function (p, i) {
-      var opt = document.createElement("option");
-      opt.value = presetValue(p, i);
-      opt.textContent = p.label;
-      sel.appendChild(opt);
+  // A choice in a menu (an example, a model): check mark, name, a note on the right and an
+  // optional line of detail. `attr` names the data attribute carrying `value`.
+  function optionButton(attr, value, name, note, desc) {
+    var item = document.createElement("button");
+    item.type = "button";
+    item.className = "option";
+    item.dataset[attr] = value;
+    item.innerHTML = ICON_CHECK;
+    item.append(textSpan("option-name", name), textSpan("option-note", note));
+    if (desc) item.appendChild(textSpan("option-desc", desc));
+    return item;
+  }
+
+  function textSpan(className, text) {
+    var span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    return span;
+  }
+
+  function populatePresets() {
+    var list = $("#preset-list");
+    var chips = $("#empty-presets");
+    list.replaceChildren();
+    chips.replaceChildren();
+    allPresets().forEach(function (p, i) {
+      list.appendChild(optionButton("preset", p.key || String(i), p.label, fileCount(p.documents.length), p.description));
+
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "btn";
+      chip.dataset.preset = p.key || String(i);
+      chip.textContent = p.label;
+      chips.appendChild(chip);
     });
+    if (!allPresets().length) {
+      var none = document.createElement("p");
+      none.className = "menu-hint";
+      none.textContent = "No examples in this build (run npm run demo).";
+      list.appendChild(none);
+    }
   }
 
   // Load a preset by key ("bcrpp") or index. Returns false when unknown.
@@ -126,8 +207,6 @@
     var i = findPresetIndex(indexOrKey);
     var p = presets[i];
     if (!p) return false;
-    $("#preset-select").value = presetValue(p, i);
-    $("#preset-description").textContent = p.description || "";
     docs = p.documents.map(function (d) { return { path: d.path, schema: d.schema }; });
     docsFromPreset = true;
     activePreset = p;
@@ -269,12 +348,41 @@
     }
   }
 
-  // --- Manifest + root selector ------------------------------------------
+  // The whole window takes drops: dragging files in shows the overlay, which then owns the
+  // drag until it is dropped on or left.
+  function wireDrop() {
+    var overlay = $("#drop-overlay");
+    var hasFiles = function (e) {
+      var types = e.dataTransfer && e.dataTransfer.types;
+      return !!types && Array.prototype.indexOf.call(types, "Files") >= 0;
+    };
+    window.addEventListener("dragenter", function (e) {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      overlay.hidden = false;
+    });
+    window.addEventListener("dragover", function (e) {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    overlay.addEventListener("dragleave", function (e) {
+      if (e.target === overlay) overlay.hidden = true;
+    });
+    window.addEventListener("drop", function (e) {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      overlay.hidden = true;
+      handleDrop(e);
+    });
+  }
+
+  // --- Source menu: documents + root selector -------------------------------
   function renderDocList() {
-    var field = $("#doc-list-field");
+    var section = $("#doc-section");
     var list = $("#doc-list");
-    $("#doc-count").textContent = String(docs.length);
-    field.hidden = docs.length === 0;
+    section.hidden = docsFromPreset || docs.length === 0;
+    $("#doc-count").textContent = fileCount(docs.length);
     list.replaceChildren();
     docs.forEach(function (d, i) {
       var li = document.createElement("li");
@@ -286,7 +394,7 @@
       btn.className = "doc-remove";
       btn.dataset.index = String(i);
       btn.setAttribute("aria-label", "Remove " + d.path);
-      btn.textContent = "×";
+      btn.innerHTML = ICON_X;
       li.append(name, btn);
       list.appendChild(li);
     });
@@ -329,6 +437,25 @@
     sel.value = rootIndex == null ? "" : String(rootIndex);
   }
 
+  // The source button names what is showing: the example, or the root of the uploaded set.
+  function updateSource() {
+    var name = "Examples";
+    var meta = "";
+    if (docsFromPreset && activePreset) {
+      name = activePreset.label;
+      meta = fileCount(docs.length);
+    } else if (docs.length) {
+      var root = rootIndex != null ? rootIndex : candidates.length ? candidates[0].index : 0;
+      name = docs[root] ? docs[root].path.split("/").pop() : "Your schemas";
+      meta = fileCount(docs.length);
+    }
+    $("#source-name").textContent = name;
+    $("#source-meta").textContent = meta;
+    $$("#preset-list [data-preset]").forEach(function (b) {
+      b.setAttribute("aria-current", String(!!(docsFromPreset && activePreset && b.dataset.preset === (activePreset.key || ""))));
+    });
+  }
+
   function removeDoc(i) {
     docs.splice(i, 1);
     rootIndex = null; // indices shifted; fall back to auto-detect
@@ -356,10 +483,10 @@
   }
 
   function setExportsEnabled(on) {
-    $("#download-html-btn").disabled = !on;
-    $("#download-csv-btn").disabled = !on;
+    $("#export-btn").disabled = !on;
     // Excel export also needs the (vendored) ExcelJS global to have loaded.
-    $("#download-excel-btn").disabled = !on || !window.ExcelJS;
+    var xlsx = $('[data-export="xlsx"]');
+    if (xlsx) xlsx.disabled = !on || !window.ExcelJS;
   }
 
   function afterDocsChanged(extras) {
@@ -369,10 +496,26 @@
     }
     renderDocList();
     populateRootSelect();
-    render(extras);
+    updateSource();
+    render(extras, true);
   }
 
-  function render(extras) {
+  function showEmpty(empty) {
+    $("#empty").hidden = !empty;
+    $("#output").hidden = empty;
+  }
+
+  // The dictionary's search box (in its shadow root, or in the page with ?shadow=0).
+  function searchBox() {
+    var el = $("#output").firstElementChild;
+    return el ? (el.shadowRoot || el).querySelector("[data-dd-search]") : null;
+  }
+
+  // Each render mounts a new dictionary. One for new options (theme, semantic search, a model)
+  // carries the reader's query over and runs it again; `fresh` (new documents) starts empty.
+  function render(extras, fresh) {
+    var box = fresh ? null : searchBox();
+    var query = box ? box.value : "";
     clearMessages();
     (extras || []).forEach(function (m) { addMessage(m.type, m.text); });
 
@@ -383,9 +526,10 @@
       lastRenderMs = null;
       lastSnapshot = null;
       setExportsEnabled(false);
-      addMessage("info", "Select an example or upload one or more JSON Schema files to begin.");
+      showEmpty(true);
       return;
     }
+    showEmpty(false);
 
     var table;
     try {
@@ -409,24 +553,57 @@
           " reads like a JSON Schema (no $schema, type, properties, items …), so the first one was used as the root."
       );
     }
-    (table.warnings || []).forEach(function (w) { addMessage("warning", w); });
 
     var options = {
       // ?shadow=0 forces light DOM until the checkbox is touched (see wire()).
       shadow: OVERRIDES.shadow === false ? false : $("#shadow").checked,
-      theme: $("#theme").value,
+      theme: theme,
       expandCategories: $("#expand-categories").checked,
-      expandAdditionalInfo: $("#expand-additional").checked
+      expandAdditionalInfo: $("#expand-additional").checked,
+      includeExport: false, // the app bar's Export menu covers CSV, Excel and HTML
+      columnWidths: columnWidths
     };
     var semantic = semanticOptions();
     if (semantic) options.semanticSearch = semantic;
     var t0 = performance.now();
     API.renderDataDictionary(out, table, options); // renders synchronously; painting is extra
     lastRenderMs = performance.now() - t0;
+    box = query && searchBox();
+    if (box) {
+      box.value = query;
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     setExportsEnabled(true);
   }
 
-  // --- Semantic search: model picker -------------------------------------
+  // --- Theme ----------------------------------------------------------------
+  function applyTheme(value, rerender) {
+    theme = value === "light" || value === "dark" ? value : "auto";
+    if (theme === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    $$('input[name="theme"]').forEach(function (r) { r.checked = r.value === theme; });
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    if (rerender) render();
+  }
+
+  // --- Column widths ----------------------------------------------------------
+  function loadColumnWidths() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(COLUMNS_KEY) || "{}");
+      if (saved && typeof saved === "object") columnWidths = saved;
+    } catch (e) { columnWidths = {}; }
+  }
+
+  // The dictionary reports every resize (and reset); keep the widths for the next render and visit.
+  function onColumnResize(e) {
+    columnWidths = (e.detail && e.detail.widths) || {};
+    try {
+      if (Object.keys(columnWidths).length) localStorage.setItem(COLUMNS_KEY, JSON.stringify(columnWidths));
+      else localStorage.removeItem(COLUMNS_KEY);
+    } catch (err) {}
+  }
+
+  // --- Semantic search: model menu ---------------------------------------
   // Usable WebGPU, as probed at start-up: `navigator.gpu` alone is not enough (Linux Chrome
   // without flags and headless browsers expose it but hand out no adapter).
   function webGpuAvailable() {
@@ -447,10 +624,23 @@
     return null;
   }
 
-  // Short display name: the label up to its first " · " (e.g. "LEAF-IR").
+  // Display name ("LEAF-IR"); an id from the URL that the menu doesn't offer shows its repo name.
   function modelName(id) {
     var m = findModel(id);
-    return m ? m.label.split(" · ")[0] : id;
+    return m ? m.name : String(id).split("/").pop();
+  }
+
+  // "23M params · Apache-2.0", from the library's table. A non-commercial licence says so in
+  // words (the item's tooltip names it); a model this browser can't run says why instead.
+  function modelDetail(m, unusable) {
+    if (unusable) return "Needs WebGPU, unavailable in this browser";
+    var known = (API.KNOWN_EMBEDDING_MODELS || {})[m.id];
+    var parts = [];
+    if (known && known.params) parts.push(Math.round(known.params / 1e6) + "M params");
+    if (m.nonCommercial) parts.push("non-commercial");
+    else if (known && known.license) parts.push(known.license);
+    if (m.needsWebGPU) parts.push("WebGPU only");
+    return parts.join(" · ");
   }
 
   function defaultModelId() {
@@ -459,7 +649,7 @@
     return MODELS.length ? MODELS[0].id : API.DEFAULT_EMBEDDING_MODEL || DEMO_MODELS[0].id;
   }
 
-  // The model the embedder runs: the ?model= override for this session, else the picker's choice.
+  // The model the embedder runs: the ?model= override for this session, else the menu's choice.
   function effectiveModel() {
     return OVERRIDES.model || selectedModel || defaultModelId();
   }
@@ -471,45 +661,45 @@
     if (!known) return DEMO_MODELS.slice();
     return DEMO_MODELS.filter(function (m) {
       if (known[m.id]) return true;
-      console.warn("[demo] Dropping " + m.id + " from the model picker: not in KNOWN_EMBEDDING_MODELS.");
+      console.warn("[demo] Dropping " + m.id + " from the model menu: not in KNOWN_EMBEDDING_MODELS.");
       return false;
     });
   }
 
-  function populateModelSelect() {
-    var sel = $("#semantic-model");
-    sel.replaceChildren();
+  function populateModelMenu() {
+    var list = $("#model-list");
+    list.replaceChildren();
     MODELS.forEach(function (m) {
-      var opt = document.createElement("option");
-      opt.value = m.id;
-      var text = m.label + " (" + m.size + ")";
-      if (m.needsWebGPU && !webGpuAvailable()) {
-        opt.disabled = true;
-        text += " (WebGPU unavailable)";
-      }
-      opt.textContent = text;
-      sel.appendChild(opt);
+      var unusable = !!m.needsWebGPU && !webGpuAvailable();
+      var item = optionButton("model", m.id, m.name, m.size, modelDetail(m, unusable));
+      item.disabled = unusable;
+      var known = (API.KNOWN_EMBEDDING_MODELS || {})[m.id];
+      if (m.nonCommercial && known && known.license) item.title = known.license + ": non-commercial use only";
+      list.appendChild(item);
     });
-    // A ?model= id outside the table is still listed, so the picker shows what is running.
+    // A ?model= id outside the table is still listed, so the menu shows what is running.
     if (OVERRIDES.model && !findModel(OVERRIDES.model)) {
-      var extra = document.createElement("option");
-      extra.value = OVERRIDES.model;
-      extra.textContent = OVERRIDES.model + " (from URL)";
+      var extra = optionButton("model", OVERRIDES.model, modelName(OVERRIDES.model), "", OVERRIDES.model + " · from the URL");
       extra.dataset.fromUrl = "1";
-      sel.appendChild(extra);
+      list.appendChild(extra);
     }
-    sel.disabled = !sel.options.length;
   }
 
-  // Reflect the effective model in the picker and in the licence notice.
+  // Reflect the effective model on the button beside the switch and in the menu.
   function syncModelUi() {
     var id = effectiveModel();
-    $("#semantic-model").value = id;
-    var m = findModel(id);
-    var notice = $("#semantic-notice");
-    var text = m && m.nonCommercial ? m.notice : "";
-    notice.hidden = !text;
-    notice.textContent = text;
+    $("#model-name").textContent = modelName(id);
+    $("#model-btn").setAttribute("aria-label", "Embedding model: " + modelName(id));
+    $$("#model-list [data-model]").forEach(function (b) {
+      b.setAttribute("aria-current", String(b.dataset.model === id));
+    });
+  }
+
+  // The model button sits beside the switch while semantic search is on.
+  function syncModelButton() {
+    var on = $("#semantic").checked;
+    $("#model-btn").hidden = !on;
+    if (!on) closeMenu("model-menu");
   }
 
   // Start-up: cross-check the table, restore the saved choice (the URL override wins for the
@@ -519,7 +709,7 @@
     var saved = null;
     try { saved = localStorage.getItem(MODEL_KEY); } catch (e) {}
     selectedModel = findModel(saved) ? saved : defaultModelId();
-    populateModelSelect();
+    populateModelMenu();
     var m = findModel(effectiveModel());
     if (m && m.needsWebGPU && !webGpuAvailable()) {
       delete OVERRIDES.model;
@@ -529,12 +719,12 @@
     syncModelUi();
   }
 
-  // From the picker (or ddDemo.setModel): save the choice and, when semantic search is on,
-  // restart it on the new model. Returns false for an id the picker doesn't offer.
+  // From the menu (or ddDemo.setModel): save the choice and, when semantic search is on,
+  // restart it on the new model. Returns false for an id the menu doesn't offer.
   function setModel(id) {
     if (!findModel(id)) return false;
     delete OVERRIDES.model; // an explicit choice replaces the session override
-    var extra = $("#semantic-model option[data-from-url]");
+    var extra = $("#model-list [data-from-url]");
     if (extra) extra.remove();
     selectedModel = id;
     try { localStorage.setItem(MODEL_KEY, id); } catch (e) {}
@@ -608,7 +798,7 @@
   }
 
   // The loaded embedder for the current start: the worker, else the main thread. The model is
-  // downloaded and initialised here (progress + device chip), so the component's own load()
+  // downloaded and initialised here (progress + device note), so the component's own load()
   // call afterwards is a no-op.
   function getEmbedder(myGen) {
     if (embedderPromise) return embedderPromise;
@@ -630,25 +820,29 @@
     return embedderPromise;
   }
 
-  // --- Semantic search: status, device chip, ETA ---------------------------
-  function setStatusText(text) {
+  // --- Semantic search: status, device note, ETA ---------------------------
+  // One status line beside the switch for the whole lifecycle (the dictionary's own status
+  // chip is hidden by the stylesheet): loading, indexing with an ETA, then nothing once ready.
+  function setStatusText(text, state) {
     var el = $("#semantic-status");
     el.hidden = !text;
     el.textContent = text || "";
+    if (state) el.dataset.state = state; else el.removeAttribute("data-state");
   }
 
   function showSemanticStatus(status) {
     if (!status) { eta = null; setStatusText(""); return; }
     if (status.state === "loading") {
-      setStatusText(status.progress == null ? "Loading model…" : "Loading model… " + Math.round(status.progress * 100) + "%");
+      setStatusText(status.progress == null ? "Loading model…" : "Loading model " + Math.round(status.progress * 100) + "%");
     } else if (status.state === "indexing") {
-      setStatusText("Indexing… " + fmtCount(status.done) + " / " + fmtCount(status.total) + indexingEta(status));
+      setStatusText("Indexing " + fmtCount(status.done) + " / " + fmtCount(status.total) + indexingEta(status));
     } else if (status.state === "ready") {
       eta = null;
-      setStatusText(""); // the component's own chip ("Semantic search on") takes over from here
+      setStatusText("");
     } else {
       eta = null;
-      setStatusText("Unavailable: " + status.message);
+      setStatusText("Unavailable", "error");
+      $("#semantic-status").title = status.message || "";
     }
   }
 
@@ -675,22 +869,18 @@
 
   var DEVICE_LABELS = { webgpu: "WebGPU", wasm: "WASM", cpu: "CPU" };
 
-  // "WebGPU · fp16" / "WASM · q8" from embedder.info (known once load() is done).
+  // "Running on WebGPU · fp16" at the foot of the model menu, from embedder.info (known once load() is done).
   function showDeviceInfo(info) {
     var el = $("#semantic-device");
     if (!info || !info.device) {
       el.hidden = true;
       el.textContent = "";
-      el.removeAttribute("data-device");
-      el.removeAttribute("title");
       return;
     }
     var device = String(info.device).toLowerCase();
     var parts = [DEVICE_LABELS[device] || info.device];
     if (info.dtype) parts.push(info.dtype);
-    el.textContent = parts.join(" · ");
-    el.setAttribute("data-device", device);
-    el.title = info.model || effectiveModel();
+    el.textContent = "Running on " + parts.join(" · ");
     el.hidden = false;
   }
 
@@ -739,7 +929,7 @@
     var slot = entry ? loadSnapshot(entry) : null;
     if (slot && !slot.done) {
       lastSnapshot = null;
-      setStatusText("Loading precomputed vectors…");
+      setStatusText("Loading vectors…");
       if (!slot.waiting) {
         slot.waiting = true;
         slot.promise.then(function () {
@@ -757,7 +947,7 @@
   }
 
   // --- Semantic search: start / stop ---------------------------------------
-  // From the checkbox: remember the choice, then apply it.
+  // From the switch: remember the choice, then apply it.
   function setSemantic(on) {
     try { localStorage.setItem(SEMANTIC_KEY, on ? "1" : "0"); } catch (e) {}
     applySemantic(on);
@@ -765,6 +955,7 @@
 
   // Start or stop semantic search without touching the saved preference (start-up, ?semantic=).
   function applySemantic(on) {
+    syncModelButton();
     if (!on) {
       stopSemantic();
       render();
@@ -772,7 +963,6 @@
     }
     var myGen = ++generation;
     eta = null;
-    $("#semantic-hint").hidden = false;
     showSemanticStatus({ state: "loading", progress: undefined });
     var entry = snapshotEntry();
     var vectors = entry ? loadSnapshot(entry).promise : Promise.resolve(null); // alongside the model download
@@ -787,6 +977,7 @@
         if (myGen !== generation) return; // a newer start owns the UI
         stopSemantic();
         $("#semantic").checked = false;
+        syncModelButton();
         addMessage("error", "Couldn’t start semantic search: " + err.message);
       }
     );
@@ -801,7 +992,6 @@
     if (semanticWorker) { semanticWorker.terminate(); semanticWorker = null; }
     showSemanticStatus(null);
     showDeviceInfo(null);
-    $("#semantic-hint").hidden = true;
   }
 
   // --- Export -------------------------------------------------------------
@@ -827,21 +1017,33 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
+  // A standalone page laid out like this one: the dictionary fills the window and scrolls inside.
   function downloadHtml() {
     if (!lastTable) return;
-    var widget = API.tableToHtml(lastTable, { theme: $("#theme").value });
+    var widget = API.tableToHtml(lastTable, { theme: theme, columnWidths: columnWidths });
+    var dark = theme === "dark" ? "#111114" : "#ffffff";
     var page =
       "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n" +
       "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n" +
       "<title>" + escapeHtml(lastTable.title || "Data dictionary") + "</title>\n" +
-      "<style>body{margin:0;padding:24px;max-width:1200px;margin-inline:auto;background:#fafbfc;}</style>\n" +
-      "</head>\n<body>\n" + widget + "\n</body>\n</html>\n";
+      "<style>html,body{height:100%;margin:0}body{box-sizing:border-box;padding:20px 24px;background:" + dark + "}" +
+      ".dd-embed{height:100%}" +
+      (theme === "auto" ? "@media (prefers-color-scheme: dark){body{background:#111114}}" : "") +
+      "</style>\n</head>\n<body>\n" + widget + "\n</body>\n</html>\n";
     downloadBlob(slug(lastTable.title) + ".html", "text/html;charset=utf-8", page);
   }
 
   function downloadCsv() {
     if (!lastTable) return;
     downloadBlob(slug(lastTable.title) + ".csv", "text/csv;charset=utf-8", API.tableToCsv(lastTable));
+  }
+
+  function copyCsv() {
+    if (!lastTable || !navigator.clipboard) return;
+    navigator.clipboard.writeText(API.tableToCsv(lastTable)).then(
+      function () { addMessage("info", "Copied the dictionary to the clipboard as CSV."); },
+      function (err) { addMessage("error", "Couldn’t copy: " + err.message); }
+    );
   }
 
   // Build a formatted .xlsx with ExcelJS: a leading Category column plus the seven
@@ -887,75 +1089,74 @@
     );
   }
 
-  // --- Input panel collapse ----------------------------------------------
-  // Hide the upload sidebar so the table reclaims its grid column. The toggle lives
-  // in the always-rendered output toolbar, so it stays reachable once the panel is gone.
-  var INPUTS_COLLAPSED_KEY = "dd-demo:inputs-collapsed";
-
-  function setInputsCollapsed(collapsed) {
-    $("#layout").classList.toggle("inputs-collapsed", collapsed);
-    var btn = $("#toggle-input-btn");
-    btn.setAttribute("aria-expanded", String(!collapsed));
-    btn.title = collapsed ? "Show input panel" : "Hide input panel";
-    $(".panel-toggle-icon").textContent = collapsed ? "›" : "‹";
-    $(".panel-toggle-label").textContent = collapsed ? "Show panel" : "Hide panel";
-    try { localStorage.setItem(INPUTS_COLLAPSED_KEY, collapsed ? "1" : "0"); } catch (e) {}
-  }
+  var EXPORTS = { html: downloadHtml, csv: downloadCsv, xlsx: downloadExcel, copy: copyCsv };
 
   // --- Wiring -------------------------------------------------------------
   function wire() {
-    $("#preset-select").addEventListener("change", function (e) { loadPreset(e.target.value); });
+    wireMenus();
+    wireDrop();
+
+    // Presets: the source menu's list and the empty state's chips.
+    document.addEventListener("click", function (e) {
+      var preset = e.target.closest && e.target.closest("[data-preset]");
+      if (preset) {
+        loadPreset(preset.dataset.preset);
+        closeMenu("source-menu");
+        return;
+      }
+      var open = e.target.closest && e.target.closest("[data-open]");
+      if (open) {
+        closeMenu("source-menu");
+        $(open.dataset.open === "folder" ? "#folder-input" : "#file-input").click();
+      }
+    });
 
     $("#file-input").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
     $("#folder-input").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
-
-    var dz = $("#drop-zone");
-    ["dragenter", "dragover"].forEach(function (ev) {
-      dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add("dragover"); });
-    });
-    ["dragleave", "dragend"].forEach(function (ev) {
-      dz.addEventListener(ev, function () { dz.classList.remove("dragover"); });
-    });
-    dz.addEventListener("drop", function (e) {
-      e.preventDefault();
-      dz.classList.remove("dragover");
-      handleDrop(e);
-    });
 
     $("#doc-list").addEventListener("click", function (e) {
       var btn = e.target.closest("button[data-index]");
       if (btn) removeDoc(Number(btn.dataset.index));
     });
-    $("#clear-btn").addEventListener("click", clearAll);
+    $("#clear-btn").addEventListener("click", function () { clearAll(); closeMenu("source-menu"); });
 
     $("#root-select").addEventListener("change", function (e) {
       rootIndex = e.target.value === "" ? null : Number(e.target.value);
-      render();
+      updateSource();
+      render(null, true);
     });
-    ["#theme", "#expand-categories", "#expand-additional"].forEach(function (sel) {
+
+    $$('input[name="theme"]').forEach(function (r) {
+      r.addEventListener("change", function () { if (r.checked) applyTheme(r.value, true); });
+    });
+    ["#expand-categories", "#expand-additional"].forEach(function (sel) {
       $(sel).addEventListener("change", function () { render(); });
     });
     $("#shadow").addEventListener("change", function () { delete OVERRIDES.shadow; render(); });
     $("#semantic").addEventListener("change", function (e) { setSemantic(e.target.checked); });
-    $("#semantic-model").addEventListener("change", function (e) {
-      if (!setModel(e.target.value)) syncModelUi(); // unusable choice: snap back to what runs
+    $("#model-list").addEventListener("click", function (e) {
+      var item = e.target.closest("[data-model]");
+      if (!item || item.disabled) return;
+      closeMenu("model-menu");
+      if (item.dataset.model !== effectiveModel()) setModel(item.dataset.model);
     });
 
-    $("#download-html-btn").addEventListener("click", downloadHtml);
-    $("#download-csv-btn").addEventListener("click", downloadCsv);
-    $("#download-excel-btn").addEventListener("click", downloadExcel);
-
-    $("#toggle-input-btn").addEventListener("click", function () {
-      setInputsCollapsed(!$("#layout").classList.contains("inputs-collapsed"));
+    $("#export-menu").addEventListener("click", function (e) {
+      var item = e.target.closest("[data-export]");
+      if (!item || item.disabled) return;
+      closeMenu("export-menu");
+      EXPORTS[item.dataset.export]();
     });
+
+    $("#output").addEventListener("dd-column-resize", onColumnResize);
   }
 
   // --- URL overrides ------------------------------------------------------
   // Session-only knobs for automation and benchmarking, read once at start-up and never
   // persisted:
   //   ?preset=<key|index>      load this preset instead of the first one (e.g. bcrpp)
-  //   ?semantic=1|0            force the semantic toggle on/off, ignoring the saved preference
-  //   ?model=<id>              embedding model id (wins over the picker's saved choice; not saved)
+  //   ?semantic=1|0            force the semantic switch on/off, ignoring the saved preference
+  //   ?model=<id>              embedding model id (wins over the menu's saved choice; not saved)
   //   ?device=auto|wasm|webgpu execution device (default auto; forwarded to the worker)
   //   ?dtype=<string>          model quantisation, e.g. q8 / fp16 (default: the library's per-device choice)
   //   ?nogpu=1                 hide WebGPU from Transformers.js (exercises the WASM path)
@@ -985,39 +1186,39 @@
     element: function () { return $("#output").firstElementChild; }, // the mounted <json-data-dictionary>
     embedder: function () { return semanticEmbedder; },
     worker: function () { return semanticWorker; },
-    models: function () { return MODELS.slice(); },   // picker entries (after the library cross-check)
+    models: function () { return MODELS.slice(); },   // model menu entries (after the library cross-check)
     model: effectiveModel,                            // effective embedding model id
     setModel: setModel,                               // pick a model; restarts semantic search when on
     snapshot: function () { return lastSnapshot; },   // decoded precomputed vectors in use, or null
     lastTable: function () { return lastTable; },
+    columnWidths: function () { return Object.assign({}, columnWidths); },
     get lastRenderMs() { return lastRenderMs; }
   };
 
   // --- Bootstrap ----------------------------------------------------------
   function start() {
     if (!API) {
-      var banner = $("#missing-bundle");
-      if (banner) banner.hidden = false;
+      $("#missing-bundle").hidden = false;
       return;
     }
     OVERRIDES = readOverrides();
-    populatePresetSelect();
+    var savedTheme = null;
+    try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) {}
+    applyTheme(savedTheme, false);
+    loadColumnWidths();
+    populatePresets();
     wire();
     if (OVERRIDES.shadow === false) $("#shadow").checked = false;
-
-    var savedCollapsed = null;
-    try { savedCollapsed = localStorage.getItem(INPUTS_COLLAPSED_KEY); } catch (e) {}
-    if (savedCollapsed === "1") setInputsCollapsed(true);
 
     if (allPresets().length) {
       var initial = OVERRIDES.preset != null ? findPresetIndex(OVERRIDES.preset) : 0;
       loadPreset(initial >= 0 ? initial : 0);
       if (initial < 0) addMessage("warning", "Unknown preset “" + OVERRIDES.preset + "” in the URL; loaded the first example instead.");
     } else {
-      render(); // show the empty-state prompt
+      render(); // show the empty state
     }
 
-    // The model picker needs to know whether WebGPU is usable (a few ms), so it is built once
+    // The model menu needs to know whether WebGPU is usable (a few ms), so it is built once
     // the probe answers; semantic search then starts from the saved preference / URL override.
     probeWebGpu().then(function (available) {
       WEBGPU = available;

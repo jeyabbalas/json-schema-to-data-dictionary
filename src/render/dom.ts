@@ -36,10 +36,10 @@ export function activeElement(root: Root): Element | null {
   }
 }
 
-/** Move keyboard focus to a freshly inserted row (made programmatically focusable). */
-export function focusRow(row: Element | null): void {
-  const el = row as (HTMLElement & { focus?: () => void }) | null;
+/** Move keyboard focus to a row (made programmatically focusable), optionally without scrolling to it. */
+export function focusRow(row: Element | null, preventScroll = false): void {
+  const el = row as (HTMLElement & { focus?: (options?: FocusOptions) => void }) | null;
   if (!el || typeof el.focus !== "function") return;
   el.tabIndex = -1;
-  el.focus();
+  el.focus(preventScroll ? { preventScroll: true } : undefined);
 }

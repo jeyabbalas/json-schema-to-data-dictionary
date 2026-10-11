@@ -19,6 +19,8 @@ import { asStringArray, formatJsonValue, isRecord, isSchemaObject } from "./util
 export interface VariableConditional {
   /** Human trigger, e.g. "parous = 0". */
   condition: string;
+  /** Variables `condition` reads, by row name. */
+  triggers: string[];
   /** Authoring prose for the rule (block `$comment`). */
   description?: string | undefined;
   /** Forced value (`const`) or allowed set (`enum`) under the condition, if any. */
@@ -142,6 +144,7 @@ function handleIfThen(
       const constraintText = constraintTextFor(condition, forced, label);
       attach(variable, {
         condition,
+        triggers,
         ...(comment ? { description: comment } : {}),
         ...(forced !== undefined ? { value: forced } : {}),
         ...(label ? { label } : {}),
@@ -153,7 +156,7 @@ function handleIfThen(
     return effects;
   };
 
-  const condition = describeCondition(block.if as JsonSchema, base, ctx);
+  const { text: condition, triggers } = readCondition(block.if as JsonSchema, base, ctx);
   const effects: ConditionalEffect[] = [];
   if (block.then !== undefined) effects.push(...apply(block.then as JsonSchema, condition));
   if (block.else !== undefined) effects.push(...apply(block.else as JsonSchema, `not (${condition})`));
@@ -161,6 +164,7 @@ function handleIfThen(
   if (effects.length > 0) {
     rules.push({
       condition,
+      triggers,
       ...(comment ? { description: comment } : {}),
       effects
     });
@@ -178,12 +182,14 @@ function handleDependentRequired(
     if (names.length === 0) continue;
     const verb = names.length === 1 ? "is" : "are";
     const condition = `${q(trigger)} is present`;
+    const triggers = [q(trigger)];
     attach(q(trigger), {
       condition,
+      triggers,
       constraintText: `When ${q(trigger)} is present, ${names.join(", ")} ${verb} also required.`
     });
     for (const dep of names) {
-      attach(dep, { condition, constraintText: `Required when ${q(trigger)} is present.` });
+      attach(dep, { condition, triggers, constraintText: `Required when ${q(trigger)} is present.` });
     }
   }
 }
@@ -198,13 +204,16 @@ function handleDependentSchemas(
   for (const [trigger, sub] of Object.entries(dependentSchemas)) {
     if (!isSchemaObject(sub) && sub !== true && sub !== false) continue;
     const condition = `${q(trigger)} is present`;
+    const triggers = [q(trigger)];
     attach(q(trigger), {
       condition,
+      triggers,
       constraintText: `When ${q(trigger)} is present, additional schema constraints apply.`
     });
     for (const [property] of thenProperties(sub as JsonSchema, base, ctx)) {
       attach(q(property), {
         condition,
+        triggers,
         constraintText: `Constrained when ${q(trigger)} is present.`
       });
     }
@@ -253,46 +262,61 @@ function constraintTextFor(condition: string, forced: JsonValue | JsonValue[] | 
 }
 
 /** Render an `if` schema as a compact human condition, e.g. "parous = 1 and parity ≤ 2". */
-export function describeCondition(ifSchema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext, depth = 0): string {
-  if (depth > ctx.maxDepth || !isSchemaObject(ifSchema)) return "condition holds";
+export function describeCondition(ifSchema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext): string {
+  return readCondition(ifSchema, base, ctx).text;
+}
+
+/** The condition an `if` schema states, and the variables it reads (each once, in order). */
+function readCondition(ifSchema: JsonSchema, base: ResolutionBase, ctx: SkipPatternContext, depth = 0): { text: string; triggers: string[] } {
+  if (depth > ctx.maxDepth || !isSchemaObject(ifSchema)) return { text: "condition holds", triggers: [] };
   const q = ctx.qualify ?? identity;
 
   const ref = refKeyword(ifSchema);
   if (ref) {
     const loc = ctx.registry.resolve(ref, base);
-    if (loc) return describeCondition(loc.schema, ctx.registry.baseOf(loc), ctx, depth + 1);
+    if (loc) return readCondition(loc.schema, ctx.registry.baseOf(loc), ctx, depth + 1);
   }
 
   const parts: string[] = [];
+  const triggers: string[] = [];
   if (isRecord(ifSchema.properties)) {
     for (const [name, sub] of Object.entries(ifSchema.properties)) {
       if (!isSchemaObject(sub)) continue;
+      const variable = q(name);
+      if (!triggers.includes(variable)) triggers.push(variable);
       if (Object.prototype.hasOwnProperty.call(sub, "const")) {
-        parts.push(`${q(name)} = ${formatJsonValue(sub.const)}`);
+        parts.push(`${variable} = ${formatJsonValue(sub.const)}`);
       } else if (Array.isArray(sub.enum)) {
-        parts.push(`${q(name)} ∈ {${sub.enum.map(formatJsonValue).join(", ")}}`);
+        parts.push(`${variable} ∈ {${sub.enum.map(formatJsonValue).join(", ")}}`);
       } else {
-        const range = conditionRange(sub);
-        parts.push(range ? `${q(name)} ${range}` : `${q(name)} is constrained`);
+        parts.push(conditionRange(variable, sub) ?? `${variable} is constrained`);
       }
     }
   }
 
   if (parts.length === 0) {
-    const required = asStringArray(ifSchema.required).map(q);
-    if (required.length) return `${required.join(", ")} present`;
-    return "condition holds";
+    const required = [...new Set(asStringArray(ifSchema.required).map(q))];
+    if (required.length) return { text: `${required.join(", ")} present`, triggers: required };
+    return { text: "condition holds", triggers: [] };
   }
-  return parts.join(" and ");
+  return { text: parts.join(" and "), triggers };
 }
 
-function conditionRange(sub: JsonSchemaObject): string {
-  const min = typeof sub.minimum === "number" ? sub.minimum : undefined;
-  const max = typeof sub.maximum === "number" ? sub.maximum : undefined;
-  if (min !== undefined && max !== undefined) return min === max ? `= ${min}` : `${min}–${max}`;
-  if (min !== undefined) return `≥ ${min}`;
-  if (max !== undefined) return `≤ ${max}`;
-  return "";
+/** A numeric range on `variable` as a condition: "parity = 1", "1 ≤ parity ≤ 3", "age ≥ 18", "x < 5". */
+function conditionRange(variable: string, sub: JsonSchemaObject): string | undefined {
+  const num = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
+  const exMin = num(sub.exclusiveMinimum);
+  const exMax = num(sub.exclusiveMaximum);
+  const min = exMin ?? num(sub.minimum);
+  const max = exMax ?? num(sub.maximum);
+  const lo = exMin !== undefined ? "<" : "≤";
+  const hi = exMax !== undefined ? "<" : "≤";
+  if (min !== undefined && max !== undefined) {
+    return min === max && lo === "≤" && hi === "≤" ? `${variable} = ${min}` : `${min} ${lo} ${variable} ${hi} ${max}`;
+  }
+  if (min !== undefined) return `${variable} ${lo === "<" ? ">" : "≥"} ${min}`;
+  if (max !== undefined) return `${variable} ${hi} ${max}`;
+  return undefined;
 }
 
 /**

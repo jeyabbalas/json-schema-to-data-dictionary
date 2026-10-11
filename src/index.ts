@@ -55,7 +55,10 @@ export type {
   PlainRowsOptions,
   RenderHtmlOptions,
   RenderOptions,
-  SemanticSearchOptions
+  SemanticSearchOptions,
+  DataDictionaryColumn,
+  ColumnWidths,
+  ColumnResizeDetail
 } from "./types";
 export type {
   Embedder,
@@ -100,5 +103,5 @@ export type { TensorLike } from "./search/pooling";
 export type { EmbedderPort } from "./search/worker";
 export type { AnalyzeContext, PropertyAnalysis, PropertyShape, PropertyShapeKind, SchemaRef } from "./analyze";
 export type { DataDictionaryElement } from "./render/component";
-export type { ViewModel, CategoryVM, RowVM, ValueVM, ConstraintVM, RuleVM, ResolvedOptions } from "./render/viewModel";
+export type { ViewModel, CategoryVM, RowVM, ValueVM, ConstraintVM, ConditionVM, RuleVM, RuleGroupVM, ResolvedOptions } from "./render/viewModel";
 export type { FormatDescriptor } from "./formats";

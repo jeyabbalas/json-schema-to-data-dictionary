@@ -3252,7 +3252,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–2"
+     "parous = 1 and 1 ≤ parity ≤ 2"
     ],
     [
      777,
@@ -3287,8 +3287,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–2, value = 666 (N/A).",
-     "parous = 1 and parity 1–2"
+     "When parous = 1 and 1 ≤ parity ≤ 2, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 2"
     ]
    ],
    "additional": null,
@@ -3316,7 +3316,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–3"
+     "parous = 1 and 1 ≤ parity ≤ 3"
     ],
     [
      777,
@@ -3351,8 +3351,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–3, value = 666 (N/A).",
-     "parous = 1 and parity 1–3"
+     "When parous = 1 and 1 ≤ parity ≤ 3, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 3"
     ]
    ],
    "additional": null,
@@ -3380,7 +3380,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–4"
+     "parous = 1 and 1 ≤ parity ≤ 4"
     ],
     [
      777,
@@ -3415,8 +3415,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–4, value = 666 (N/A).",
-     "parous = 1 and parity 1–4"
+     "When parous = 1 and 1 ≤ parity ≤ 4, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 4"
     ]
    ],
    "additional": null,
@@ -3444,7 +3444,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–5"
+     "parous = 1 and 1 ≤ parity ≤ 5"
     ],
     [
      777,
@@ -3479,8 +3479,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–5, value = 666 (N/A).",
-     "parous = 1 and parity 1–5"
+     "When parous = 1 and 1 ≤ parity ≤ 5, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 5"
     ]
    ],
    "additional": null,
@@ -3508,7 +3508,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–6"
+     "parous = 1 and 1 ≤ parity ≤ 6"
     ],
     [
      777,
@@ -3543,8 +3543,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–6, value = 666 (N/A).",
-     "parous = 1 and parity 1–6"
+     "When parous = 1 and 1 ≤ parity ≤ 6, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 6"
     ]
    ],
    "additional": null,
@@ -3572,7 +3572,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–7"
+     "parous = 1 and 1 ≤ parity ≤ 7"
     ],
     [
      777,
@@ -3607,8 +3607,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–7, value = 666 (N/A).",
-     "parous = 1 and parity 1–7"
+     "When parous = 1 and 1 ≤ parity ≤ 7, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 7"
     ]
    ],
    "additional": null,
@@ -3636,7 +3636,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–8"
+     "parous = 1 and 1 ≤ parity ≤ 8"
     ],
     [
      777,
@@ -3671,8 +3671,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–8, value = 666 (N/A).",
-     "parous = 1 and parity 1–8"
+     "When parous = 1 and 1 ≤ parity ≤ 8, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 8"
     ]
    ],
    "additional": null,
@@ -3700,7 +3700,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–9"
+     "parous = 1 and 1 ≤ parity ≤ 9"
     ],
     [
      777,
@@ -3735,8 +3735,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–9, value = 666 (N/A).",
-     "parous = 1 and parity 1–9"
+     "When parous = 1 and 1 ≤ parity ≤ 9, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 9"
     ]
    ],
    "additional": null,
@@ -3986,7 +3986,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–2"
+     "parous = 1 and 1 ≤ parity ≤ 2"
     ],
     [
      777,
@@ -4021,8 +4021,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–2, value = 666 (N/A).",
-     "parous = 1 and parity 1–2"
+     "When parous = 1 and 1 ≤ parity ≤ 2, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 2"
     ]
    ],
    "additional": null,
@@ -4050,7 +4050,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–3"
+     "parous = 1 and 1 ≤ parity ≤ 3"
     ],
     [
      777,
@@ -4085,8 +4085,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–3, value = 666 (N/A).",
-     "parous = 1 and parity 1–3"
+     "When parous = 1 and 1 ≤ parity ≤ 3, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 3"
     ]
    ],
    "additional": null,
@@ -4114,7 +4114,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–4"
+     "parous = 1 and 1 ≤ parity ≤ 4"
     ],
     [
      777,
@@ -4149,8 +4149,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–4, value = 666 (N/A).",
-     "parous = 1 and parity 1–4"
+     "When parous = 1 and 1 ≤ parity ≤ 4, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 4"
     ]
    ],
    "additional": null,
@@ -4178,7 +4178,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–5"
+     "parous = 1 and 1 ≤ parity ≤ 5"
     ],
     [
      777,
@@ -4213,8 +4213,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–5, value = 666 (N/A).",
-     "parous = 1 and parity 1–5"
+     "When parous = 1 and 1 ≤ parity ≤ 5, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 5"
     ]
    ],
    "additional": null,
@@ -4242,7 +4242,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–6"
+     "parous = 1 and 1 ≤ parity ≤ 6"
     ],
     [
      777,
@@ -4277,8 +4277,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–6, value = 666 (N/A).",
-     "parous = 1 and parity 1–6"
+     "When parous = 1 and 1 ≤ parity ≤ 6, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 6"
     ]
    ],
    "additional": null,
@@ -4306,7 +4306,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–7"
+     "parous = 1 and 1 ≤ parity ≤ 7"
     ],
     [
      777,
@@ -4341,8 +4341,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–7, value = 666 (N/A).",
-     "parous = 1 and parity 1–7"
+     "When parous = 1 and 1 ≤ parity ≤ 7, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 7"
     ]
    ],
    "additional": null,
@@ -4370,7 +4370,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–8"
+     "parous = 1 and 1 ≤ parity ≤ 8"
     ],
     [
      777,
@@ -4405,8 +4405,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–8, value = 666 (N/A).",
-     "parous = 1 and parity 1–8"
+     "When parous = 1 and 1 ≤ parity ≤ 8, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 8"
     ]
    ],
    "additional": null,
@@ -4434,7 +4434,7 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity 1–9"
+     "parous = 1 and 1 ≤ parity ≤ 9"
     ],
     [
      777,
@@ -4469,8 +4469,8 @@
     ],
     [
      "conditional",
-     "When parous = 1 and parity 1–9, value = 666 (N/A).",
-     "parous = 1 and parity 1–9"
+     "When parous = 1 and 1 ≤ parity ≤ 9, value = 666 (N/A).",
+     "parous = 1 and 1 ≤ parity ≤ 9"
     ]
    ],
    "additional": null,
@@ -5593,6 +5593,9 @@
  "conditionalRules": [
   {
    "condition": "parous = 0",
+   "triggers": [
+    "parous"
+   ],
    "description": "Skip pattern: nonparous (parous=0) => all pregnancy/breastfeeding fields are Nonparous (777).",
    "effects": [
     {
@@ -5709,6 +5712,10 @@
   },
   {
    "condition": "parous = 1 and parity = 1",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 2 full-term pregnancies => 2nd pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5724,7 +5731,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–2",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 2",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 3 full-term pregnancies => 3rd pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5740,7 +5751,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–3",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 3",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 4 full-term pregnancies => 4th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5756,7 +5771,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–4",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 4",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 5 full-term pregnancies => 5th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5772,7 +5791,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–5",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 5",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 6 full-term pregnancies => 6th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5788,7 +5811,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–6",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 6",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 7 full-term pregnancies => 7th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5804,7 +5831,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–7",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 7",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 8 full-term pregnancies => 8th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5820,7 +5851,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–8",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 8",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 9 full-term pregnancies => 9th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5836,7 +5871,11 @@
    ]
   },
   {
-   "condition": "parous = 1 and parity 1–9",
+   "condition": "parous = 1 and 1 ≤ parity ≤ 9",
+   "triggers": [
+    "parous",
+    "parity"
+   ],
    "description": "Skip pattern: parous with fewer than 10 full-term pregnancies => 10th pregnancy/birth fields are N/A (666).",
    "effects": [
     {
@@ -5853,6 +5892,9 @@
   },
   {
    "condition": "meno_status = 2",
+   "triggers": [
+    "meno_status"
+   ],
    "description": "Skip pattern: premenopausal (meno_status=2) => age/reason at menopause are Premenopausal/NA (777) and HRT durations are not real values (sentinel 666/777/888).",
    "effects": [
     {
@@ -5893,6 +5935,9 @@
   },
   {
    "condition": "hrtuse = 0",
+   "triggers": [
+    "hrtuse"
+   ],
    "description": "Skip pattern: never used any HRT (hrtuse=0) => total HRT duration is Never-user (777).",
    "effects": [
     {
@@ -5904,6 +5949,9 @@
   },
   {
    "condition": "hrtuse_ep = 0",
+   "triggers": [
+    "hrtuse_ep"
+   ],
    "description": "Skip pattern: never used E+P HRT (hrtuse_ep=0) => E+P HRT duration is Never-user (777).",
    "effects": [
     {
@@ -5915,6 +5963,9 @@
   },
   {
    "condition": "hrtuse_eonly = 0",
+   "triggers": [
+    "hrtuse_eonly"
+   ],
    "description": "Skip pattern: never used E-only HRT (hrtuse_eonly=0) => E-only HRT duration is Never-user (777).",
    "effects": [
     {
@@ -5926,6 +5977,9 @@
   },
   {
    "condition": "alcohol_status = 4",
+   "triggers": [
+    "alcohol_status"
+   ],
    "description": "Skip pattern: never drinker (alcohol_status=4) => alcohol init/amt/dur/stop are Nondrinker (777).",
    "effects": [
     {
@@ -5952,6 +6006,9 @@
   },
   {
    "condition": "alcohol_status = 1",
+   "triggers": [
+    "alcohol_status"
+   ],
    "description": "Skip pattern: current drinker (alcohol_status=1) => alcohol stop age is N/A no-stop-date (666).",
    "effects": [
     {
@@ -5963,6 +6020,9 @@
   },
   {
    "condition": "smoking_status = 4",
+   "triggers": [
+    "smoking_status"
+   ],
    "description": "Skip pattern: never smoker (smoking_status=4) => smoking init/amt/dur/stop are Nonsmoker (777).",
    "effects": [
     {
@@ -5989,6 +6049,9 @@
   },
   {
    "condition": "smoking_status = 1",
+   "triggers": [
+    "smoking_status"
+   ],
    "description": "Skip pattern: current smoker (smoking_status=1) => smoking stop age is N/A current-smoker (666).",
    "effects": [
     {
@@ -6000,6 +6063,9 @@
   },
   {
    "condition": "ocuse_ever = 0",
+   "triggers": [
+    "ocuse_ever"
+   ],
    "description": "Skip pattern: never OC user (ocuse_ever=0) => OC duration/start/stop are NA never-user (777).",
    "effects": [
     {
@@ -6021,6 +6087,9 @@
   },
   {
    "condition": "ocuse_current = 1",
+   "triggers": [
+    "ocuse_current"
+   ],
    "description": "Skip pattern: current OC user (ocuse_current=1) => OC stop age is Current-user (666).",
    "effects": [
     {
@@ -6032,6 +6101,9 @@
   },
   {
    "condition": "othcontracep_ever = 0",
+   "triggers": [
+    "othcontracep_ever"
+   ],
    "description": "Skip pattern: never other-hormonal-contraceptive user (othcontracep_ever=0) => current use is NA never-user (777).",
    "effects": [
     {
@@ -6043,6 +6115,9 @@
   },
   {
    "condition": "screen_ever = 0",
+   "triggers": [
+    "screen_ever"
+   ],
    "description": "Skip pattern: never screened (screen_ever=0) => age at first screen is Never-screened (777) and last-screen year is Never-screened (7777).",
    "effects": [
     {
@@ -6059,6 +6134,9 @@
   },
   {
    "condition": "BBD_history = 0",
+   "triggers": [
+    "BBD_history"
+   ],
    "description": "Skip pattern: no benign breast disease (BBD_history=0) => all four BBD type/year slots are NA (777 / 7777).",
    "effects": [
     {
@@ -6105,6 +6183,9 @@
   },
   {
    "condition": "BBD_number = 0",
+   "triggers": [
+    "BBD_number"
+   ],
    "description": "Skip pattern: zero BBD diagnoses (BBD_number=0) => all four BBD type/year slots are NA (777 / 7777).",
    "effects": [
     {
@@ -6151,6 +6232,9 @@
   },
   {
    "condition": "BBD_number = 1",
+   "triggers": [
+    "BBD_number"
+   ],
    "description": "Skip pattern: exactly 1 BBD diagnosis (BBD_number=1) => BBD type/year slots 2-4 are NA (777 / 7777).",
    "effects": [
     {
@@ -6187,6 +6271,9 @@
   },
   {
    "condition": "BBD_number = 2",
+   "triggers": [
+    "BBD_number"
+   ],
    "description": "Skip pattern: exactly 2 BBD diagnoses (BBD_number=2) => BBD type/year slots 3-4 are NA (777 / 7777).",
    "effects": [
     {
@@ -6213,6 +6300,9 @@
   },
   {
    "condition": "BBD_number = 3",
+   "triggers": [
+    "BBD_number"
+   ],
    "description": "Skip pattern: exactly 3 BBD diagnoses (BBD_number=3) => BBD type/year slot 4 is NA (777 / 7777).",
    "effects": [
     {

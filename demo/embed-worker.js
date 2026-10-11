@@ -24,7 +24,7 @@ if (PARAMS.get("nogpu") === "1") {
   try { delete WorkerNavigator.prototype.gpu; } catch (e) {}
 }
 
-var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1";
 
 var API = self.JsonSchemaDataDictionary;
 

@@ -4,16 +4,23 @@
 // row indexes and — for large dictionaries — only the first page of rows plus a sentinel
 // row per category that pages the rest in, see lazyRows.ts). Every value derived from the
 // schema is HTML-escaped before interpolation.
+//
+// Layout: a header (title, toolbar, the panels the toolbar opens) above one scrolling
+// viewport. The viewport holds a sticky column header -- the only visible one, carrying the
+// resize handles -- then the results list and the category sections. Each section is its own
+// table (so off-screen sections skip layout) whose <thead> is kept for assistive technology
+// but not shown; all of them size their columns from the same custom properties (columns.ts).
 
 import { escapeHtml } from "../utils";
 import type { CategoryVM, ViewModel } from "./viewModel";
-import { jsonTree, multiline, rowMarkup } from "./rowMarkup";
+import { jsonTree, multiline, rowMarkup, rulesMarkup } from "./rowMarkup";
 import type { RowMarkupOptions } from "./rowMarkup";
+import { COLUMNS, columnStyle } from "./columns";
 
 export type MarkupTarget = "static" | "component";
 
 /** Row options of the static output: the inline script filters on `data-search`. */
-export const STATIC_ROW_OPTIONS: RowMarkupOptions = { searchAttr: true, rowIndex: false, categoryTag: false, indent: true };
+export const STATIC_ROW_OPTIONS: RowMarkupOptions = { searchAttr: true, rowIndex: false, categoryTag: false, indent: true, skipDetails: true };
 /** Row options of the component's category sections (the results list adds the category tag and drops the indentation). */
 export const COMPONENT_ROW_OPTIONS: RowMarkupOptions = { searchAttr: false, rowIndex: true, categoryTag: false, indent: true };
 
@@ -27,15 +34,22 @@ export function buildMarkup(vm: ViewModel, target: MarkupTarget): string {
   const pageSize = component ? o.pageSize : Infinity;
   const pages = initialPages(vm, pageSize);
   const emptySemantic = component ? ` <span data-dd-empty-semantic hidden>Looking for related variables…</span>` : "";
+  const style = columnStyle(o.columnWidths);
   return `
-<div class="dd-root" data-theme="${o.theme}" data-dd-root>
-  ${header(vm)}
+<div class="dd-root" data-theme="${o.theme}" data-dd-root${style ? ` style="${style}"` : ""}>
+  ${header(vm, uid)}
   <div class="dd-empty" data-dd-empty hidden>No variables match “<span data-dd-empty-q></span>”.${emptySemantic}</div>
-  ${component ? resultsSection() : ""}
-  <div class="dd-categories" data-dd-categories>
-  ${vm.categories.map((c, i) => categorySection(c, i, vm, pages[i] ?? c.rows.length, pageSize, uid, rowOptions)).join("\n")}
+  <div class="dd-viewport" data-dd-viewport>
+    <div class="dd-frame">
+      <div class="dd-sheet">
+        ${columnHeader()}
+        ${component ? resultsSection() : ""}
+        <div class="dd-categories" data-dd-categories>
+        ${vm.categories.map((c, i) => categorySection(c, i, vm, pages[i] ?? c.rows.length, pageSize, uid, rowOptions)).join("\n")}
+        </div>
+      </div>
+    </div>
   </div>
-  ${footer(vm)}
 </div>`.trim();
 }
 
@@ -67,107 +81,128 @@ export function moreLabel(remaining: number, pageSize: number): string {
 
 /** Sentinel row closing an incomplete category: observed for lazy paging, clickable as the fallback. */
 export function moreRowMarkup(next: number, total: number, pageSize: number): string {
-  return `<tr class="dd-more" data-dd-more><td colspan="7"><button class="dd-btn dd-more-btn" type="button" data-dd-more-btn>${moreLabel(total - next, pageSize)}</button></td></tr>`;
+  return `<tr class="dd-more" data-dd-more><td colspan="7"><div class="dd-pin"><button class="dd-btn dd-more-btn" type="button" data-dd-more-btn>${moreLabel(total - next, pageSize)}</button></div></td></tr>`;
 }
 
-/** Column widths for `table-layout: fixed` (percentages live in the stylesheet). */
-export function colGroup(): string {
-  return `<colgroup><col class="dd-c-name"><col class="dd-c-desc"><col class="dd-c-type"><col class="dd-c-format"><col class="dd-c-values"><col class="dd-c-constraints"><col class="dd-c-additional"></colgroup>`;
+/**
+ * The visible column header: sticky at the top of the viewport, one resize handle per column
+ * edge. The body tables carry their own (visually hidden) headers for screen readers, so the
+ * labels here are hidden from them and only the handles are announced.
+ */
+function columnHeader(): string {
+  const cells = COLUMNS.map(
+    (c) =>
+      `<th class="dd-h-${c.key}${c.key === "name" ? " dd-col-name" : ""}"><span class="dd-head-label" data-dd-head-label aria-hidden="true">${c.label}</span>` +
+      `<span class="dd-resize" data-dd-resize="${c.key}" role="separator" aria-orientation="vertical" aria-label="Resize the ${c.label} column" aria-valuemin="56" aria-valuemax="1600" tabindex="0" title="Drag to resize · double-click to fit"></span></th>`
+  ).join("");
+  return `<div class="dd-head" data-dd-head><table class="dd-table" role="presentation"><thead><tr>${cells}</tr></thead></table></div>`;
+}
+
+/**
+ * Header of a body table: what screen readers announce for each cell, not shown. Being the
+ * table's first row, its cells also carry the column widths (`table-layout: fixed`).
+ */
+function tableHead(): string {
+  return `<thead class="dd-sr-head"><tr>${COLUMNS.map((c) => `<th class="dd-h-${c.key}${c.key === "name" ? " dd-col-name" : ""}" scope="col"><span>${c.label}</span></th>`).join("")}</tr></thead>`;
 }
 
 /** Flat, ranked results table used while a query is active (component only). */
 function resultsSection(): string {
   return `
   <section class="dd-results" data-dd-results hidden aria-label="Search results" aria-busy="false">
-    <div class="dd-table-wrap">
-      <table class="dd-table">
-        ${colGroup()}
-        ${tableHead()}
-        <tbody data-dd-results-body></tbody>
-      </table>
-    </div>
-    <div class="dd-results-foot" data-dd-results-foot hidden>
+    <table class="dd-table">
+      ${tableHead()}
+      <tbody data-dd-results-body></tbody>
+    </table>
+    <div class="dd-results-foot dd-pin" data-dd-results-foot hidden>
       <span class="dd-results-status" data-dd-results-status></span>
       <button class="dd-btn" type="button" data-dd-results-more>Show more</button>
     </div>
   </section>`;
 }
 
-function tableHead(): string {
-  return `<thead>
-          <tr>
-            <th class="dd-col-name" scope="col">Variable</th>
-            <th scope="col">Description</th>
-            <th scope="col">Data type</th>
-            <th scope="col">Format</th>
-            <th scope="col">Valid values</th>
-            <th scope="col">Constraints</th>
-            <th scope="col">Additional</th>
-          </tr>
-        </thead>`;
-}
-
-function header(vm: ViewModel): string {
+function header(vm: ViewModel, uid: string): string {
   const o = vm.options;
-  const actions = [
-    `<button class="dd-btn" type="button" data-dd-action="expand-all">Expand all</button>`,
-    `<button class="dd-btn" type="button" data-dd-action="collapse-all">Collapse all</button>`,
+  const panels: string[] = [];
+  const toggles: string[] = [];
+  if (vm.rules.length > 0) {
+    toggles.push(panelToggle(uid, "rules", `${ICON_RULES}Skip logic <span class="dd-btn-count">${formatCount(vm.rules.length)}</span>`, "Skip patterns: what each answer sets elsewhere"));
+    panels.push(panel(uid, "rules", "Skip logic", `${formatCount(vm.rules.length)} rule${vm.rules.length === 1 ? "" : "s"}`, rulesMarkup(sortByTrigger(vm), vm, undefined)));
+  }
+  if (vm.additionalInformation !== null) {
+    toggles.push(panelToggle(uid, "meta", `${ICON_INFO}Metadata`, "Dataset metadata"));
+    panels.push(panel(uid, "meta", "Dataset metadata", "", `<div class="dd-tree">${jsonTree(vm.additionalInformation, true)}</div>`));
+  }
+  if (vm.warnings.length > 0) {
+    const n = vm.warnings.length;
+    toggles.push(panelToggle(uid, "warnings", `${ICON_WARN}${formatCount(n)} warning${n === 1 ? "" : "s"}`, "Extraction warnings", " dd-btn-warn"));
+    panels.push(panel(uid, "warnings", "Extraction warnings", "", `<ul class="dd-warnings">${vm.warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>`));
+  }
+  const allCollapsed = !o.expandCategories;
+  const actions = `<div class="dd-actions">${[
+    `<button class="dd-btn" type="button" data-dd-action="reset-widths" title="Reset the column widths" hidden>${ICON_RESET}Reset widths</button>`,
+    `<button class="dd-btn dd-btn-icon" type="button" data-dd-action="${allCollapsed ? "expand-all" : "collapse-all"}" title="${allCollapsed ? "Expand all" : "Collapse all"}" aria-label="${allCollapsed ? "Expand all" : "Collapse all"}">${ICON_COLLAPSE}</button>`,
     ...(o.includeExport
       ? [
-          `<button class="dd-btn" type="button" data-dd-action="copy" title="Copy the dictionary as CSV">Copy CSV</button>`,
-          `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV">Download CSV</button>`
+          `<button class="dd-btn" type="button" data-dd-action="copy" title="Copy the dictionary as CSV">${ICON_COPY}Copy</button>`,
+          `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV">${ICON_DOWNLOAD}CSV</button>`
         ]
       : [])
-  ].join("");
+  ].join("")}</div>`;
 
+  // The search box on a line of its own, then the panel toggles under it -- what the reader
+  // should not miss -- with the table's own controls at the far end. A dictionary with nothing
+  // to open keeps those controls beside the search box instead of on a line of their own.
   return `
   <header class="dd-header">
     <h2 class="dd-title">${escapeHtml(vm.title)}</h2>
     ${vm.description ? `<p class="dd-description">${multiline(vm.description)}</p>` : ""}
     ${vm.comment ? `<p class="dd-comment">${multiline(vm.comment)}</p>` : ""}
     <div class="dd-toolbar">
-      <div class="dd-search">
-        <input class="dd-search-input" type="search" inputmode="search" autocomplete="off"
-               placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
-        <span class="dd-count" role="status" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
+      <div class="dd-searchbar">
+        <div class="dd-search">
+          <input class="dd-search-input" type="search" inputmode="search" autocomplete="off" spellcheck="false"
+                 placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
+          <span class="dd-count" role="status" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
+        </div>
+        ${o.semanticSearch ? `<span class="dd-semantic-status" part="semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
+        ${toggles.length ? "" : actions}
       </div>
-      ${o.semanticSearch ? `<span class="dd-semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
-      <div class="dd-actions">${actions}</div>
+      ${toggles.length ? `<div class="dd-tools"><div class="dd-panel-toggles">${toggles.join("")}</div>${actions}</div>` : ""}
     </div>
-    ${rulesPanel(vm)}
-    ${datasetInfoPanel(vm)}
+    ${panels.join("")}
   </header>`;
 }
 
-function rulesPanel(vm: ViewModel): string {
-  if (vm.rules.length === 0) return "";
-  const items = vm.rules
-    .map((r) => {
-      const effects = r.effects.length ? `<div class="dd-rule-effects">${escapeHtml(r.effects.join(" · "))}</div>` : "";
-      const desc = r.description ? `<div class="dd-muted">${escapeHtml(r.description)}</div>` : "";
-      return `<li><span class="dd-rule-cond">when ${escapeHtml(r.condition)}</span>${desc}${effects}</li>`;
-    })
-    .join("");
-  return `
-    <details class="dd-panel">
-      <summary>${vm.rules.length} skip pattern${vm.rules.length === 1 ? "" : "s"} / conditional rule${vm.rules.length === 1 ? "" : "s"}</summary>
-      <div class="dd-panel-body"><ul class="dd-rules-list">${items}</ul></div>
-    </details>`;
+function panelToggle(uid: string, key: string, label: string, title: string, extra = ""): string {
+  return `<button class="dd-btn${extra}" type="button" data-dd-panel-toggle="${key}" aria-expanded="false" aria-controls="${uid}-${key}" title="${escapeHtml(title)}">${label}</button>`;
 }
 
-function datasetInfoPanel(vm: ViewModel): string {
-  if (vm.additionalInformation === null) return "";
+function panel(uid: string, key: string, title: string, note: string, body: string): string {
   return `
-    <details class="dd-panel"${vm.options.expandAdditionalInfo ? " open" : ""}>
-      <summary>Dataset metadata</summary>
-      <div class="dd-panel-body dd-tree">${jsonTree(vm.additionalInformation, vm.options.expandAdditionalInfo)}</div>
-    </details>`;
+    <section class="dd-panel" id="${uid}-${key}" data-dd-panel="${key}" aria-label="${escapeHtml(title)}" hidden>
+      <div class="dd-panel-head"><span class="dd-panel-title">${escapeHtml(title)}</span>${note ? `<span class="dd-panel-note">${escapeHtml(note)}</span>` : ""}<button class="dd-btn dd-btn-icon dd-panel-close" type="button" data-dd-panel-close aria-label="Close">${ICON_CLOSE}</button></div>
+      <div class="dd-panel-body">${body}</div>
+    </section>`;
+}
+
+/** The rules grouped by the first variable they read (in order of first appearance), stable otherwise. */
+function sortByTrigger(vm: ViewModel): ViewModel["rules"] {
+  const order = new Map<string, number>();
+  vm.rules.forEach((r) => {
+    const first = r.triggers[0] ?? "";
+    if (!order.has(first)) order.set(first, order.size);
+  });
+  return vm.rules
+    .map((rule, i) => ({ rule, i, group: order.get(rule.triggers[0] ?? "") ?? 0 }))
+    .sort((a, b) => a.group - b.group || a.i - b.i)
+    .map((x) => x.rule);
 }
 
 /**
- * One category: the toggle, the description and a table holding the first `next` rows.
- * `data-dd-next` / `data-total` track materialisation; a sentinel row follows while
- * `next < total`.
+ * One category: a sticky bar (toggle, title, count), the description and a table holding the
+ * first `next` rows. `data-dd-next` / `data-total` track materialisation; a sentinel row
+ * follows while `next < total`.
  */
 function categorySection(
   c: CategoryVM,
@@ -184,15 +219,15 @@ function categorySection(
   const rows = c.rows.slice(0, next).map((row) => rowMarkup(row, vm, rowOptions)).join("\n");
   return `
   <section class="dd-category" data-dd-category data-dd-cat="${i}" data-dd-next="${next}" data-total="${total}" data-collapsed="${collapsed}">
-    <button class="dd-category-toggle" type="button" aria-expanded="${!collapsed}" aria-controls="${id}" data-dd-category-toggle>
-      <span class="dd-caret" aria-hidden="true">▾</span>
-      <span class="dd-category-title">${escapeHtml(c.title)}</span>
-      <span class="dd-category-count" data-dd-cat-count data-total="${total}">${total}</span>
-    </button>
-    ${c.description ? `<p class="dd-category-desc">${multiline(c.description)}</p>` : ""}
+    <div class="dd-group">
+      <button class="dd-category-toggle dd-pin" type="button" aria-expanded="${!collapsed}" aria-controls="${id}" data-dd-category-toggle>
+        <span class="dd-category-title">${escapeHtml(c.title)}</span>
+        <span class="dd-category-count" data-dd-cat-count data-total="${total}">${total}</span>
+      </button>
+    </div>
     <div class="dd-table-wrap" data-dd-table-wrap id="${id}">
+      ${c.description ? `<div class="dd-category-intro"><p class="dd-category-desc dd-pin">${multiline(c.description)}</p></div>` : ""}
       <table class="dd-table">
-        ${colGroup()}
         ${tableHead()}
         <tbody data-dd-rows>
           ${rows}${next < total ? moreRowMarkup(next, total, pageSize) : ""}
@@ -202,11 +237,14 @@ function categorySection(
   </section>`;
 }
 
-function footer(vm: ViewModel): string {
-  if (vm.warnings.length === 0) return "";
-  return `
-  <details class="dd-footer">
-    <summary class="dd-warning">${vm.warnings.length} extraction warning${vm.warnings.length === 1 ? "" : "s"}</summary>
-    <ul>${vm.warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
-  </details>`;
-}
+// Icons: 16px strokes in currentColor, hidden from assistive technology (each button has a label).
+const svg = (body: string): string =>
+  `<svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+const ICON_RULES = svg(`<path d="M3 2.5v5A2.5 2.5 0 0 0 5.5 10H13m0 0-2.5-2.5M13 10l-2.5 2.5"/>`);
+const ICON_INFO = svg(`<circle cx="8" cy="8" r="5.75"/><path d="M8 7.25v3.5M8 5.2v.05"/>`);
+const ICON_WARN = svg(`<path d="M8 2.5 14 13H2L8 2.5Z"/><path d="M8 6.5v3M8 11.2v.05"/>`);
+const ICON_RESET = svg(`<path d="M2.5 8h11M2.5 8l2-2M2.5 8l2 2M13.5 8l-2-2M13.5 8l-2 2"/>`);
+const ICON_COLLAPSE = svg(`<path d="m4.5 6 3.5-3 3.5 3M4.5 10l3.5 3 3.5-3"/>`);
+const ICON_COPY = svg(`<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/>`);
+const ICON_DOWNLOAD = svg(`<path d="M8 2.5v8m0 0-3-3m3 3 3-3M3 13.5h10"/>`);
+const ICON_CLOSE = svg(`<path d="m4.5 4.5 7 7m0-7-7 7"/>`);

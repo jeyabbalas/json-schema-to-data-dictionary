@@ -23,7 +23,7 @@ import { SchemaRegistry, type IndexedSchemaLocation, type ResolutionBase } from 
 import { analyzeProperty, collectRequired, refKeyword, type PropertyShape, type SchemaRef } from "./analyze";
 import { collectSkipPatterns, mergeSkipPatterns, type SkipPatternResult, type VariableConditional } from "./skipPatterns";
 import { formatVariablePath, sourceAt } from "./paths";
-import { cloneJson, compactObject, isRecord, isSchemaObject, joinNonEmpty, uniqueSlug, valueKey } from "./utils";
+import { cloneJson, compactObject, isRecord, isSchemaObject, joinNonEmpty, typeAlternatives, uniqueSlug, valueKey } from "./utils";
 
 interface Options {
   includePatternProperties: boolean;
@@ -57,6 +57,8 @@ interface Enclosing {
   required: ReadonlySet<string>;
   /** Names the `oneOf`/`anyOf` branch a field came from requires (mandatory in that variant only). */
   variantRequired?: ReadonlySet<string> | undefined;
+  /** That branch is the only object among its union's alternatives: it is named by being one. */
+  soleObjectVariant?: boolean | undefined;
   /** Variable name of the enclosing row (absent at the top level). */
   parent?: string | undefined;
   depth: number;
@@ -527,16 +529,30 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
   const validValues = analysis.validValues.slice();
   const constraints: ConstraintItem[] = [];
   const last = path[path.length - 1];
-  const variant = ref.union !== undefined && ref.variant !== undefined && enclosing.parent !== undefined ? `variant ${ref.variant + 1} of ${enclosing.parent}` : undefined;
+  // A field of one `oneOf`/`anyOf` branch says which branch: "when contact is an object" when it
+  // is the union's only object, else by position ("in variant 2 of contact"). The union is the
+  // container's own -- an element's (`events[]`) when the elements are the union.
+  const container = path.length > 1 ? formatVariablePath(path.slice(0, -1)) : enclosing.parent;
+  const variant =
+    ref.union !== undefined && ref.variant !== undefined && enclosing.parent !== undefined
+      ? enclosing.soleObjectVariant
+        ? `when ${container} is an object`
+        : `in variant ${ref.variant + 1} of ${container}`
+      : undefined;
+  let requiredInVariant = false;
   if (last?.kind === "property" && enclosing.required.has(last.name)) {
     // "Required within visits[]" rather than a bare "Required": the field is mandatory in
     // every element, which says nothing about whether `visits` itself is present.
     const within = path.length > 1 ? ` within ${formatVariablePath(path.slice(0, -1))}` : "";
     constraints.push({ keyword: "required", value: true, text: `Required${within}` });
   } else if (last?.kind === "property" && variant !== undefined && enclosing.variantRequired?.has(last.name)) {
-    constraints.push({ keyword: "required", value: true, text: `Required in ${variant}` });
+    constraints.push({ keyword: "required", value: true, text: `Required ${variant}` });
+    requiredInVariant = true;
   }
-  if (variant !== undefined) constraints.push({ keyword: ref.union as "oneOf" | "anyOf", value: ref.variant, text: `In ${variant}` });
+  // "Required when contact is an object" already says which branch the field belongs to.
+  if (variant !== undefined && !requiredInVariant) {
+    constraints.push({ keyword: ref.union as "oneOf" | "anyOf", value: ref.variant, text: `${variant.charAt(0).toUpperCase()}${variant.slice(1)}` });
+  }
   constraints.push(...analysis.constraints);
 
   applySkipPatterns(name, validValues, constraints, ctx);
@@ -604,7 +620,8 @@ function expandChildren(
     const fieldsOf = (ref: SchemaRef): Enclosing => {
       const key = variantKey(ref);
       const own = key !== undefined ? variantRequired.get(key) : undefined;
-      return { ...child, required, ...(own ? { variantRequired: own } : {}) };
+      const sole = ref.union !== undefined && shape.unionObjects.get(ref.union) === 1;
+      return { ...child, required, ...(own ? { variantRequired: own } : {}), ...(sole ? { soleObjectVariant: true } : {}) };
     };
     // Rules between the fields of this object, named by their rows, before the rows are built
     // so that each row picks up its conditions.
@@ -699,8 +716,10 @@ function applySkipPatterns(name: string, validValues: ValidValue[], constraints:
   for (const cond of conds) {
     constraints.push({
       keyword: "conditional",
+      ...(cond.value !== undefined ? { value: cond.value } : {}),
       text: cond.constraintText,
       condition: cond.condition,
+      ...(cond.triggers.length > 0 ? { triggers: cond.triggers } : {}),
       ...(cond.source ? { source: cond.source } : {})
     });
     if (cond.value === undefined) continue;
@@ -862,7 +881,7 @@ function finalizeBuilders(builders: CategoryBuilder[]): DataDictionaryCategory[]
 
 /** "string" + "integer (nullable)" -> "string or integer (nullable)"; a repeated alternative is listed once. */
 function unionTypes(a: string, b: string): string {
-  return [...new Set([...a.split(" or "), ...b.split(" or ")].filter(Boolean))].join(" or ");
+  return [...new Set([...typeAlternatives(a), ...typeAlternatives(b)].filter(Boolean))].join(" or ");
 }
 
 function dedupeValidValues(values: ValidValue[]): ValidValue[] {

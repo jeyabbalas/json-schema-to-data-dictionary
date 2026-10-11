@@ -19,7 +19,8 @@ const SETS = {
   "clinical-trial": () => loadDir("multiple_schema_1"),
   covid: () => loadFile("single_schema/covid-patient-dataset.json"),
   "format-showcase": () => loadFile("single_schema/format-showcase-dataset.json"),
-  longitudinal: () => loadFile("single_schema/longitudinal-cohort-dataset.json")
+  longitudinal: () => loadFile("single_schema/longitudinal-cohort-dataset.json"),
+  "nested-stress-tests": () => loadFile("single_schema/nested-stress-tests-dataset.json")
 };
 
 /** The projection as text, with the checkout's file:// prefix replaced so the files are portable. */

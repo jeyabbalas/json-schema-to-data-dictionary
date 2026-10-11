@@ -77,7 +77,29 @@ test("a nullable array and nullable items read differently", () => {
   const days = findRow(T, "hospital_days");
   assert.equal(days["Data type"], "array of integer (nullable)");
   assert.ok(texts(days).includes("Each item: value ≥ 0"));
-  assert.equal(findRow(T, "daily_steps")["Data type"], "array of integer or null");
+  assert.equal(findRow(T, "daily_steps")["Data type"], "array of nullable integer");
+});
+
+test("nested and union element types read one way only", () => {
+  const nullable = (type, extra = {}) => ({ type: [type, "null"], ...extra });
+  const t = build({
+    matrix: nullable("array", { items: nullable("array", { items: nullable("integer") }) }),
+    mixed: { type: "array", items: { anyOf: [{ type: "number" }, { type: "string" }, { type: "null" }, { type: "object", properties: { k: { type: "integer" } } }] } },
+    shifty: { oneOf: [{ type: "integer" }, { type: "object", properties: { k: { type: "string" } } }, { type: "array", items: { type: ["string", "null"] } }] }
+  });
+  assert.equal(findRow(t, "matrix")["Data type"], "array of nullable array of nullable integer (nullable)", "was: array of array of integer or null or null");
+  assert.equal(findRow(t, "matrix[]")["Data type"], "array of nullable integer (nullable)");
+  assert.equal(findRow(t, "mixed")["Data type"], "array of (number or string or object or null)", "a union element type is parenthesised");
+  assert.deepEqual(texts(findRow(t, "mixed[].k")), ["When mixed[] is an object"], "the elements are the union, not the array");
+  assert.equal(findRow(t, "shifty")["Data type"], "integer or object or array of nullable string", "the array comes last");
+  assert.deepEqual(texts(findRow(t, "shifty.k")), ["When shifty is an object"]);
+});
+
+test("an empty array or object says it must be empty", () => {
+  const t = build({ none: { type: "array", maxItems: 0 }, empty: { type: "object", maxProperties: 0 }, few: { type: "object", maxProperties: 1 } });
+  assert.deepEqual(texts(findRow(t, "none")), ["Must be empty (no items allowed)"]);
+  assert.deepEqual(texts(findRow(t, "empty")), ["Must be empty (no properties allowed)"]);
+  assert.deepEqual(texts(findRow(t, "few")), ["At most 1 property"]);
 });
 
 test("`contains` is rendered, with its counts", () => {
@@ -309,19 +331,20 @@ test("a union of shapes lists every type and the fields of its object branch", (
   assert.equal(contact["Data type"], "email address or object");
   assert.match(contact["Format"], /Email address/);
   assert.ok(texts(contact).includes("Fields: email, phone"));
-  for (const name of ["contact.email", "contact.phone"]) {
-    const row = findRow(T, name);
-    assert.deepEqual(row["Constraints"].find((c) => c.keyword === "oneOf"), { keyword: "oneOf", value: 1, text: "In variant 2 of contact" });
-    assert.equal(row.__parent, "contact");
-  }
+  for (const name of ["contact.email", "contact.phone"]) assert.equal(findRow(T, name).__parent, "contact");
+  // The object is the union's only object alternative, so its fields are named by that.
+  assert.deepEqual(texts(findRow(T, "contact.phone")), ["When contact is an object"]);
+  assert.deepEqual(findRow(T, "contact.phone")["Constraints"][0], { keyword: "oneOf", value: 1, text: "When contact is an object" });
   assert.deepEqual(
     findRow(T, "contact.email")["Constraints"].find((c) => c.keyword === "required"),
-    { keyword: "required", value: true, text: "Required in variant 2 of contact" },
+    { keyword: "required", value: true, text: "Required when contact is an object" },
     "a branch's required holds in that variant only, and says so"
   );
+  assert.ok(!texts(findRow(T, "contact.email")).includes("When contact is an object"), "the required line already says which variant");
   assert.equal(findRow(T, "contact.phone")["Constraints"].find((c) => c.keyword === "required"), undefined);
 
-  // The object's own `required` applies to every field, whichever branch declares it.
+  // The object's own `required` applies to every field, whichever branch declares it; with two
+  // object alternatives, a field is named by its branch's position.
   const t = build({
     c: { type: "object", required: ["id"], oneOf: [{ properties: { id: { type: "string" }, a: { type: "string" } } }, { properties: { id: { type: "integer" }, b: { type: "string" } }, required: ["b"] }] }
   });
@@ -329,7 +352,11 @@ test("a union of shapes lists every type and the fields of its object branch", (
   assert.deepEqual(texts(findRow(t, "c.id")), ["Required within c", "In variant 1 of c", "In variant 2 of c"]);
   assert.equal(findRow(t, "c.id")["Data type"], "string or integer", "a field declared by two branches is one row");
   assert.deepEqual(texts(findRow(t, "c.a")), ["In variant 1 of c"]);
-  assert.deepEqual(texts(findRow(t, "c.b")), ["Required in variant 2 of c", "In variant 2 of c"]);
+  assert.deepEqual(texts(findRow(t, "c.b")), ["Required in variant 2 of c"]);
+
+  // An object alternative without fields still counts: `a` is not "when d is an object".
+  const d = build({ d: { anyOf: [{ type: "object", properties: { a: { type: "string" } } }, { type: "object" }, { type: "string" }] } });
+  assert.deepEqual(texts(findRow(d, "d.a")), ["In variant 1 of d"]);
 });
 
 test("open content that says nothing gets no row: `additionalProperties: true` inside an object, as at the top level", () => {

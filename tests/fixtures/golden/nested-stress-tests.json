@@ -1,0 +1,1646 @@
+{
+ "title": "Nested Stress Tests",
+ "categories": [
+  {
+   "id": "scalars",
+   "title": "Scalars",
+   "rows": [
+    "id",
+    "label"
+   ]
+  },
+  {
+   "id": "lists",
+   "title": "Lists",
+   "rows": [
+    "counts",
+    "signed",
+    "huge",
+    "floats",
+    "words",
+    "days",
+    "ids",
+    "empty_list",
+    "mixed_list",
+    "mixed_list[]",
+    "mixed_list[].k",
+    "people",
+    "people[].name",
+    "people[].age",
+    "people[].langs",
+    "matrix",
+    "matrix[]"
+   ]
+  },
+  {
+   "id": "structs",
+   "title": "Structs",
+   "rows": [
+    "point",
+    "point.x",
+    "point.y",
+    "point.tier",
+    "depth5",
+    "depth5.l2",
+    "depth5.l2.l3",
+    "depth5.l2.l3.l4",
+    "depth5.l2.l3.l4.l5",
+    "depth5.l2.l3.l4.l5.leaf",
+    "key_order",
+    "key_order.1",
+    "key_order.2",
+    "odd_keys",
+    "odd_keys.k",
+    "odd_keys.score",
+    "odd_keys.kind",
+    "odd_keys[\"my field\"]",
+    "odd_keys[\"a.b\"]",
+    "odd_keys[\"q\\\"k\"]",
+    "odd_keys.ünï"
+   ]
+  },
+  {
+   "id": "maps",
+   "title": "Maps",
+   "rows": [
+    "props",
+    "props./^key_[0-9]{3}$/",
+    "props.*",
+    "empty_obj"
+   ]
+  },
+  {
+   "id": "json-values",
+   "title": "JSON values",
+   "rows": [
+    "shifty",
+    "shifty.k",
+    "shifty.n",
+    "all_null"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "name": "id",
+   "category": "Scalars",
+   "description": "Row ID\nRow number, unique. Equals the __rowid__ column data-table's loaders add.",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 999",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/id"
+   }
+  },
+  {
+   "name": "label",
+   "category": "Scalars",
+   "description": "Row label\nThe showcase row's name in rows 1-11, a random two-word label in rows 12-999; null in row 0.",
+   "type": "string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     "showcase: demo",
+     "hidden heron"
+    ],
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/label"
+   }
+  },
+  {
+   "name": "counts",
+   "category": "Lists",
+   "description": "Counts\nUp to four integers below 1,000. Row 3 holds integers past 2^53, which a JavaScript number rounds; rows 5-7 hold 1,000, 2,500 and 10,000 digits.",
+   "type": "array of nullable integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 10000 item(s)",
+     null
+    ],
+    [
+     "range",
+     "Each item: value ≥ 0",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      1,
+      2,
+      3
+     ],
+     [
+      4,
+      null,
+      17
+     ]
+    ],
+    "x-duckdb-type": "BIGINT[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/counts"
+   }
+  },
+  {
+   "name": "signed",
+   "category": "Lists",
+   "description": "Signed integers\nUp to three integers from -99 to 99; the INT64 limits in row 3. Mixed signs make DuckDB read HUGEINT[] rather than BIGINT[].",
+   "type": "array of nullable integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 4 item(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      -1,
+      0,
+      1
+     ],
+     [
+      -77,
+      74
+     ]
+    ],
+    "x-duckdb-type": "HUGEINT[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/signed"
+   }
+  },
+  {
+   "name": "huge",
+   "category": "Lists",
+   "description": "Huge integers\nOne or two integers below 1,000; 2^63 and the UINT64 maximum in row 3, past INT64, so DuckDB reads HUGEINT[].",
+   "type": "array of nullable integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ],
+    [
+     "range",
+     "Each item: value ≥ 0",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      910,
+      568
+     ]
+    ],
+    "x-duckdb-type": "HUGEINT[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/huge"
+   }
+  },
+  {
+   "name": "floats",
+   "category": "Lists",
+   "description": "Floats\nUp to three numbers with three decimals; -0.0, 5e-324, ±the largest double and 2^64 in row 3.",
+   "type": "array of nullable number (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 5 item(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      195.42,
+      20.843,
+      114.099
+     ]
+    ],
+    "x-duckdb-type": "DOUBLE[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/floats"
+   }
+  },
+  {
+   "name": "words",
+   "category": "Lists",
+   "description": "Words\nOne or two lorem-ipsum words. Row 4 holds 15 strings that need escaping; row 8 a 20,000-character string with an emoji across data-table's display cap.",
+   "type": "array of nullable string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 15 item(s)",
+     null
+    ],
+    [
+     "length",
+     "Each item: At most 20000 character(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      "red",
+      "green",
+      "blue"
+     ]
+    ],
+    "x-duckdb-type": "VARCHAR[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/words"
+   }
+  },
+  {
+   "name": "days",
+   "category": "Lists",
+   "description": "Days\nOne date from 1990 to 2029; 0001-01-01, 9999-12-31, 1970-01-01 and 1969-07-20 in row 9.",
+   "type": "array of nullable date (nullable)",
+   "format": "Calendar date (ISO 8601 / RFC 3339) — e.g. 2026-06-22",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 4 item(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      "2024-01-01",
+      "2024-02-29"
+     ]
+    ],
+    "x-duckdb-type": "DATE[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/days"
+   }
+  },
+  {
+   "name": "ids",
+   "category": "Lists",
+   "description": "IDs\nOne random version-4 UUID; the nil and all-ones UUIDs in row 9.",
+   "type": "array of nullable UUID (nullable)",
+   "format": "Universally unique identifier (RFC 4122) — e.g. 123e4567-e89b-12d3-a456-426614174000",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 2 item(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      "a88beba2-9928-4479-96ee-827997d24c17"
+     ]
+    ],
+    "x-duckdb-type": "UUID[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/ids"
+   }
+  },
+  {
+   "name": "empty_list",
+   "category": "Lists",
+   "description": "Empty list\n[] in every row that is not null. With no element to go by, DuckDB types the elements JSON.",
+   "type": "array (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "Must be empty (no items allowed)",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "JSON[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/empty_list"
+   }
+  },
+  {
+   "name": "mixed_list",
+   "category": "Lists",
+   "description": "Mixed list\nUp to three elements of mixed JSON types. DuckDB keeps each as JSON; a null element is SQL NULL.",
+   "type": "array of (number or string or boolean or object or array of integer or null) (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 5 item(s)",
+     null
+    ],
+    [
+     "properties",
+     "Fields: k",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ],
+    [
+     "range",
+     "Each inner item: 0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      1,
+      "two",
+      true,
+      {
+       "k": 3
+      },
+      [
+       4
+      ]
+     ]
+    ],
+    "x-duckdb-type": "JSON[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/mixed_list"
+   }
+  },
+  {
+   "name": "mixed_list[]",
+   "category": "Lists",
+   "description": "",
+   "type": "number or string or boolean or object or array of integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: k",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ],
+    [
+     "range",
+     "Each item: 0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/mixed_list/items"
+   }
+  },
+  {
+   "name": "mixed_list[].k",
+   "category": "Lists",
+   "description": "Digit",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required when mixed_list[] is an object",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/mixed_list/items/anyOf/4/properties/k"
+   }
+  },
+  {
+   "name": "people",
+   "category": "Lists",
+   "description": "People\nOne person, sometimes two. Row 2 holds a null person and one whose fields are all null.",
+   "type": "array of nullable object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ],
+    [
+     "properties",
+     "Fields: name, age, langs",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      {
+       "name": "Ada",
+       "age": 36,
+       "langs": [
+        "en",
+        "fr"
+       ]
+      },
+      {
+       "name": "Linus",
+       "age": 54,
+       "langs": [
+        "fi",
+        "sv",
+        "en"
+       ]
+      }
+     ]
+    ],
+    "x-duckdb-type": "STRUCT(\"name\" VARCHAR, age BIGINT, langs VARCHAR[])[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/people"
+   }
+  },
+  {
+   "name": "people[].name",
+   "category": "Lists",
+   "description": "First name\nFrom a pool of 16 computing pioneers.",
+   "type": "string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within people[]",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     "Ada",
+     "Grace"
+    ],
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/people/items/properties/name"
+   }
+  },
+  {
+   "name": "people[].age",
+   "category": "Lists",
+   "description": "Age (years)",
+   "type": "integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within people[]",
+     null
+    ],
+    [
+     "range",
+     "18 ≤ value ≤ 89",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/people/items/properties/age"
+   }
+  },
+  {
+   "name": "people[].langs",
+   "category": "Lists",
+   "description": "Languages\nISO 639-1 codes, usually none or one.",
+   "type": "array of nullable categorical (string) (nullable)",
+   "format": "",
+   "values": [
+    [
+     "en",
+     "value",
+     null,
+     "English",
+     null
+    ],
+    [
+     "fr",
+     "value",
+     null,
+     "French",
+     null
+    ],
+    [
+     "de",
+     "value",
+     null,
+     "German",
+     null
+    ],
+    [
+     "es",
+     "value",
+     null,
+     "Spanish",
+     null
+    ],
+    [
+     "fi",
+     "value",
+     null,
+     "Finnish",
+     null
+    ],
+    [
+     "sv",
+     "value",
+     null,
+     "Swedish",
+     null
+    ],
+    [
+     "ja",
+     "value",
+     null,
+     "Japanese",
+     null
+    ],
+    [
+     "hi",
+     "value",
+     null,
+     "Hindi",
+     null
+    ],
+    [
+     "ar",
+     "value",
+     null,
+     "Arabic",
+     null
+    ],
+    [
+     "pt",
+     "value",
+     null,
+     "Portuguese",
+     null
+    ]
+   ],
+   "constraints": [
+    [
+     "required",
+     "Required within people[]",
+     null
+    ],
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "VARCHAR[]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/people/items/properties/langs"
+   }
+  },
+  {
+   "name": "matrix",
+   "category": "Lists",
+   "description": "Matrix\nOne or two rows of up to three digits. Row 2 holds [[1, null], null, []].",
+   "type": "array of nullable array of nullable integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ],
+    [
+     "items",
+     "Each item: At most 3 item(s)",
+     null
+    ],
+    [
+     "range",
+     "Each inner item: 0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     [
+      [
+       1,
+       2,
+       3
+      ],
+      [
+       4,
+       5,
+       6
+      ]
+     ]
+    ],
+    "x-duckdb-type": "BIGINT[][]"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/matrix"
+   }
+  },
+  {
+   "name": "matrix[]",
+   "category": "Lists",
+   "description": "",
+   "type": "array of nullable integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ],
+    [
+     "range",
+     "Each item: 0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/matrix/items"
+   }
+  },
+  {
+   "name": "point",
+   "category": "Structs",
+   "description": "Point\nA point and its tier, like the struct columns of data-table's wide test file. {} in row 1.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "properties",
+     "Fields: x, y, tier",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     {
+      "x": 1.5,
+      "y": -0.5,
+      "tier": "gold"
+     }
+    ],
+    "x-duckdb-type": "STRUCT(x DOUBLE, y DOUBLE, tier VARCHAR)"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/point"
+   }
+  },
+  {
+   "name": "point.x",
+   "category": "Structs",
+   "description": "x coordinate\nStandard normal, two decimals.",
+   "type": "number (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "DOUBLE"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/point/properties/x"
+   }
+  },
+  {
+   "name": "point.y",
+   "category": "Structs",
+   "description": "y coordinate\nStandard normal, two decimals.",
+   "type": "number (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "DOUBLE"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/point/properties/y"
+   }
+  },
+  {
+   "name": "point.tier",
+   "category": "Structs",
+   "description": "Tier\nFrom bronze (lowest) to platinum (highest).",
+   "type": "categorical (string) (nullable)",
+   "format": "",
+   "values": [
+    [
+     "bronze",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "silver",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "gold",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "platinum",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "it's",
+     "value",
+     null,
+     "Row 4: text that needs escaping",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/point/properties/tier"
+   }
+  },
+  {
+   "name": "depth5",
+   "category": "Structs",
+   "description": "Five levels deep\nOne leaf under four levels of structs. {} in row 1; l3 is null in row 2.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "properties",
+     "Fields: l2",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     {
+      "l2": {
+       "l3": {
+        "l4": {
+         "l5": {
+          "leaf": 42
+         }
+        }
+       }
+      }
+     }
+    ],
+    "x-duckdb-type": "STRUCT(l2 STRUCT(l3 STRUCT(l4 STRUCT(l5 STRUCT(leaf BIGINT)))))"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5"
+   }
+  },
+  {
+   "name": "depth5.l2",
+   "category": "Structs",
+   "description": "Level 2",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "properties",
+     "Fields: l3",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5/properties/l2"
+   }
+  },
+  {
+   "name": "depth5.l2.l3",
+   "category": "Structs",
+   "description": "Level 3",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within depth5.l2",
+     null
+    ],
+    [
+     "properties",
+     "Fields: l4",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5/properties/l2/properties/l3"
+   }
+  },
+  {
+   "name": "depth5.l2.l3.l4",
+   "category": "Structs",
+   "description": "Level 4",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within depth5.l2.l3",
+     null
+    ],
+    [
+     "properties",
+     "Fields: l5",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5/properties/l2/properties/l3/properties/l4"
+   }
+  },
+  {
+   "name": "depth5.l2.l3.l4.l5",
+   "category": "Structs",
+   "description": "Level 5",
+   "type": "object",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within depth5.l2.l3.l4",
+     null
+    ],
+    [
+     "properties",
+     "Fields: leaf",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5/properties/l2/properties/l3/properties/l4/properties/l5"
+   }
+  },
+  {
+   "name": "depth5.l2.l3.l4.l5.leaf",
+   "category": "Structs",
+   "description": "Leaf",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required within depth5.l2.l3.l4.l5",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 99",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/depth5/properties/l2/properties/l3/properties/l4/properties/l5/properties/leaf"
+   }
+  },
+  {
+   "name": "key_order",
+   "category": "Structs",
+   "description": "Key order\nKey \"2\" before \"1\": an order DuckDB keeps and JavaScript does not, since it lists integer-like keys first, as this dictionary does.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "properties",
+     "Fields: 1, 2",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "STRUCT(\"2\" BIGINT, \"1\" BIGINT)"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/key_order"
+   }
+  },
+  {
+   "name": "key_order.1",
+   "category": "Structs",
+   "description": "Key \"1\"\nSecond in the file.",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/key_order/properties/1"
+   }
+  },
+  {
+   "name": "key_order.2",
+   "category": "Structs",
+   "description": "Key \"2\"\nFirst in the file.",
+   "type": "integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/key_order/properties/2"
+   }
+  },
+  {
+   "name": "odd_keys",
+   "category": "Structs",
+   "description": "Odd keys\nA random subset of seven keys, in this order, that SQL or a path must quote. Every key in rows 2 and 10.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "properties",
+     "Fields: k, score, kind, my field, a.b, q\"k, ünï",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "STRUCT(k VARCHAR, score DOUBLE, kind VARCHAR, \"my field\" JSON, \"a.b\" BIGINT, \"q\"\"k\" BOOLEAN, \"ünï\" VARCHAR)"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys"
+   }
+  },
+  {
+   "name": "odd_keys.k",
+   "category": "Structs",
+   "description": "Tag\nOne of 24 tag words.",
+   "type": "string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": {
+    "examples": [
+     "red",
+     "north"
+    ],
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/k"
+   }
+  },
+  {
+   "name": "odd_keys.score",
+   "category": "Structs",
+   "description": "Score\nTwo decimals.",
+   "type": "number (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 1",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "DOUBLE"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/score"
+   }
+  },
+  {
+   "name": "odd_keys.kind",
+   "category": "Structs",
+   "description": "Kind",
+   "type": "categorical (string)",
+   "format": "",
+   "values": [
+    [
+     "alpha",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "beta",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "gamma",
+     "value",
+     null,
+     null,
+     null
+    ],
+    [
+     "nulls",
+     "value",
+     null,
+     "Row 2, where every other key is null",
+     null
+    ],
+    [
+     "demo",
+     "value",
+     null,
+     "Row 10",
+     null
+    ]
+   ],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/kind"
+   }
+  },
+  {
+   "name": "odd_keys[\"my field\"]",
+   "category": "Structs",
+   "description": "Spaced key\nA digit or a tag word, so DuckDB types it JSON.",
+   "type": "integer or string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "JSON"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/my field"
+   }
+  },
+  {
+   "name": "odd_keys[\"a.b\"]",
+   "category": "Structs",
+   "description": "Dotted key",
+   "type": "integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "range",
+     "0 ≤ value ≤ 99",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "BIGINT"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/a.b"
+   }
+  },
+  {
+   "name": "odd_keys[\"q\\\"k\"]",
+   "category": "Structs",
+   "description": "Quoted key",
+   "type": "boolean (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "BOOLEAN"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/q\"k"
+   }
+  },
+  {
+   "name": "odd_keys.ünï",
+   "category": "Structs",
+   "description": "Unicode key\nA tag word.",
+   "type": "string (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [],
+   "additional": {
+    "x-duckdb-type": "VARCHAR"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/odd_keys/properties/ünï"
+   }
+  },
+  {
+   "name": "props",
+   "category": "Maps",
+   "description": "Properties\nOne or two numbered keys. Row 11 holds keys that collide once case and punctuation are folded, which a STRUCT cannot hold.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "maxProperties",
+     "At most 6 properties",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     {
+      "key_398": 76,
+      "key_107": 885
+     },
+     {
+      "width": 12,
+      "height": 30,
+      "depth": 4
+     }
+    ],
+    "x-duckdb-type": "MAP(VARCHAR, BIGINT)"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/props"
+   }
+  },
+  {
+   "name": "props./^key_[0-9]{3}$/",
+   "category": "Maps",
+   "description": "Numbered key\nkey_000 to key_499.",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "patternProperties",
+     "Property name matches /^key_[0-9]{3}$/.",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 999",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/props/patternProperties/^key_[0-9]{3}$"
+   }
+  },
+  {
+   "name": "props.*",
+   "category": "Maps",
+   "description": "Other keys\nNow and then size, toJSON, constructor or __proto__; the showcase rows' own keys.",
+   "type": "integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "additionalProperties",
+     "Any property name not listed above.",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 999",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/props/additionalProperties"
+   }
+  },
+  {
+   "name": "empty_obj",
+   "category": "Maps",
+   "description": "Empty object\n{} in every row that is not null. With no key to go by, DuckDB reads a map of JSON values.",
+   "type": "object (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "maxProperties",
+     "Must be empty (no properties allowed)",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "MAP(VARCHAR, JSON)"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/empty_obj"
+   }
+  },
+  {
+   "name": "shifty",
+   "category": "JSON values",
+   "description": "Shifty value\nA number, a word, a boolean, a {k, n} object or a list of digits, changing from row to row.",
+   "type": "integer or string or boolean or object or array of integer (nullable)",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ],
+    [
+     "items",
+     "At most 3 item(s)",
+     null
+    ],
+    [
+     "properties",
+     "Fields: k, n",
+     null
+    ],
+    [
+     "additionalProperties",
+     "No other properties allowed",
+     null
+    ],
+    [
+     "range",
+     "Each item: 0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": {
+    "examples": [
+     226,
+     "nostrud",
+     true,
+     {
+      "k": "ipsum",
+      "n": 0
+     },
+     [
+      0,
+      3,
+      4
+     ]
+    ],
+    "x-duckdb-type": "JSON"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/shifty"
+   }
+  },
+  {
+   "name": "shifty.k",
+   "category": "JSON values",
+   "description": "Word",
+   "type": "string",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "oneOf",
+     "When shifty is an object",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/shifty/oneOf/3/properties/k"
+   }
+  },
+  {
+   "name": "shifty.n",
+   "category": "JSON values",
+   "description": "Digit",
+   "type": "integer",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "oneOf",
+     "When shifty is an object",
+     null
+    ],
+    [
+     "range",
+     "0 ≤ value ≤ 9",
+     null
+    ]
+   ],
+   "additional": null,
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/shifty/oneOf/3/properties/n"
+   }
+  },
+  {
+   "name": "all_null",
+   "category": "JSON values",
+   "description": "All null\nnull in every row. With no value to go by, DuckDB types the column JSON.",
+   "type": "null",
+   "format": "",
+   "values": [],
+   "constraints": [
+    [
+     "required",
+     "Required",
+     null
+    ]
+   ],
+   "additional": {
+    "x-duckdb-type": "JSON"
+   },
+   "source": {
+    "uri": "https://example.org/schemas/nested-stress-tests-dataset.json",
+    "pointer": "/properties/all_null"
+   }
+  }
+ ],
+ "conditionalRules": [],
+ "warnings": []
+}
