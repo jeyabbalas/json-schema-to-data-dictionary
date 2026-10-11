@@ -139,8 +139,7 @@ function header(vm: ViewModel, uid: string): string {
     panels.push(panel(uid, "warnings", "Extraction warnings", "", `<ul class="dd-warnings">${vm.warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>`));
   }
   const allCollapsed = !o.expandCategories;
-  const actions = [
-    ...toggles,
+  const actions = `<div class="dd-actions">${[
     `<button class="dd-btn" type="button" data-dd-action="reset-widths" title="Reset the column widths" hidden>${ICON_RESET}Reset widths</button>`,
     `<button class="dd-btn dd-btn-icon" type="button" data-dd-action="${allCollapsed ? "expand-all" : "collapse-all"}" title="${allCollapsed ? "Expand all" : "Collapse all"}" aria-label="${allCollapsed ? "Expand all" : "Collapse all"}">${ICON_COLLAPSE}</button>`,
     ...(o.includeExport
@@ -149,21 +148,27 @@ function header(vm: ViewModel, uid: string): string {
           `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV">${ICON_DOWNLOAD}CSV</button>`
         ]
       : [])
-  ].join("");
+  ].join("")}</div>`;
 
+  // The search box on a line of its own, then the panel toggles under it -- what the reader
+  // should not miss -- with the table's own controls at the far end. A dictionary with nothing
+  // to open keeps those controls beside the search box instead of on a line of their own.
   return `
   <header class="dd-header">
     <h2 class="dd-title">${escapeHtml(vm.title)}</h2>
     ${vm.description ? `<p class="dd-description">${multiline(vm.description)}</p>` : ""}
     ${vm.comment ? `<p class="dd-comment">${multiline(vm.comment)}</p>` : ""}
     <div class="dd-toolbar">
-      <div class="dd-search">
-        <input class="dd-search-input" type="search" inputmode="search" autocomplete="off" spellcheck="false"
-               placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
-        <span class="dd-count" role="status" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
+      <div class="dd-searchbar">
+        <div class="dd-search">
+          <input class="dd-search-input" type="search" inputmode="search" autocomplete="off" spellcheck="false"
+                 placeholder="${escapeHtml(o.searchPlaceholder)}" aria-label="Search variables" data-dd-search>
+          <span class="dd-count" role="status" data-dd-count data-total="${vm.variableCount}">${vm.variableCount} variables</span>
+        </div>
+        ${o.semanticSearch ? `<span class="dd-semantic-status" part="semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
+        ${toggles.length ? "" : actions}
       </div>
-      ${o.semanticSearch ? `<span class="dd-semantic-status" part="semantic-status" role="status" data-dd-semantic-status hidden></span>` : ""}
-      <div class="dd-actions">${actions}</div>
+      ${toggles.length ? `<div class="dd-tools"><div class="dd-panel-toggles">${toggles.join("")}</div>${actions}</div>` : ""}
     </div>
     ${panels.join("")}
   </header>`;

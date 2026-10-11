@@ -192,8 +192,8 @@ range reads as an inequality (`parous = 1 and 1 ≤ parity ≤ 2`).
 The rendered table lets you follow a pattern from either end: the variable named in a condition
 is a link to its row, a variable that patterns read carries a **Skips N** chip under its name
 that opens a row listing what each of its answers sets (`if meno_status = 2 → 777
-Premenopausal/NA · meno_age, meno_reason`), and the toolbar's **Skip logic** panel lists every
-rule that way, grouped by the variable it reads.
+Premenopausal/NA · meno_age, meno_reason`), and the **Skip logic** button under the search box
+opens a panel listing every rule that way, grouped by the variable it reads.
 
 ### Saying which codes are special: `x-value-kind`
 

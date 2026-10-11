@@ -98,7 +98,9 @@
 .dd-description, .dd-comment { margin: 4px 0 0; max-width: 120ch; color: var(--_muted); }
 .dd-comment { font-size: 12px; }
 
-.dd-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.dd-toolbar { display: grid; gap: 8px; margin-top: 14px; }
+.dd-searchbar, .dd-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dd-panel-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .dd-search { position: relative; flex: 1 1 340px; min-width: 220px; max-width: 640px; }
 .dd-search::before {
   content: ""; position: absolute; left: 11px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%);
@@ -133,7 +135,6 @@
 .dd-btn-count { font-size: 11px; font-weight: 500; color: var(--_muted); font-variant-numeric: tabular-nums; }
 .dd-btn[aria-expanded="true"] .dd-btn-count { color: inherit; }
 .dd-btn-warn, .dd-btn-warn .dd-icon { color: var(--_sentinel); }
-.dd-root[data-all-collapsed] [data-dd-action="expand-all"] .dd-icon { transform: none; }
 
 /* ---- Panels opened from the toolbar ---- */
 .dd-panel {
@@ -390,7 +391,6 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
 }
 @media (max-width: 640px) {
   .dd-search { flex-basis: 100%; max-width: none; }
-  .dd-actions { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dd-row.dd-flash > td, .dd-row.dd-flash > th { animation-duration: .01s; }
@@ -403,13 +403,16 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
     <p class="dd-description">Array of CORE records. One element = one participant at one questionnaire / record cycle. Each record is the union of the category object schemas; structurally-missing values are encoded via sentinels and the key skip patterns are enforced by the conditional blocks below.</p>
     
     <div class="dd-toolbar">
-      <div class="dd-search">
-        <input class="dd-search-input" type="search" inputmode="search" autocomplete="off" spellcheck="false"
-               placeholder="Search variables, descriptions, values…" aria-label="Search variables" data-dd-search>
-        <span class="dd-count" role="status" data-dd-count data-total="106">106 variables</span>
+      <div class="dd-searchbar">
+        <div class="dd-search">
+          <input class="dd-search-input" type="search" inputmode="search" autocomplete="off" spellcheck="false"
+                 placeholder="Search variables, descriptions, values…" aria-label="Search variables" data-dd-search>
+          <span class="dd-count" role="status" data-dd-count data-total="106">106 variables</span>
+        </div>
+        
+        
       </div>
-      
-      <div class="dd-actions"><button class="dd-btn" type="button" data-dd-panel-toggle="rules" aria-expanded="false" aria-controls="dd1-rules" title="Skip patterns: what each answer sets elsewhere"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2.5v5A2.5 2.5 0 0 0 5.5 10H13m0 0-2.5-2.5M13 10l-2.5 2.5"/></svg>Skip logic <span class="dd-btn-count">27</span></button><button class="dd-btn" type="button" data-dd-panel-toggle="meta" aria-expanded="false" aria-controls="dd1-meta" title="Dataset metadata"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 7.25v3.5M8 5.2v.05"/></svg>Metadata</button><button class="dd-btn" type="button" data-dd-action="reset-widths" title="Reset the column widths" hidden><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h11M2.5 8l2-2M2.5 8l2 2M13.5 8l-2-2M13.5 8l-2 2"/></svg>Reset widths</button><button class="dd-btn dd-btn-icon" type="button" data-dd-action="collapse-all" title="Collapse all" aria-label="Collapse all"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 6 3.5-3 3.5 3M4.5 10l3.5 3 3.5-3"/></svg></button><button class="dd-btn" type="button" data-dd-action="copy" title="Copy the dictionary as CSV"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></svg>Copy</button><button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8m0 0-3-3m3 3 3-3M3 13.5h10"/></svg>CSV</button></div>
+      <div class="dd-tools"><div class="dd-panel-toggles"><button class="dd-btn" type="button" data-dd-panel-toggle="rules" aria-expanded="false" aria-controls="dd1-rules" title="Skip patterns: what each answer sets elsewhere"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2.5v5A2.5 2.5 0 0 0 5.5 10H13m0 0-2.5-2.5M13 10l-2.5 2.5"/></svg>Skip logic <span class="dd-btn-count">27</span></button><button class="dd-btn" type="button" data-dd-panel-toggle="meta" aria-expanded="false" aria-controls="dd1-meta" title="Dataset metadata"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.75"/><path d="M8 7.25v3.5M8 5.2v.05"/></svg>Metadata</button></div><div class="dd-actions"><button class="dd-btn" type="button" data-dd-action="reset-widths" title="Reset the column widths" hidden><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h11M2.5 8l2-2M2.5 8l2 2M13.5 8l-2-2M13.5 8l-2 2"/></svg>Reset widths</button><button class="dd-btn dd-btn-icon" type="button" data-dd-action="collapse-all" title="Collapse all" aria-label="Collapse all"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 6 3.5-3 3.5 3M4.5 10l3.5 3 3.5-3"/></svg></button><button class="dd-btn" type="button" data-dd-action="copy" title="Copy the dictionary as CSV"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 0 0 9 2.5H4A1.5 1.5 0 0 0 2.5 4v5A1.5 1.5 0 0 0 4 10.5h1.5"/></svg>Copy</button><button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV"><svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v8m0 0-3-3m3 3 3-3M3 13.5h10"/></svg>CSV</button></div></div>
     </div>
     
     <section class="dd-panel" id="dd1-rules" data-dd-panel="rules" aria-label="Skip logic" hidden>

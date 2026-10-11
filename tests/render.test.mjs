@@ -84,6 +84,28 @@ test("tableToHtml: fixed column layout, static sections, no component-only marku
   assert.match(markup, /data-search="/);
 });
 
+test("tableToHtml: the panel toggles sit under the search box, the table's controls at the far end", () => {
+  const html = tableToHtml(table);
+  const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
+  const toolbar = markup.slice(markup.indexOf('<div class="dd-toolbar">'), markup.indexOf('<section class="dd-panel"'));
+  const [searchbar, tools] = toolbar.split('<div class="dd-tools">');
+  assert.ok(tools, "a line of its own under the search box");
+  assert.match(searchbar, /data-dd-search/);
+  assert.doesNotMatch(searchbar, /data-dd-panel-toggle|data-dd-action/, "the search box keeps its line to itself");
+  assert.match(tools, /^<div class="dd-panel-toggles"><button[^>]*data-dd-panel-toggle="rules"[\s\S]*data-dd-panel-toggle="meta"/, "Skip logic first, then Metadata");
+  assert.match(tools, /<div class="dd-actions">[\s\S]*data-dd-action="reset-widths"[\s\S]*data-dd-action="(collapse|expand)-all"/);
+});
+
+test("tableToHtml: with nothing to open, the table's controls stay beside the search box", () => {
+  const plain = schemaDocumentsToTable([
+    { uri: "https://example.org/p.json", schema: { type: "array", items: { type: "object", properties: { a: { type: "string" } } } } }
+  ]);
+  const html = tableToHtml(plain);
+  const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
+  assert.doesNotMatch(markup, /data-dd-panel-toggle|class="dd-tools"/);
+  assert.match(markup, /<div class="dd-searchbar">[\s\S]*data-dd-search[\s\S]*<div class="dd-actions">/);
+});
+
 test("tableToHtml: a value cannot break out of the embedded script", () => {
   const evil = {
     ...table,

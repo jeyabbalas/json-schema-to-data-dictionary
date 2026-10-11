@@ -49,7 +49,10 @@ A calmer table that you can size, and skip patterns you can follow.
 - Columns nobody has sized share out only the width beyond each column's minimum, so the table
   fits its viewport exactly whenever it can and scrolls sideways only when it cannot.
 - The skip-pattern rules, the dataset metadata and the extraction warnings open as panels from
-  the toolbar instead of collapsible bars above the table (the warnings were a footer).
+  the toolbar instead of collapsible bars above the table (the warnings were a footer). Their
+  buttons — *Skip logic*, *Metadata*, *N warnings* — sit on a line of their own right under the
+  search box, with the table's own controls (*Reset widths*, expand/collapse all, copy, CSV) at
+  the far end of it; a dictionary with nothing to open keeps those controls beside the search box.
 - In the rendered table, a skip pattern that pins a value is shown on that value only, no longer
   repeated as a constraint (`When parous = 0, value = 777 (Nonparous).`). `table.rows`, the CSV
   and spreadsheet exports and the search index are unchanged.

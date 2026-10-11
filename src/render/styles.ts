@@ -94,7 +94,9 @@ export const STYLES = `
 .dd-description, .dd-comment { margin: 4px 0 0; max-width: 120ch; color: var(--_muted); }
 .dd-comment { font-size: 12px; }
 
-.dd-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.dd-toolbar { display: grid; gap: 8px; margin-top: 14px; }
+.dd-searchbar, .dd-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dd-panel-toggles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .dd-search { position: relative; flex: 1 1 340px; min-width: 220px; max-width: 640px; }
 .dd-search::before {
   content: ""; position: absolute; left: 11px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%);
@@ -385,7 +387,6 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
 }
 @media (max-width: 640px) {
   .dd-search { flex-basis: 100%; max-width: none; }
-  .dd-actions { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .dd-row.dd-flash > td, .dd-row.dd-flash > th { animation-duration: .01s; }
