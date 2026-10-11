@@ -26,6 +26,8 @@ export type PoolingMode = "cls" | "mean" | "last_token" | "sentence_embedding";
 export interface TransformersModuleLike {
   AutoTokenizer: { from_pretrained(model: string, options?: unknown): Promise<unknown> };
   AutoModel: { from_pretrained(model: string, options?: unknown): Promise<unknown> };
+  /** Needed only for `configOverrides` (multimodal models loaded as text models). */
+  AutoConfig?: { from_pretrained(model: string, options?: unknown): Promise<unknown> } | undefined;
   env?: Record<string, unknown> | undefined;
 }
 
@@ -62,6 +64,13 @@ export interface TransformersEmbedderOptions {
   minScore?: number | undefined;
   /** Texts per model call. Default: 16. */
   batchSize?: number | undefined;
+  /**
+   * Fields replaced in the model's config before the model loads. For a multimodal model, `null`
+   * for each encoder a text embedder never runs (`{ vision_config: null, audio_config: null }`)
+   * loads the text model alone, so the encoders' weights are never downloaded. Needs the module's
+   * `AutoConfig`. Default: from {@link KNOWN_EMBEDDING_MODELS}.
+   */
+  configOverrides?: Record<string, unknown> | undefined;
   /** Extra options merged into `AutoModel.from_pretrained()` (e.g. `revision`, `session_options`). */
   modelOptions?: Record<string, unknown> | undefined;
   /** Extra options merged into `AutoTokenizer.from_pretrained()`. */
@@ -90,6 +99,8 @@ export interface KnownEmbeddingModel {
   dtype: DtypeTable;
   /** Devices the model is practical on; a warning is logged when it resolves elsewhere. */
   devices?: readonly string[] | undefined;
+  /** Config fields replaced before loading (see `TransformersEmbedderOptions.configOverrides`). */
+  configOverrides?: Readonly<Record<string, unknown>> | undefined;
   /** Parameter count. */
   params: number;
   /** SPDX licence identifier of the weights. */
@@ -105,9 +116,9 @@ export const DEFAULT_EMBEDDING_MODEL = "MongoDB/mdbr-leaf-ir";
  * Floors were calibrated with `npm run eval -- --calibrate --dtype q8` on the BCRPP fixture
  * (52 labelled queries): the floor sits just above the highest mean-centred score any row
  * reached for 12 nonsense queries ("asdfgh", "xyzzy plugh", "the", …). Noise ceilings: LEAF-IR
- * 0.241, bge-small 0.233, Jina v5 nano 0.271; the 10th percentile of the expected rows' scores
- * was 0.11 / 0.11 / 0.21, so some weakly related rows fall below the floor — the lexical index
- * covers those, and the floor only gates "related"-only rows.
+ * 0.241, Jina v5 nano 0.271, EmbeddingGemma 2 0.195; the 10th percentile of the expected rows'
+ * scores was 0.11 / 0.21 / 0.13, so some weakly related rows fall below the floor — the lexical
+ * index covers those, and the floor only gates "related"-only rows.
  */
 export const KNOWN_EMBEDDING_MODELS: Readonly<Record<string, KnownEmbeddingModel>> = {
   // LEAF-IR: the ONNX graph exposes `sentence_embedding` (pooling + Dense 384→768 + normalise);
@@ -139,28 +150,23 @@ export const KNOWN_EMBEDDING_MODELS: Readonly<Record<string, KnownEmbeddingModel
     license: "CC-BY-NC-4.0",
     notes: "Non-commercial use only. Matryoshka 32–768 dims."
   },
-  // BGE: CLS pooling (per BAAI); v1.5 needs no query instruction.
-  "Xenova/bge-small-en-v1.5": {
-    pooling: "cls",
-    queryPrefix: "",
-    documentPrefix: "",
-    fullDims: 384,
+  // EmbeddingGemma 2, text model only: a Gemma 4 decoder whose ONNX graph exposes
+  // `sentence_embedding` (mean pooling + Dense 512→768 + normalise). The multimodal checkpoint's
+  // vision and audio encoders are dropped from the config, so their weights are never fetched.
+  // 270M parameters (half of them the 262k-token embedding table) — practical on WebGPU only.
+  "onnx-community/embeddinggemma-2-ONNX": {
+    pooling: "sentence_embedding",
+    queryPrefix: "task: search result | query: ",
+    documentPrefix: "title: none | text: ",
+    fullDims: 768,
     maxLength: 256,
-    minScore: 0.25,
-    dtype: { webgpu: "fp16", webgpuNoF16: "fp32", wasm: "q8", cpu: "fp32" },
-    params: 33e6,
-    license: "MIT"
-  },
-  "Xenova/all-MiniLM-L6-v2": {
-    pooling: "mean",
-    queryPrefix: "",
-    documentPrefix: "",
-    fullDims: 384,
-    maxLength: 256,
-    minScore: 0.25,
-    dtype: { webgpu: "fp16", webgpuNoF16: "fp32", wasm: "q8", cpu: "fp32" },
-    params: 22e6,
-    license: "Apache-2.0"
+    minScore: 0.2, // noise ceiling 0.195 (2026-10 calibration)
+    dtype: { webgpu: "q4f16", webgpuNoF16: "q4", wasm: "q4", cpu: "fp32" },
+    devices: ["webgpu"],
+    configOverrides: { vision_config: null, audio_config: null },
+    params: 270e6,
+    license: "Apache-2.0",
+    notes: "Matryoshka 128–768 dims; 100+ languages; 8k context."
   }
 };
 
@@ -199,6 +205,7 @@ export function createTransformersEmbedder(
   const batchSize = Math.max(1, Math.floor(options.batchSize ?? 16));
   const modelOptions = { ...(options.pipelineOptions ?? {}), ...(options.modelOptions ?? {}) };
   const tokenizerOptions = options.tokenizerOptions ?? {};
+  const configOverrides = options.configOverrides ?? known?.configOverrides;
 
   // The vector space: everything that changes the vectors except the weight precision.
   const spaceId = `transformers:${model}:${pooling}:${dims ?? "full"}:${maxLength}:${documentPrefix}`;
@@ -234,11 +241,24 @@ export function createTransformersEmbedder(
     emit(total > 0 ? Math.min(1, loaded / total) : 0);
   };
 
-  const createModel = async (mod: TransformersModuleLike, rt: ResolvedRuntime): Promise<ModelLike> =>
+  // The config with `configOverrides` applied, or undefined to let AutoModel read it. A
+  // multimodal model handed a config without its encoders loads (and downloads) the text model only.
+  const loadConfig = async (mod: TransformersModuleLike): Promise<unknown> => {
+    if (!configOverrides || Object.keys(configOverrides).length === 0) return undefined;
+    if (!mod.AutoConfig) {
+      warnOnce(`config:${model}`, `The Transformers.js module has no AutoConfig; "${model}" loads with its full config.`);
+      return undefined;
+    }
+    const config = await mod.AutoConfig.from_pretrained(model, { progress_callback: onProgressEvent, ...modelOptions });
+    return Object.assign(config as object, configOverrides);
+  };
+
+  const createModel = async (mod: TransformersModuleLike, rt: ResolvedRuntime, config: unknown): Promise<ModelLike> =>
     (await mod.AutoModel.from_pretrained(model, {
       device: rt.device,
       dtype: rt.dtype,
       progress_callback: onProgressEvent,
+      ...(config === undefined ? {} : { config }),
       ...modelOptions
     })) as ModelLike;
 
@@ -249,15 +269,16 @@ export function createTransformersEmbedder(
       warnOnce(`device:${model}:${rt.device}`, `"${model}" is verified on ${known.devices.join("/")} only; running on ${rt.device} may be very slow.`);
     }
     const tokenizer = (await mod.AutoTokenizer.from_pretrained(model, { progress_callback: onProgressEvent, ...tokenizerOptions })) as TokenizerLike;
+    const config = await loadConfig(mod);
     let loadedModel: ModelLike;
     try {
-      loadedModel = await createModel(mod, rt);
+      loadedModel = await createModel(mod, rt, config);
     } catch (err) {
       if (rt.device !== "webgpu" || !fallbackToWasm) throw err;
       const wasmDtype = requestedDtype === "auto" ? (known?.dtype.wasm ?? "q8") : requestedDtype;
       console.warn(`${PREFIX} WebGPU session for "${model}" failed (${err instanceof Error ? err.message : String(err)}); retrying on WASM (${wasmDtype}).`);
       rt = { device: "wasm", dtype: wasmDtype, fromAuto: rt.fromAuto };
-      loadedModel = await createModel(mod, rt);
+      loadedModel = await createModel(mod, rt, config);
     }
     runtime = rt;
     return { tokenizer, model: loadedModel, runtime: rt };

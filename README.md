@@ -372,26 +372,28 @@ related ones well above it, which is what makes one floor work across models.
 
 #### Choosing a model
 
-`createTransformersEmbedder(moduleOrLoader, { model, dtype, device, pooling, queryPrefix, documentPrefix, dims, maxLength, minScore, batchSize, modelOptions, tokenizerOptions })`
+`createTransformersEmbedder(moduleOrLoader, { model, dtype, device, pooling, queryPrefix, documentPrefix, dims, maxLength, minScore, batchSize, configOverrides, modelOptions, tokenizerOptions })`
 has verified configurations (`KNOWN_EMBEDDING_MODELS`) for these models. Throughput was
 measured in Chrome 152 on an Intel MacBook on real dictionary text (≈ 180 characters per
-chunk, batches of 16); a 10,000-variable dictionary is about 13,000 chunks.
+chunk, batches of 16) unless noted; a 10,000-variable dictionary is about 13,000 chunks.
+EmbeddingGemma 2 needs Transformers.js 4.3.1 or later.
 
 | Model | Params | Download | Licence | WASM | WebGPU | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `MongoDB/mdbr-leaf-ir` (default) | 23M | 23 MB q8 · 46 MB fp16 | Apache-2.0 | 16 texts/s single-threaded, ~70 texts/s with threads (10k vars ≈ 3 min) | **~800 texts/s** fp16 (10k vars ≈ 16 s) | Best retrieval quality under 100M params (BEIR nDCG@10 53.6); uses the model's `sentence_embedding` output. |
 | `jinaai/jina-embeddings-v5-text-nano-retrieval` | 239M | 124 MB q4f16 | **CC-BY-NC-4.0** (non-commercial use only) | impractical | ~60 texts/s q4f16 (10k vars ≈ 4 min) | Highest quality (MTEB-English-v2 71.0; best MRR on the labelled set), multilingual, 8k context. WebGPU only. |
-| `Xenova/bge-small-en-v1.5` | 33M | 34 MB q8 | MIT | 8 texts/s single-threaded | ~200 texts/s fp16 | The 0.2 default; weaker on abbreviations (*BMI*). |
-| `Xenova/all-MiniLM-L6-v2` | 23M | 22 MB q8 | Apache-2.0 | ~16 texts/s | ~330 texts/s | Fastest; lowest retrieval quality. |
+| `onnx-community/embeddinggemma-2-ONNX` | 270M (text model) | 157 MB q4f16 + 32 MB tokenizer | Apache-2.0 | impractical | ~70 texts/s q4f16 on an M1 Pro, where LEAF-IR runs ~270 and Jina ~110 (10k vars ≈ 3 min) | The text model of Google's multimodal EmbeddingGemma 2 (Gemma 4): its vision and audio encoders are left out of the config, so their weights are never downloaded. Second-best MRR on the labelled set, 100+ languages, 8k context, Matryoshka 128–768. WebGPU only. |
 
 Once embedded, the vectors of a 10,000-variable dictionary (13,400 chunks, 39 MB) come back from
 IndexedDB in about 0.4 s on the next visit. On the labelled BCRPP query set (`npm run eval`),
-hybrid ranking reaches MRR 0.90 with LEAF-IR, 0.89 with bge-small and 0.94 with Jina v5 nano,
-against 0.82 for keyword search alone.
+hybrid ranking reaches MRR 0.90 with LEAF-IR, 0.92 with EmbeddingGemma 2 and 0.94 with Jina v5
+nano, against 0.82 for keyword search alone.
 
 Any other Transformers.js embedding model works if you pass `pooling` (`"cls"`, `"mean"`,
 `"last_token"` — mask-aware, so right-padded batches are correct — or `"sentence_embedding"`
-for exports that include their pooling head), the prefixes and `minScore` explicitly. To not
+for exports that include their pooling head), the prefixes and `minScore` explicitly; a
+multimodal checkpoint loads as a text model with `configOverrides` set to `null` for each
+encoder it should leave out (`{ vision_config: null, audio_config: null }`). To not
 depend on a third-party Hub repo, mirror the model files (`config.json`, `tokenizer.json`,
 `tokenizer_config.json`, `special_tokens_map.json`, `onnx/model_*.onnx` and their
 `.onnx_data` sidecars) into your own Hugging Face account and set `model: "<account>/<repo>"`.
@@ -404,7 +406,7 @@ If you publish the dictionary, embed it once and ship the vectors next to the sc
 browser then only embeds the query:
 
 ```bash
-npm install --no-save @huggingface/transformers@4.2.0   # once, for the build step
+npm install --no-save @huggingface/transformers@4.3.1   # once, for the build step
 node scripts/build-snapshot.mjs path/to/schemas dictionary.jsddvec --int8   # ~1,500 texts/s on a CPU
 ```
 
@@ -428,7 +430,7 @@ Run the model off the main thread by serving it from a Web Worker (this is what 
 importScripts("json-schema-data-dictionary.global.js");
 const { serveEmbedder, createTransformersEmbedder } = JsonSchemaDataDictionary;
 const params = new URLSearchParams(self.location.search);          // e.g. ?model=…&device=auto
-serveEmbedder(createTransformersEmbedder(() => import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0"), {
+serveEmbedder(createTransformersEmbedder(() => import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1"), {
   model: params.get("model") ?? undefined, device: params.get("device") ?? "auto"
 }));
 

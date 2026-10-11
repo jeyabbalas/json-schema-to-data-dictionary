@@ -48,7 +48,7 @@
   // per model and reused across re-renders; the library caches row embeddings in IndexedDB.
   var SEMANTIC_KEY = "dd-demo:semantic";
   var MODEL_KEY = "dd-demo:model";
-  var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+  var TRANSFORMERS_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1";
   // The Pages deploy appends ?v=<commit> to every asset URL (cache-busting). Forward it to
   // the worker so a fresh app.js never pairs with a stale embed-worker.js.
   var ASSET_QUERY = (function () {
@@ -65,8 +65,7 @@
   var DEMO_MODELS = [
     { id: "MongoDB/mdbr-leaf-ir", name: "LEAF-IR", size: "23 MB q8 / 46 MB fp16", isDefault: true },
     { id: "jinaai/jina-embeddings-v5-text-nano-retrieval", name: "Jina v5 nano", size: "124 MB q4f16", nonCommercial: true, needsWebGPU: true },
-    { id: "Xenova/bge-small-en-v1.5", name: "BGE small v1.5", size: "34 MB q8" },
-    { id: "Xenova/all-MiniLM-L6-v2", name: "all-MiniLM-L6-v2", size: "22 MB q8" }
+    { id: "onnx-community/embeddinggemma-2-ONNX", name: "EmbeddingGemma 2", size: "157 MB q4f16", needsWebGPU: true }
   ];
   var MODELS = [];               // DEMO_MODELS cross-checked against the library at start-up
   var selectedModel = null;      // the menu's (persisted) choice; the ?model= override wins over it

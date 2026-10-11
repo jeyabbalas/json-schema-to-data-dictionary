@@ -35,6 +35,16 @@ A calmer table that you can size, and skip patterns you can follow.
   (effects grouped by the value they set), `ViewModel.names`; types `ConditionVM`,
   `RuleGroupVM`, `DataDictionaryColumn`, `ColumnWidths` and `ColumnResizeDetail`.
 - The semantic-search status chip is exposed as `part="semantic-status"`.
+- **EmbeddingGemma 2** (`onnx-community/embeddinggemma-2-ONNX`) is a verified model: the text
+  model of Google's multimodal EmbeddingGemma 2, read from its `sentence_embedding` output with
+  its task prefixes (`task: search result | query: `, `title: none | text: `), q4f16 on WebGPU
+  (q4 without `shader-f16` and on WASM), a `minScore` of 0.20 (noise ceiling 0.195) and WebGPU
+  only, like Jina v5 nano. It needs Transformers.js 4.3.1. On the labelled BCRPP queries,
+  hybrid ranking reaches MRR 0.92, between LEAF-IR (0.90) and Jina v5 nano (0.94).
+- `configOverrides` — an embedder option and a `KnownEmbeddingModel` field: config fields
+  replaced before the model loads, read through the module's `AutoConfig` (a new optional
+  member of `TransformersModuleLike`). EmbeddingGemma 2 sets its vision and audio encoders to
+  `null`, so only the 157 MB text model and its tokenizer are downloaded.
 
 ### Changed
 
@@ -63,11 +73,21 @@ A calmer table that you can size, and skip patterns you can follow.
   files or a folder, the loaded documents and the root document), the semantic-search switch, an
   Export menu (HTML, Excel, CSV, copy) and settings (theme, display options); files and folders
   drop anywhere on the window; the dictionary fills the rest. While semantic search is on, the
-  model in use sits beside its switch (*LEAF-IR*, *Jina v5 nano*, …) and opens a menu to switch
-  models, each with its download size, parameter count and licence, and the device it runs on;
-  the loading and indexing status follows it. Turning semantic search on or off, switching
-  models or changing a display option keeps the query. Theme and column widths are remembered,
-  and the exported HTML page uses the same full-window layout.
+  model in use sits beside its switch (*LEAF-IR*, *Jina v5 nano* or *EmbeddingGemma 2*) and
+  opens a menu to switch models, each with its download size, parameter count and licence, and
+  the device it runs on; the loading and indexing status follows it. Turning semantic search on
+  or off, switching models or changing a display option keeps the query. Theme and column
+  widths are remembered, and the exported HTML page uses the same full-window layout.
+
+- Transformers.js 4.3.1 (was 4.2.0) in the demo, the README examples and the dev dependency.
+  `npm run eval` evaluates LEAF-IR alone unless `--model` names others.
+
+### Removed
+
+- `Xenova/bge-small-en-v1.5` and `Xenova/all-MiniLM-L6-v2` are no longer verified models (in
+  `KNOWN_EMBEDDING_MODELS` or the demo). They still load as unverified models when given their
+  settings: `pooling: "cls"` for bge-small or `"mean"` for MiniLM, and `minScore: 0.25`.
+  Without them the embedder warns and pools by mean.
 
 ### Fixed
 
