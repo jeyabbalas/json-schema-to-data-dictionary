@@ -8,11 +8,11 @@
  * documents resolve exactly as they would on disk.
  *
  * The page is an app bar over the dictionary, which fills the rest of the window. The menus
- * (source, export, settings) are popovers positioned under their buttons.
+ * (source, model, export, settings) are popovers positioned under their buttons.
  *
- * Semantic search is opt-in: a model picker (DEMO_MODELS) feeds an embedding worker, and a
- * preset that ships precomputed vectors (demo/vectors, see build-presets.mjs) is searchable
- * without embedding anything in the browser.
+ * Semantic search is opt-in: while its switch is on, a model menu beside it (DEMO_MODELS)
+ * chooses what the embedding worker runs, and a preset that ships precomputed vectors
+ * (demo/vectors, see build-presets.mjs) is searchable without embedding anything in the browser.
  *
  * Automation hooks: session-only URL overrides (see readOverrides) and window.ddDemo.
  */
@@ -58,24 +58,18 @@
       return m ? m[0] : "";
     } catch (e) { return ""; }
   })();
-  // Models offered by the picker (#semantic-model). Every id must be in the library's
-  // KNOWN_EMBEDDING_MODELS table (pooling, prefixes, per-device dtype, cosine floor); ids the
-  // running build doesn't know are dropped at start-up. `size` is the download per device.
+  // Models offered by the model menu (#model-menu). Every id must be in the library's
+  // KNOWN_EMBEDDING_MODELS table (pooling, prefixes, per-device dtype, cosine floor), which also
+  // supplies the parameter count and licence the menu shows; ids the running build doesn't know
+  // are dropped at start-up. `size` is the download per precision.
   var DEMO_MODELS = [
-    { id: "MongoDB/mdbr-leaf-ir", label: "LEAF-IR · 23M · Apache-2.0", size: "23 MB q8 / 46 MB fp16", isDefault: true },
-    { id: "Xenova/bge-small-en-v1.5", label: "BGE small v1.5 · 33M · MIT", size: "34 MB q8" },
-    { id: "Xenova/all-MiniLM-L6-v2", label: "all-MiniLM-L6-v2 · 23M · Apache-2.0", size: "22 MB q8" },
-    {
-      id: "jinaai/jina-embeddings-v5-text-nano-retrieval",
-      label: "Jina v5 nano retrieval · 239M · CC-BY-NC-4.0 · needs WebGPU",
-      size: "124 MB q4f16",
-      nonCommercial: true,
-      needsWebGPU: true,
-      notice: "Jina v5 nano is licensed CC-BY-NC-4.0: non-commercial use only."
-    }
+    { id: "MongoDB/mdbr-leaf-ir", name: "LEAF-IR", size: "23 MB q8 / 46 MB fp16", isDefault: true },
+    { id: "jinaai/jina-embeddings-v5-text-nano-retrieval", name: "Jina v5 nano", size: "124 MB q4f16", nonCommercial: true, needsWebGPU: true },
+    { id: "Xenova/bge-small-en-v1.5", name: "BGE small v1.5", size: "34 MB q8" },
+    { id: "Xenova/all-MiniLM-L6-v2", name: "all-MiniLM-L6-v2", size: "22 MB q8" }
   ];
   var MODELS = [];               // DEMO_MODELS cross-checked against the library at start-up
-  var selectedModel = null;      // the picker's (persisted) choice; the ?model= override wins over it
+  var selectedModel = null;      // the menu's (persisted) choice; the ?model= override wins over it
   var semanticEmbedder = null;   // set once the embedder is loaded and the box is still ticked
   var semanticWorker = null;
   var embedderPromise = null;
@@ -86,7 +80,7 @@
   var WEBGPU = false;            // a WebGPU adapter can be acquired (probed once in start(); see probeWebGpu)
 
   // --- Icons (inline SVG, so the page needs no icon font) -------------------
-  var ICON_CHECK = '<svg class="preset-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>';
+  var ICON_CHECK = '<svg class="option-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>';
   var ICON_X = '<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg>';
 
   // --- Messages -----------------------------------------------------------
@@ -112,10 +106,11 @@
 
   // --- Menus ----------------------------------------------------------------
   // Popovers live in the top layer, centred by default; place each under the button that
-  // opened it, left-aligned (source) or right-aligned (export, settings), inside the window.
+  // opened it, left-aligned on the left of the bar (source, model) and right-aligned on the
+  // right (export, settings), inside the window.
   function placeMenu(menu, button) {
     var r = button.getBoundingClientRect();
-    var alignRight = menu.id !== "source-menu";
+    var alignRight = r.left + r.width / 2 > window.innerWidth / 2;
     menu.style.top = Math.round(r.bottom + 6) + "px";
     if (alignRight) {
       menu.style.left = "auto";
@@ -164,31 +159,33 @@
 
   function fileCount(n) { return n + (n === 1 ? " file" : " files"); }
 
+  // A choice in a menu (an example, a model): check mark, name, a note on the right and an
+  // optional line of detail. `attr` names the data attribute carrying `value`.
+  function optionButton(attr, value, name, note, desc) {
+    var item = document.createElement("button");
+    item.type = "button";
+    item.className = "option";
+    item.dataset[attr] = value;
+    item.innerHTML = ICON_CHECK;
+    item.append(textSpan("option-name", name), textSpan("option-note", note));
+    if (desc) item.appendChild(textSpan("option-desc", desc));
+    return item;
+  }
+
+  function textSpan(className, text) {
+    var span = document.createElement("span");
+    span.className = className;
+    span.textContent = text;
+    return span;
+  }
+
   function populatePresets() {
     var list = $("#preset-list");
     var chips = $("#empty-presets");
     list.replaceChildren();
     chips.replaceChildren();
     allPresets().forEach(function (p, i) {
-      var item = document.createElement("button");
-      item.type = "button";
-      item.className = "preset";
-      item.dataset.preset = p.key || String(i);
-      item.innerHTML = ICON_CHECK;
-      var name = document.createElement("span");
-      name.className = "preset-name";
-      name.textContent = p.label;
-      var files = document.createElement("span");
-      files.className = "preset-files";
-      files.textContent = fileCount(p.documents.length);
-      item.append(name, files);
-      if (p.description) {
-        var desc = document.createElement("span");
-        desc.className = "preset-desc";
-        desc.textContent = p.description;
-        item.appendChild(desc);
-      }
-      list.appendChild(item);
+      list.appendChild(optionButton("preset", p.key || String(i), p.label, fileCount(p.documents.length), p.description));
 
       var chip = document.createElement("button");
       chip.type = "button";
@@ -455,7 +452,7 @@
     }
     $("#source-name").textContent = name;
     $("#source-meta").textContent = meta;
-    $$(".preset").forEach(function (b) {
+    $$("#preset-list [data-preset]").forEach(function (b) {
       b.setAttribute("aria-current", String(!!(docsFromPreset && activePreset && b.dataset.preset === (activePreset.key || ""))));
     });
   }
@@ -501,7 +498,7 @@
     renderDocList();
     populateRootSelect();
     updateSource();
-    render(extras);
+    render(extras, true);
   }
 
   function showEmpty(empty) {
@@ -509,7 +506,17 @@
     $("#output").hidden = empty;
   }
 
-  function render(extras) {
+  // The dictionary's search box (in its shadow root, or in the page with ?shadow=0).
+  function searchBox() {
+    var el = $("#output").firstElementChild;
+    return el ? (el.shadowRoot || el).querySelector("[data-dd-search]") : null;
+  }
+
+  // Each render mounts a new dictionary. One for new options (theme, semantic search, a model)
+  // carries the reader's query over and runs it again; `fresh` (new documents) starts empty.
+  function render(extras, fresh) {
+    var box = fresh ? null : searchBox();
+    var query = box ? box.value : "";
     clearMessages();
     (extras || []).forEach(function (m) { addMessage(m.type, m.text); });
 
@@ -562,6 +569,11 @@
     var t0 = performance.now();
     API.renderDataDictionary(out, table, options); // renders synchronously; painting is extra
     lastRenderMs = performance.now() - t0;
+    box = query && searchBox();
+    if (box) {
+      box.value = query;
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     setExportsEnabled(true);
   }
 
@@ -592,7 +604,7 @@
     } catch (err) {}
   }
 
-  // --- Semantic search: model picker -------------------------------------
+  // --- Semantic search: model menu ---------------------------------------
   // Usable WebGPU, as probed at start-up: `navigator.gpu` alone is not enough (Linux Chrome
   // without flags and headless browsers expose it but hand out no adapter).
   function webGpuAvailable() {
@@ -613,10 +625,23 @@
     return null;
   }
 
-  // Short display name: the label up to its first " · " (e.g. "LEAF-IR").
+  // Display name ("LEAF-IR"); an id from the URL that the menu doesn't offer shows its repo name.
   function modelName(id) {
     var m = findModel(id);
-    return m ? m.label.split(" · ")[0] : id;
+    return m ? m.name : String(id).split("/").pop();
+  }
+
+  // "23M params · Apache-2.0", from the library's table. A non-commercial licence says so in
+  // words (the item's tooltip names it); a model this browser can't run says why instead.
+  function modelDetail(m, unusable) {
+    if (unusable) return "Needs WebGPU, unavailable in this browser";
+    var known = (API.KNOWN_EMBEDDING_MODELS || {})[m.id];
+    var parts = [];
+    if (known && known.params) parts.push(Math.round(known.params / 1e6) + "M params");
+    if (m.nonCommercial) parts.push("non-commercial");
+    else if (known && known.license) parts.push(known.license);
+    if (m.needsWebGPU) parts.push("WebGPU only");
+    return parts.join(" · ");
   }
 
   function defaultModelId() {
@@ -625,7 +650,7 @@
     return MODELS.length ? MODELS[0].id : API.DEFAULT_EMBEDDING_MODEL || DEMO_MODELS[0].id;
   }
 
-  // The model the embedder runs: the ?model= override for this session, else the picker's choice.
+  // The model the embedder runs: the ?model= override for this session, else the menu's choice.
   function effectiveModel() {
     return OVERRIDES.model || selectedModel || defaultModelId();
   }
@@ -637,45 +662,45 @@
     if (!known) return DEMO_MODELS.slice();
     return DEMO_MODELS.filter(function (m) {
       if (known[m.id]) return true;
-      console.warn("[demo] Dropping " + m.id + " from the model picker: not in KNOWN_EMBEDDING_MODELS.");
+      console.warn("[demo] Dropping " + m.id + " from the model menu: not in KNOWN_EMBEDDING_MODELS.");
       return false;
     });
   }
 
-  function populateModelSelect() {
-    var sel = $("#semantic-model");
-    sel.replaceChildren();
+  function populateModelMenu() {
+    var list = $("#model-list");
+    list.replaceChildren();
     MODELS.forEach(function (m) {
-      var opt = document.createElement("option");
-      opt.value = m.id;
-      var text = m.label + " (" + m.size + ")";
-      if (m.needsWebGPU && !webGpuAvailable()) {
-        opt.disabled = true;
-        text += " (WebGPU unavailable)";
-      }
-      opt.textContent = text;
-      sel.appendChild(opt);
+      var unusable = !!m.needsWebGPU && !webGpuAvailable();
+      var item = optionButton("model", m.id, m.name, m.size, modelDetail(m, unusable));
+      item.disabled = unusable;
+      var known = (API.KNOWN_EMBEDDING_MODELS || {})[m.id];
+      if (m.nonCommercial && known && known.license) item.title = known.license + ": non-commercial use only";
+      list.appendChild(item);
     });
-    // A ?model= id outside the table is still listed, so the picker shows what is running.
+    // A ?model= id outside the table is still listed, so the menu shows what is running.
     if (OVERRIDES.model && !findModel(OVERRIDES.model)) {
-      var extra = document.createElement("option");
-      extra.value = OVERRIDES.model;
-      extra.textContent = OVERRIDES.model + " (from URL)";
+      var extra = optionButton("model", OVERRIDES.model, modelName(OVERRIDES.model), "", OVERRIDES.model + " · from the URL");
       extra.dataset.fromUrl = "1";
-      sel.appendChild(extra);
+      list.appendChild(extra);
     }
-    sel.disabled = !sel.options.length;
   }
 
-  // Reflect the effective model in the picker and in the licence notice.
+  // Reflect the effective model on the button beside the switch and in the menu.
   function syncModelUi() {
     var id = effectiveModel();
-    $("#semantic-model").value = id;
-    var m = findModel(id);
-    var notice = $("#semantic-notice");
-    var text = m && m.nonCommercial ? m.notice : "";
-    notice.hidden = !text;
-    notice.textContent = text;
+    $("#model-name").textContent = modelName(id);
+    $("#model-btn").setAttribute("aria-label", "Embedding model: " + modelName(id));
+    $$("#model-list [data-model]").forEach(function (b) {
+      b.setAttribute("aria-current", String(b.dataset.model === id));
+    });
+  }
+
+  // The model button sits beside the switch while semantic search is on.
+  function syncModelButton() {
+    var on = $("#semantic").checked;
+    $("#model-btn").hidden = !on;
+    if (!on) closeMenu("model-menu");
   }
 
   // Start-up: cross-check the table, restore the saved choice (the URL override wins for the
@@ -685,7 +710,7 @@
     var saved = null;
     try { saved = localStorage.getItem(MODEL_KEY); } catch (e) {}
     selectedModel = findModel(saved) ? saved : defaultModelId();
-    populateModelSelect();
+    populateModelMenu();
     var m = findModel(effectiveModel());
     if (m && m.needsWebGPU && !webGpuAvailable()) {
       delete OVERRIDES.model;
@@ -695,12 +720,12 @@
     syncModelUi();
   }
 
-  // From the picker (or ddDemo.setModel): save the choice and, when semantic search is on,
-  // restart it on the new model. Returns false for an id the picker doesn't offer.
+  // From the menu (or ddDemo.setModel): save the choice and, when semantic search is on,
+  // restart it on the new model. Returns false for an id the menu doesn't offer.
   function setModel(id) {
     if (!findModel(id)) return false;
     delete OVERRIDES.model; // an explicit choice replaces the session override
-    var extra = $("#semantic-model option[data-from-url]");
+    var extra = $("#model-list [data-from-url]");
     if (extra) extra.remove();
     selectedModel = id;
     try { localStorage.setItem(MODEL_KEY, id); } catch (e) {}
@@ -845,7 +870,7 @@
 
   var DEVICE_LABELS = { webgpu: "WebGPU", wasm: "WASM", cpu: "CPU" };
 
-  // "Running on WebGPU · fp16" under the model picker, from embedder.info (known once load() is done).
+  // "Running on WebGPU · fp16" at the foot of the model menu, from embedder.info (known once load() is done).
   function showDeviceInfo(info) {
     var el = $("#semantic-device");
     if (!info || !info.device) {
@@ -931,6 +956,7 @@
 
   // Start or stop semantic search without touching the saved preference (start-up, ?semantic=).
   function applySemantic(on) {
+    syncModelButton();
     if (!on) {
       stopSemantic();
       render();
@@ -952,6 +978,7 @@
         if (myGen !== generation) return; // a newer start owns the UI
         stopSemantic();
         $("#semantic").checked = false;
+        syncModelButton();
         addMessage("error", "Couldn’t start semantic search: " + err.message);
       }
     );
@@ -1097,7 +1124,7 @@
     $("#root-select").addEventListener("change", function (e) {
       rootIndex = e.target.value === "" ? null : Number(e.target.value);
       updateSource();
-      render();
+      render(null, true);
     });
 
     $$('input[name="theme"]').forEach(function (r) {
@@ -1108,8 +1135,11 @@
     });
     $("#shadow").addEventListener("change", function () { delete OVERRIDES.shadow; render(); });
     $("#semantic").addEventListener("change", function (e) { setSemantic(e.target.checked); });
-    $("#semantic-model").addEventListener("change", function (e) {
-      if (!setModel(e.target.value)) syncModelUi(); // unusable choice: snap back to what runs
+    $("#model-list").addEventListener("click", function (e) {
+      var item = e.target.closest("[data-model]");
+      if (!item || item.disabled) return;
+      closeMenu("model-menu");
+      if (item.dataset.model !== effectiveModel()) setModel(item.dataset.model);
     });
 
     $("#export-menu").addEventListener("click", function (e) {
@@ -1127,7 +1157,7 @@
   // persisted:
   //   ?preset=<key|index>      load this preset instead of the first one (e.g. bcrpp)
   //   ?semantic=1|0            force the semantic switch on/off, ignoring the saved preference
-  //   ?model=<id>              embedding model id (wins over the picker's saved choice; not saved)
+  //   ?model=<id>              embedding model id (wins over the menu's saved choice; not saved)
   //   ?device=auto|wasm|webgpu execution device (default auto; forwarded to the worker)
   //   ?dtype=<string>          model quantisation, e.g. q8 / fp16 (default: the library's per-device choice)
   //   ?nogpu=1                 hide WebGPU from Transformers.js (exercises the WASM path)
@@ -1157,7 +1187,7 @@
     element: function () { return $("#output").firstElementChild; }, // the mounted <json-data-dictionary>
     embedder: function () { return semanticEmbedder; },
     worker: function () { return semanticWorker; },
-    models: function () { return MODELS.slice(); },   // picker entries (after the library cross-check)
+    models: function () { return MODELS.slice(); },   // model menu entries (after the library cross-check)
     model: effectiveModel,                            // effective embedding model id
     setModel: setModel,                               // pick a model; restarts semantic search when on
     snapshot: function () { return lastSnapshot; },   // decoded precomputed vectors in use, or null
@@ -1189,7 +1219,7 @@
       render(); // show the empty state
     }
 
-    // The model picker needs to know whether WebGPU is usable (a few ms), so it is built once
+    // The model menu needs to know whether WebGPU is usable (a few ms), so it is built once
     // the probe answers; semantic search then starts from the saved preference / URL override.
     probeWebGpu().then(function (available) {
       WEBGPU = available;

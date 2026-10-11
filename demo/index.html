@@ -22,16 +22,24 @@
       <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
     </button>
 
-    <div class="appbar-end">
-      <span id="semantic-status" class="semantic-status" role="status" hidden></span>
-      <label class="switch" for="semantic" title="Also finds related variables (“smoking” → the tobacco rows). Downloads a small embedding model once; everything stays in your browser.">
-        <input type="checkbox" id="semantic" role="switch" />
+    <!-- Semantic search: the switch, then, while it is on, the model in use and its status. -->
+    <div class="semantic">
+      <label class="switch" for="semantic" title="Also finds related variables (“smoking” → the tobacco rows). Downloads the embedding model once; everything stays in your browser.">
+        <input type="checkbox" id="semantic" role="switch" aria-label="Semantic search" />
         <span class="switch-track" aria-hidden="true"></span>
         <span class="switch-label">Semantic search</span>
       </label>
-      <button id="export-btn" class="btn" type="button" popovertarget="export-menu" aria-haspopup="menu" disabled>
+      <button id="model-btn" class="model-btn" type="button" popovertarget="model-menu" aria-haspopup="dialog" title="Embedding model" hidden>
+        <span id="model-name" class="model-name"></span>
+        <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>
+      </button>
+      <span id="semantic-status" class="semantic-status" role="status" hidden></span>
+    </div>
+
+    <div class="appbar-end">
+      <button id="export-btn" class="btn" type="button" popovertarget="export-menu" aria-haspopup="menu" aria-label="Export" title="Export" disabled>
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v8m0 0-3-3m3 3 3-3M3 13.5h10"/></svg>
-        <span>Export</span>
+        <span class="btn-label">Export</span>
       </button>
       <button id="settings-btn" class="icon-btn" type="button" popovertarget="settings-menu" aria-haspopup="dialog" aria-label="Settings" title="Settings">
         <svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4.5h6m3 0h2M2.5 11.5h2m3 0h6"/><circle cx="10" cy="4.5" r="1.5"/><circle cx="6" cy="11.5" r="1.5"/></svg>
@@ -61,7 +69,7 @@
   <!-- Menus (popover API: light-dismiss and Escape for free; positioned under their button by app.js). -->
   <div id="source-menu" class="menu menu-source" popover>
     <div class="menu-label">Examples</div>
-    <div id="preset-list" class="preset-list"></div>
+    <div id="preset-list" class="option-list"></div>
     <div class="menu-sep"></div>
     <div class="menu-label">Your schemas</div>
     <div class="menu-actions">
@@ -94,6 +102,12 @@
     <button type="button" class="menu-item" data-export="copy">Copy as CSV</button>
   </div>
 
+  <div id="model-menu" class="menu menu-model" popover>
+    <div class="menu-label">Embedding model</div>
+    <div id="model-list" class="option-list"></div>
+    <p id="semantic-device" class="menu-hint" hidden></p>
+  </div>
+
   <div id="settings-menu" class="menu menu-settings" popover>
     <div class="menu-label">Theme</div>
     <div class="segmented" role="radiogroup" aria-label="Theme">
@@ -101,11 +115,6 @@
       <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
       <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
     </div>
-    <div class="menu-sep"></div>
-    <div class="menu-label">Semantic search model</div>
-    <select id="semantic-model" aria-label="Embedding model"></select>
-    <p id="semantic-device" class="menu-hint" hidden></p>
-    <p id="semantic-notice" class="menu-hint menu-warn" hidden></p>
     <div class="menu-sep"></div>
     <div class="menu-label">Display</div>
     <label class="check"><input type="checkbox" id="expand-categories" checked /> Expand categories</label>

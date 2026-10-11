@@ -86,7 +86,7 @@ a { color: var(--accent); }
   height: 52px; padding: 0 16px 0 20px;
   border-bottom: 1px solid var(--border);
 }
-.brand { display: flex; align-items: center; gap: 9px; color: inherit; text-decoration: none; min-width: 0; }
+.brand { display: flex; flex: none; align-items: center; gap: 9px; color: inherit; text-decoration: none; }
 .brand-mark { width: 22px; height: 22px; flex: none; }
 .brand-mark rect { fill: var(--accent); }
 .brand-mark path { fill: none; stroke: var(--accent-fg); stroke-width: 2.2; stroke-linecap: round; }
@@ -94,7 +94,7 @@ a { color: var(--accent); }
 .brand-arrow { color: var(--muted); font-weight: 400; }
 
 .source-btn {
-  display: inline-flex; align-items: center; gap: 8px; min-width: 0;
+  display: inline-flex; flex: 0 .3 auto; align-items: center; gap: 8px; min-width: 0;
   height: 32px; padding: 0 10px 0 12px; margin-left: 6px;
   font: inherit; color: var(--fg);
   border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
@@ -130,7 +130,11 @@ a { color: var(--accent); }
 .link { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
 .link:hover { text-decoration: underline; }
 
-/* Semantic search switch + its status. */
+/* Semantic search: the switch, the model chip and the status, set off from the source button by
+   a hairline. They grow rightwards, so turning the switch on never moves it. Short of room, the
+   status gives way first, then the model chip, before the source button does. */
+.semantic { display: flex; flex: 0 3 auto; align-items: center; gap: 8px; min-width: 0; }
+.semantic::before { content: ""; flex: none; width: 1px; height: 20px; margin-right: 4px; background: var(--border); }
 .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 0 4px; height: 32px; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .switch-track {
@@ -145,8 +149,20 @@ a { color: var(--accent); }
 .switch input:checked + .switch-track::after { transform: translateX(12px); }
 .switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
 .switch-label { font-weight: 500; white-space: nowrap; }
-.semantic-status { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.semantic-status { flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .semantic-status[data-state="error"] { color: var(--error); }
+/* The model in use, beside the switch while it is on; opens the model menu. */
+.model-btn {
+  display: inline-flex; align-items: center; gap: 4px; min-width: 0;
+  height: 26px; padding: 0 6px 0 9px; margin-left: -2px;
+  font: inherit; font-size: 12px; font-weight: 500; color: var(--accent); white-space: nowrap;
+  border: 0; border-radius: 999px; background: var(--accent-weak);
+  cursor: pointer; transition: background .12s;
+}
+.model-name { overflow: hidden; text-overflow: ellipsis; }
+.model-btn .chev { stroke: currentColor; width: 12px; height: 12px; }
+.model-btn:hover, .model-btn[aria-expanded="true"] { background: color-mix(in srgb, var(--accent) 18%, var(--bg)); }
+.model-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* ---------- Messages (under the app bar) ---------- */
 .messages { flex: none; display: flex; flex-direction: column; }
@@ -186,13 +202,13 @@ a { color: var(--accent); }
   background: var(--bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-menu);
 }
 .menu-source { width: 380px; }
+.menu-model { width: 340px; }
 .menu-settings { width: 280px; padding: 6px 12px 10px; }
 .menu-label { padding: 8px 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .menu-settings .menu-label { padding: 8px 0 6px; }
 .menu-sep { height: 1px; background: var(--border); margin: 6px 0; }
 .menu-hint { margin: 6px 8px 4px; font-size: 12px; color: var(--muted); }
 .menu-settings .menu-hint { margin: 6px 0 0; }
-.menu-warn { color: var(--warn); }
 .menu-actions { display: flex; gap: 6px; padding: 2px 8px; }
 .menu-actions .btn { flex: 1; justify-content: center; }
 .menu-item {
@@ -203,18 +219,20 @@ a { color: var(--accent); }
 .menu-item:hover, .menu-item:focus-visible { background: var(--surface); outline: none; }
 .menu-item-note { margin-left: auto; color: var(--muted); font-size: 12px; font-family: var(--mono); }
 
-.preset-list { display: flex; flex-direction: column; }
-.preset {
+/* A choice in a menu (an example, a model): check mark, name, a note on the right, a line of detail. */
+.option-list { display: flex; flex-direction: column; }
+.option {
   display: grid; grid-template-columns: 16px 1fr auto; column-gap: 8px; align-items: baseline;
   width: 100%; padding: 7px 10px 7px 8px; font: inherit; color: inherit; text-align: left;
   background: none; border: 0; border-radius: 6px; cursor: pointer;
 }
-.preset:hover, .preset:focus-visible { background: var(--surface); outline: none; }
-.preset-check { grid-row: span 2; align-self: center; width: 14px; height: 14px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
-.preset[aria-current="true"] .preset-check { visibility: visible; }
-.preset-name { font-weight: 500; }
-.preset-files { color: var(--muted); font-size: 12px; white-space: nowrap; }
-.preset-desc { grid-column: 2 / -1; color: var(--muted); font-size: 12px; }
+.option:hover:not(:disabled), .option:focus-visible { background: var(--surface); outline: none; }
+.option:disabled { cursor: default; opacity: .5; }
+.option-check { grid-row: span 2; align-self: center; width: 14px; height: 14px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; visibility: hidden; }
+.option[aria-current="true"] .option-check { visibility: visible; }
+.option-name { font-weight: 500; }
+.option-note { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.option-desc { grid-column: 2 / -1; color: var(--muted); font-size: 12px; }
 
 .doc-section { margin: 8px 8px 4px; }
 .doc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
@@ -254,11 +272,18 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
   background: var(--bg); color: var(--accent); font-size: 15px; font-weight: 600; pointer-events: none;
 }
 
+@media (max-width: 1100px) {
+  .brand-name { display: none; }
+}
 @media (max-width: 760px) {
   .appbar { gap: 8px; padding: 0 10px 0 12px; }
-  .brand-name, .switch-label { display: none; }
+  .switch-label, .source-meta, .btn-label { display: none; }
   .source-btn { margin-left: 0; }
+  #export-btn { padding: 0 8px; }
   .stage { padding: 12px 12px 14px; }
+}
+@media (max-width: 480px) {
+  .appbar-end > a.icon-btn { display: none; }
 }
 
 /* The app bar reports semantic-search status beside its switch, so the dictionary's own chip

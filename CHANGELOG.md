@@ -60,10 +60,14 @@ A calmer table that you can size, and skip patterns you can follow.
   (was `parity 1–2`) — and exclusive bounds are described (`x > 5`, `1 ≤ x < 3`) instead of
   `x is constrained`.
 - Demo: rebuilt around the dictionary. A slim app bar holds the source menu (examples, open
-  files or a folder, the loaded documents and the root document), the semantic-search switch
-  and its status, an Export menu (HTML, Excel, CSV, copy) and settings (theme, model, display
-  options); files and folders drop anywhere on the window; the dictionary fills the rest. Theme
-  and column widths are remembered, and the exported HTML page uses the same full-window layout.
+  files or a folder, the loaded documents and the root document), the semantic-search switch, an
+  Export menu (HTML, Excel, CSV, copy) and settings (theme, display options); files and folders
+  drop anywhere on the window; the dictionary fills the rest. While semantic search is on, the
+  model in use sits beside its switch (*LEAF-IR*, *Jina v5 nano*, …) and opens a menu to switch
+  models, each with its download size, parameter count and licence, and the device it runs on;
+  the loading and indexing status follows it. Turning semantic search on or off, switching
+  models or changing a display option keeps the query. Theme and column widths are remembered,
+  and the exported HTML page uses the same full-window layout.
 
 ### Fixed
 
