@@ -87,9 +87,21 @@ a { color: var(--accent); }
   border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; flex: none; align-items: center; gap: 9px; color: inherit; text-decoration: none; }
-.brand-mark { width: 22px; height: 22px; flex: none; }
-.brand-mark rect { fill: var(--accent); }
-.brand-mark path { fill: none; stroke: var(--accent-fg); stroke-width: 2.2; stroke-linecap: round; }
+/* The logo reads like the app: JSON Schema's braces, check and x → a spreadsheet. Phones get
+   the compact tile (the favicon) instead; both draw the JSON Schema logo from one <symbol>. */
+.brand-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.brand-mark { width: 69px; height: 26px; flex: none; }
+.brand-mark .schema { fill: var(--accent); }
+.brand-mark .arrow { fill: none; stroke: var(--muted); stroke-width: 4.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand-mark .sheet { fill: none; stroke: var(--accent); stroke-width: 2.2; }
+.brand-mark .sheet rect { stroke-width: 3.8; }
+.brand-mark .sheet-head { fill: var(--accent); stroke: none; }
+.brand-icon { display: none; width: 24px; height: 24px; flex: none; }
+.brand-icon .tile { fill: var(--accent); }
+.brand-icon .schema { fill: var(--accent-fg); }
+.brand-icon .sheet { fill: none; stroke: var(--accent-fg); stroke-width: 1.1; }
+.brand-icon .sheet rect { stroke-width: 1.4; }
+.brand-icon .sheet-head { fill: var(--accent-fg); stroke: none; }
 .brand-name { font-weight: 600; font-size: 14px; letter-spacing: -.01em; white-space: nowrap; }
 .brand-arrow { color: var(--muted); font-weight: 400; }
 
@@ -282,8 +294,15 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
   #export-btn { padding: 0 8px; }
   .stage { padding: 12px 12px 14px; }
 }
+@media (max-width: 540px) {
+  .brand-mark { display: none; }
+  .brand-icon { display: block; }
+}
 @media (max-width: 480px) {
   .appbar-end > a.icon-btn { display: none; }
+  /* The example's name gives way before the model's, which would otherwise shrink to nothing. */
+  .source-btn { flex-shrink: 3; }
+  .semantic { flex-shrink: 1; }
 }
 
 /* The app bar reports semantic-search status beside its switch, so the dictionary's own chip

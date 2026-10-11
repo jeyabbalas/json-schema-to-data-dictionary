@@ -105,6 +105,10 @@ A calmer table that you can size, and skip patterns you can follow.
   the device it runs on; the loading and indexing status follows it. Turning semantic search on
   or off, switching models or changing a display option keeps the query. Theme and column
   widths are remembered, and the exported HTML page uses the same full-window layout.
+- Demo: a logo that shows what the app does: the JSON Schema logo (its braces, check and x), an
+  arrow, then a spreadsheet, in the theme's accent. In an app bar narrower than 540 px it
+  becomes a tile, which is also the favicon, and on a phone the example's name shortens before
+  the model's does.
 - Transformers.js 4.3.1 (was 4.2.0) in the demo, the README examples and the dev dependency.
   `npm run eval` evaluates LEAF-IR alone unless `--model` names others.
 
