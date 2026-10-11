@@ -44,6 +44,13 @@ const SOURCES = [
     only: "longitudinal-cohort-dataset.json"
   },
   {
+    key: "nested",
+    label: "Nested stress tests",
+    description: "data-table's fixture: lists, structs, maps and JSON values",
+    dir: "single_schema",
+    only: "nested-stress-tests-dataset.json"
+  },
+  {
     key: "trial",
     label: "Clinical trial",
     description: "Schemas composed with allOf and relative $refs",

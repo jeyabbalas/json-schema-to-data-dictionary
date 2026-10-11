@@ -45,6 +45,11 @@ A calmer table that you can size, and skip patterns you can follow.
   replaced before the model loads, read through the module's `AutoConfig` (a new optional
   member of `TransformersModuleLike`). EmbeddingGemma 2 sets its vision and audio encoders to
   `null`, so only the 157 MB text model and its tokenizer are downloaded.
+- Demo: a *Nested stress tests* example (`?preset=nested`), the dictionary of the JSON file of
+  [data-table](https://github.com/jeyabbalas/data-table)'s nested stress-test fixture: 21
+  columns of lists, structs, maps and JSON values in five sections, 48 rows with the nested
+  fields, each with the DuckDB type data-table gives it (`x-duckdb-type`) and examples from the
+  data. The schema validates all 1,000 records of the file. A golden file pins its output.
 - `PropertyShape.unionObjects`: how many branches of the property's `oneOf`/`anyOf` can be an
   object.
 

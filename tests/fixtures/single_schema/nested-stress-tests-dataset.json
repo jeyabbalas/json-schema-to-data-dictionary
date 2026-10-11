@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/nested-stress-tests-dataset.json",
+  "title": "Nested Stress Tests",
+  "description": "The JSON file of data-table's nested stress-test fixture: 1,000 records whose 21 columns cover every nested shape DuckDB reads from JSON (lists, structs, maps and JSON values), with values chosen to break naive handling.",
+  "$comment": "Rows 0-11 are showcase rows, one kind of edge case each (x-showcase-rows); rows 12-999 are random, about 10% null. x-duckdb-type is the type DuckDB gives each column once data-table has loaded the file.",
+  "x-source": "https://github.com/jeyabbalas/data-table/blob/main/tests/fixtures/datasets/json/nested-stress-tests.json",
+  "x-showcase-rows": {
+    "0": "All null: null in every column but id",
+    "1": "Empties: [] for lists, {} for objects",
+    "2": "Null elements: null inside lists, structs and maps",
+    "3": "Numeric extremes: integers past 2^53 and past 64 bits, -0.0, 5e-324, the largest double",
+    "4": "Text escapes: quotes, commas, brackets, a backslash, a newline, a tab, right-to-left text",
+    "5": "A list of 1,000 items",
+    "6": "A list of 2,500 items",
+    "7": "A list of 10,000 items",
+    "8": "Cap edge: a 20,000-character string, an emoji across the 1,000-character display cap",
+    "9": "Date and UUID edges: 0001-01-01, 9999-12-31, the nil and all-ones UUIDs",
+    "10": "Demo: readable values",
+    "11": "Name collisions: map keys that collide once case and punctuation are folded"
+  },
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "title": "Record",
+    "allOf": [
+      {
+        "title": "Scalars",
+        "description": "Plain values.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Row ID",
+            "description": "Row number, unique. Equals the __rowid__ column data-table's loaders add.",
+            "minimum": 0,
+            "maximum": 999,
+            "x-duckdb-type": "BIGINT"
+          },
+          "label": {
+            "type": ["string", "null"],
+            "title": "Row label",
+            "description": "The showcase row's name in rows 1-11, a random two-word label in rows 12-999; null in row 0.",
+            "examples": ["showcase: demo", "hidden heron"],
+            "x-duckdb-type": "VARCHAR"
+          }
+        }
+      },
+      {
+        "title": "Lists",
+        "description": "JSON arrays, which DuckDB reads as LIST columns: of scalars, structs, lists or JSON values.",
+        "properties": {
+          "counts": {
+            "type": ["array", "null"],
+            "title": "Counts",
+            "description": "Up to four integers below 1,000. Row 3 holds integers past 2^53, which a JavaScript number rounds; rows 5-7 hold 1,000, 2,500 and 10,000 digits.",
+            "items": { "type": ["integer", "null"], "minimum": 0 },
+            "maxItems": 10000,
+            "examples": [[1, 2, 3], [4, null, 17]],
+            "x-duckdb-type": "BIGINT[]"
+          },
+          "signed": {
+            "type": ["array", "null"],
+            "title": "Signed integers",
+            "description": "Up to three integers from -99 to 99; the INT64 limits in row 3. Mixed signs make DuckDB read HUGEINT[] rather than BIGINT[].",
+            "items": { "type": ["integer", "null"] },
+            "maxItems": 4,
+            "examples": [[-1, 0, 1], [-77, 74]],
+            "x-duckdb-type": "HUGEINT[]"
+          },
+          "huge": {
+            "type": ["array", "null"],
+            "title": "Huge integers",
+            "description": "One or two integers below 1,000; 2^63 and the UINT64 maximum in row 3, past INT64, so DuckDB reads HUGEINT[].",
+            "items": { "type": ["integer", "null"], "minimum": 0 },
+            "maxItems": 3,
+            "examples": [[910, 568]],
+            "x-duckdb-type": "HUGEINT[]"
+          },
+          "floats": {
+            "type": ["array", "null"],
+            "title": "Floats",
+            "description": "Up to three numbers with three decimals; -0.0, 5e-324, ±the largest double and 2^64 in row 3.",
+            "items": { "type": ["number", "null"] },
+            "maxItems": 5,
+            "examples": [[195.42, 20.843, 114.099]],
+            "x-duckdb-type": "DOUBLE[]"
+          },
+          "words": {
+            "type": ["array", "null"],
+            "title": "Words",
+            "description": "One or two lorem-ipsum words. Row 4 holds 15 strings that need escaping; row 8 a 20,000-character string with an emoji across data-table's display cap.",
+            "items": { "type": ["string", "null"], "maxLength": 20000 },
+            "maxItems": 15,
+            "examples": [["red", "green", "blue"]],
+            "x-duckdb-type": "VARCHAR[]"
+          },
+          "days": {
+            "type": ["array", "null"],
+            "title": "Days",
+            "description": "One date from 1990 to 2029; 0001-01-01, 9999-12-31, 1970-01-01 and 1969-07-20 in row 9.",
+            "items": { "type": ["string", "null"], "format": "date" },
+            "maxItems": 4,
+            "examples": [["2024-01-01", "2024-02-29"]],
+            "x-duckdb-type": "DATE[]"
+          },
+          "ids": {
+            "type": ["array", "null"],
+            "title": "IDs",
+            "description": "One random version-4 UUID; the nil and all-ones UUIDs in row 9.",
+            "items": { "type": ["string", "null"], "format": "uuid" },
+            "maxItems": 2,
+            "examples": [["a88beba2-9928-4479-96ee-827997d24c17"]],
+            "x-duckdb-type": "UUID[]"
+          },
+          "empty_list": {
+            "type": ["array", "null"],
+            "title": "Empty list",
+            "description": "[] in every row that is not null. With no element to go by, DuckDB types the elements JSON.",
+            "items": false,
+            "x-duckdb-type": "JSON[]"
+          },
+          "mixed_list": {
+            "type": ["array", "null"],
+            "title": "Mixed list",
+            "description": "Up to three elements of mixed JSON types. DuckDB keeps each as JSON; a null element is SQL NULL.",
+            "items": {
+              "anyOf": [
+                { "type": "number" },
+                { "type": "string" },
+                { "type": "boolean" },
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "properties": { "k": { "type": "integer", "title": "Digit", "minimum": 0, "maximum": 9 } },
+                  "required": ["k"],
+                  "additionalProperties": false
+                },
+                { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 9 } }
+              ]
+            },
+            "maxItems": 5,
+            "examples": [[1, "two", true, {"k": 3}, [4]]],
+            "x-duckdb-type": "JSON[]"
+          },
+          "people": {
+            "type": ["array", "null"],
+            "title": "People",
+            "description": "One person, sometimes two. Row 2 holds a null person and one whose fields are all null.",
+            "items": {
+              "type": ["object", "null"],
+              "properties": {
+                "name": {
+                  "type": ["string", "null"],
+                  "title": "First name",
+                  "description": "From a pool of 16 computing pioneers.",
+                  "examples": ["Ada", "Grace"],
+                  "x-duckdb-type": "VARCHAR"
+                },
+                "age": {
+                  "type": ["integer", "null"],
+                  "title": "Age (years)",
+                  "minimum": 18,
+                  "maximum": 89,
+                  "x-duckdb-type": "BIGINT"
+                },
+                "langs": {
+                  "type": ["array", "null"],
+                  "title": "Languages",
+                  "description": "ISO 639-1 codes, usually none or one.",
+                  "items": {
+                    "type": ["string", "null"],
+                    "enum": ["en", "fr", "de", "es", "fi", "sv", "ja", "hi", "ar", "pt", null],
+                    "enumDescriptions": ["English", "French", "German", "Spanish", "Finnish", "Swedish", "Japanese", "Hindi", "Arabic", "Portuguese"]
+                  },
+                  "maxItems": 3,
+                  "x-duckdb-type": "VARCHAR[]"
+                }
+              },
+              "required": ["name", "age", "langs"],
+              "additionalProperties": false
+            },
+            "maxItems": 3,
+            "examples": [[{"name": "Ada", "age": 36, "langs": ["en", "fr"]}, {"name": "Linus", "age": 54, "langs": ["fi", "sv", "en"]}]],
+            "x-duckdb-type": "STRUCT(\"name\" VARCHAR, age BIGINT, langs VARCHAR[])[]"
+          },
+          "matrix": {
+            "type": ["array", "null"],
+            "title": "Matrix",
+            "description": "One or two rows of up to three digits. Row 2 holds [[1, null], null, []].",
+            "items": {
+              "type": ["array", "null"],
+              "items": { "type": ["integer", "null"], "minimum": 0, "maximum": 9 },
+              "maxItems": 3
+            },
+            "maxItems": 3,
+            "examples": [[[1, 2, 3], [4, 5, 6]]],
+            "x-duckdb-type": "BIGINT[][]"
+          }
+        }
+      },
+      {
+        "title": "Structs",
+        "description": "JSON objects with a fixed set of keys, which DuckDB reads as STRUCT columns.",
+        "properties": {
+          "point": {
+            "type": ["object", "null"],
+            "title": "Point",
+            "description": "A point and its tier, like the struct columns of data-table's wide test file. {} in row 1.",
+            "properties": {
+              "x": {
+                "type": ["number", "null"],
+                "title": "x coordinate",
+                "description": "Standard normal, two decimals.",
+                "x-duckdb-type": "DOUBLE"
+              },
+              "y": {
+                "type": ["number", "null"],
+                "title": "y coordinate",
+                "description": "Standard normal, two decimals.",
+                "x-duckdb-type": "DOUBLE"
+              },
+              "tier": {
+                "type": ["string", "null"],
+                "title": "Tier",
+                "description": "From bronze (lowest) to platinum (highest).",
+                "enum": ["bronze", "silver", "gold", "platinum", "it's", null],
+                "enumDescriptions": ["", "", "", "", "Row 4: text that needs escaping"],
+                "x-duckdb-type": "VARCHAR"
+              }
+            },
+            "additionalProperties": false,
+            "examples": [{"x": 1.5, "y": -0.5, "tier": "gold"}],
+            "x-duckdb-type": "STRUCT(x DOUBLE, y DOUBLE, tier VARCHAR)"
+          },
+          "depth5": {
+            "type": ["object", "null"],
+            "title": "Five levels deep",
+            "description": "One leaf under four levels of structs. {} in row 1; l3 is null in row 2.",
+            "properties": {
+              "l2": {
+                "type": "object",
+                "title": "Level 2",
+                "properties": {
+                  "l3": {
+                    "type": ["object", "null"],
+                    "title": "Level 3",
+                    "properties": {
+                      "l4": {
+                        "type": "object",
+                        "title": "Level 4",
+                        "properties": {
+                          "l5": {
+                            "type": "object",
+                            "title": "Level 5",
+                            "properties": {
+                              "leaf": {
+                                "type": "integer",
+                                "title": "Leaf",
+                                "minimum": 0,
+                                "maximum": 99,
+                                "x-duckdb-type": "BIGINT"
+                              }
+                            },
+                            "required": ["leaf"],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["l5"],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": ["l4"],
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["l3"],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "examples": [{"l2": {"l3": {"l4": {"l5": {"leaf": 42}}}}}],
+            "x-duckdb-type": "STRUCT(l2 STRUCT(l3 STRUCT(l4 STRUCT(l5 STRUCT(leaf BIGINT)))))"
+          },
+          "key_order": {
+            "type": ["object", "null"],
+            "title": "Key order",
+            "description": "Key \"2\" before \"1\": an order DuckDB keeps and JavaScript does not, since it lists integer-like keys first, as this dictionary does.",
+            "properties": {
+              "2": {
+                "type": ["integer", "null"],
+                "title": "Key \"2\"",
+                "description": "First in the file.",
+                "minimum": 0,
+                "maximum": 9,
+                "x-duckdb-type": "BIGINT"
+              },
+              "1": {
+                "type": "integer",
+                "title": "Key \"1\"",
+                "description": "Second in the file.",
+                "minimum": 0,
+                "maximum": 9,
+                "x-duckdb-type": "BIGINT"
+              }
+            },
+            "additionalProperties": false,
+            "x-duckdb-type": "STRUCT(\"2\" BIGINT, \"1\" BIGINT)"
+          },
+          "odd_keys": {
+            "type": ["object", "null"],
+            "title": "Odd keys",
+            "description": "A random subset of seven keys, in this order, that SQL or a path must quote. Every key in rows 2 and 10.",
+            "properties": {
+              "k": {
+                "type": ["string", "null"],
+                "title": "Tag",
+                "description": "One of 24 tag words.",
+                "examples": ["red", "north"],
+                "x-duckdb-type": "VARCHAR"
+              },
+              "score": {
+                "type": ["number", "null"],
+                "title": "Score",
+                "description": "Two decimals.",
+                "minimum": 0,
+                "maximum": 1,
+                "x-duckdb-type": "DOUBLE"
+              },
+              "kind": {
+                "type": "string",
+                "title": "Kind",
+                "enum": ["alpha", "beta", "gamma", "nulls", "demo"],
+                "enumDescriptions": ["", "", "", "Row 2, where every other key is null", "Row 10"],
+                "x-duckdb-type": "VARCHAR"
+              },
+              "my field": {
+                "title": "Spaced key",
+                "description": "A digit or a tag word, so DuckDB types it JSON.",
+                "anyOf": [
+                  { "type": "integer", "minimum": 0, "maximum": 9 },
+                  { "type": "string" },
+                  { "type": "null" }
+                ],
+                "x-duckdb-type": "JSON"
+              },
+              "a.b": {
+                "type": ["integer", "null"],
+                "title": "Dotted key",
+                "minimum": 0,
+                "maximum": 99,
+                "x-duckdb-type": "BIGINT"
+              },
+              "q\"k": {
+                "type": ["boolean", "null"],
+                "title": "Quoted key",
+                "x-duckdb-type": "BOOLEAN"
+              },
+              "ünï": {
+                "type": ["string", "null"],
+                "title": "Unicode key",
+                "description": "A tag word.",
+                "x-duckdb-type": "VARCHAR"
+              }
+            },
+            "additionalProperties": false,
+            "x-duckdb-type": "STRUCT(k VARCHAR, score DOUBLE, kind VARCHAR, \"my field\" JSON, \"a.b\" BIGINT, \"q\"\"k\" BOOLEAN, \"ünï\" VARCHAR)"
+          }
+        }
+      },
+      {
+        "title": "Maps",
+        "description": "JSON objects whose keys vary from row to row, which DuckDB reads as MAP columns.",
+        "properties": {
+          "props": {
+            "type": ["object", "null"],
+            "title": "Properties",
+            "description": "One or two numbered keys. Row 11 holds keys that collide once case and punctuation are folded, which a STRUCT cannot hold.",
+            "patternProperties": {
+              "^key_[0-9]{3}$": {
+                "type": "integer",
+                "title": "Numbered key",
+                "description": "key_000 to key_499.",
+                "minimum": 0,
+                "maximum": 999
+              }
+            },
+            "additionalProperties": {
+              "type": ["integer", "null"],
+              "title": "Other keys",
+              "description": "Now and then size, toJSON, constructor or __proto__; the showcase rows' own keys.",
+              "minimum": 0,
+              "maximum": 999
+            },
+            "maxProperties": 6,
+            "examples": [{"key_398": 76, "key_107": 885}, {"width": 12, "height": 30, "depth": 4}],
+            "x-duckdb-type": "MAP(VARCHAR, BIGINT)"
+          },
+          "empty_obj": {
+            "type": ["object", "null"],
+            "title": "Empty object",
+            "description": "{} in every row that is not null. With no key to go by, DuckDB reads a map of JSON values.",
+            "maxProperties": 0,
+            "x-duckdb-type": "MAP(VARCHAR, JSON)"
+          }
+        }
+      },
+      {
+        "title": "JSON values",
+        "description": "Columns with no single type, which DuckDB keeps as JSON.",
+        "properties": {
+          "shifty": {
+            "title": "Shifty value",
+            "description": "A number, a word, a boolean, a {k, n} object or a list of digits, changing from row to row.",
+            "oneOf": [
+              { "type": "integer" },
+              { "type": "string" },
+              { "type": "boolean" },
+              {
+                "type": "object",
+                "properties": {
+                  "k": { "type": "string", "title": "Word" },
+                  "n": { "type": "integer", "title": "Digit", "minimum": 0, "maximum": 9 }
+                },
+                "additionalProperties": false
+              },
+              { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 9 }, "maxItems": 3 },
+              { "type": "null" }
+            ],
+            "examples": [226, "nostrud", true, {"k": "ipsum", "n": 0}, [0, 3, 4]],
+            "x-duckdb-type": "JSON"
+          },
+          "all_null": {
+            "type": "null",
+            "title": "All null",
+            "description": "null in every row. With no value to go by, DuckDB types the column JSON.",
+            "x-duckdb-type": "JSON"
+          }
+        }
+      }
+    ],
+    "required": [
+      "id", "label", "counts", "signed", "huge", "floats", "words", "days", "ids", "point", "depth5",
+      "props", "empty_list", "mixed_list", "shifty", "key_order", "people", "odd_keys", "matrix", "all_null", "empty_obj"
+    ],
+    "unevaluatedProperties": false
+  }
+}
