@@ -38,7 +38,8 @@ see them, and an Excel workbook instead of a CSV file.
   `constraintsCell`, `XLSX_MEDIA_TYPE`; `PropertyAnalysis.types` (the JSON types a value may
   take); types `ConditionalEffectKind`, `XlsxExportOptions` and the `Xlsx*` writer types.
 - A *HESP household panel* fixture and demo preset (`?preset=hesp`): 265 variables and 171
-  skip-pattern and consistency rules of every shape this release reads.
+  skip-pattern and consistency rules of every shape this release reads. The demo opens with it
+  (it opened with *COVID-19 surveillance*, still `?preset=covid`).
 - **Skip patterns over nested data.** A rule can reach into a value: a field of an object, however
   deep (`point.tier = "platinum" or point is null`, `deep.l2.l3 is null`), an item of a list
   (`contains`, with `minContains`/`maxContains`: `people has at least 2 items where people[].age ≥

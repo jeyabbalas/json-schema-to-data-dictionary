@@ -20,8 +20,14 @@ const VECTORS_MANIFEST = join(HERE, "vectors", "manifest.json");
 // the library uses to resolve relative $refs, so for directory presets the path must
 // reproduce the on-disk layout (e.g. `categories/demographics.json`, `common/defs.json`).
 // `key` is a stable identifier: the demo's `?preset=<key>` URL override refers to presets by
-// it, so keep keys unchanged when labels are reworded.
+// it, so keep keys unchanged when labels are reworded. The demo opens with the first one.
 const SOURCES = [
+  {
+    key: "hesp",
+    label: "HESP household panel",
+    description: "265 variables, 171 skip-pattern and consistency rules",
+    dir: "hesp"
+  },
   {
     key: "covid",
     label: "COVID-19 surveillance",
@@ -61,12 +67,6 @@ const SOURCES = [
     label: "BCRPP CORE",
     description: "A breast-cancer cohort with special codes and skip logic",
     dir: "multiple_schema_2"
-  },
-  {
-    key: "hesp",
-    label: "HESP household panel",
-    description: "265 variables, 171 skip-pattern and consistency rules",
-    dir: "hesp"
   }
 ];
 
