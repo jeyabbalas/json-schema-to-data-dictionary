@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.8.0 - 2026-10-11
 
 Skip patterns that say exactly what the schema enforces, the schema's comments where readers
 see them, and an Excel workbook instead of a CSV file.
