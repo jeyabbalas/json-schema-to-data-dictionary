@@ -1,0 +1,459 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/debts_credit.json",
+  "title": "HESP CORE - Debts and credit access",
+  "description": "Nonmortgage debts, delinquency, bankruptcy, credit score knowledge, and recent credit applications.",
+  "type": "object",
+  "x-variable-group": "debts_credit",
+  "properties": {
+    "credit_card_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household has at least one general-purpose credit card"
+    },
+    "credit_card_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Number of general-purpose credit cards",
+      "x-unit": "cards"
+    },
+    "credit_card_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Revolving credit-card balance",
+      "x-universe": "Households with at least one credit card.",
+      "x-unit": "currency units"
+    },
+    "credit_card_min_payment": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total minimum monthly credit-card payment",
+      "x-universe": "Households with at least one credit card.",
+      "x-unit": "currency units per month"
+    },
+    "auto_loan_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Number of vehicle loans or leases with balances",
+      "x-unit": "loans"
+    },
+    "auto_loan_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total vehicle-loan and lease balance",
+      "x-universe": "Households with at least one vehicle loan or lease.",
+      "x-unit": "currency units"
+    },
+    "student_loan_owed": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household owes education loans"
+    },
+    "student_loan_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total education-loan balance",
+      "x-universe": "Households owing education loans.",
+      "x-unit": "currency units"
+    },
+    "personal_loan_owed": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household owes unsecured personal loans"
+    },
+    "personal_loan_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Unsecured personal-loan balance",
+      "x-universe": "Households owing personal loans.",
+      "x-unit": "currency units"
+    },
+    "payday_loan_used_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Used a payday, deposit-advance, or similar short-term loan in past 12 months"
+    },
+    "payday_loan_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Outstanding short-term high-cost loan balance",
+      "x-universe": "Households using a short-term high-cost loan.",
+      "x-unit": "currency units"
+    },
+    "tax_debt_owed": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household owes delinquent tax debt"
+    },
+    "tax_debt_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Delinquent tax debt balance",
+      "x-universe": "Households owing delinquent tax debt.",
+      "x-unit": "currency units"
+    },
+    "other_debt_owed": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household owes other nonmortgage debt"
+    },
+    "other_debt_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Other nonmortgage debt balance",
+      "x-universe": "Households owing other nonmortgage debt.",
+      "x-unit": "currency units"
+    },
+    "any_payment_60days_late": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Any debt payment 60 or more days late in past 12 months"
+    },
+    "late_debt_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Mortgage or home-secured debt"
+        },
+        {
+          "const": 2,
+          "title": "Credit card"
+        },
+        {
+          "const": 3,
+          "title": "Vehicle loan or lease"
+        },
+        {
+          "const": 4,
+          "title": "Education loan"
+        },
+        {
+          "const": 5,
+          "title": "Personal or high-cost short-term loan"
+        },
+        {
+          "const": 6,
+          "title": "Tax or other debt"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Debt type with the most serious delinquency",
+      "x-universe": "Households with a debt payment 60 or more days late."
+    },
+    "bankruptcy_ever": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Any household adult has ever filed for bankruptcy"
+    },
+    "bankruptcy_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Most recent bankruptcy filing year",
+      "x-universe": "Households with a bankruptcy filing.",
+      "x-unit": "calendar year"
+    },
+    "credit_score_known": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Respondent knows a current household credit score"
+    },
+    "credit_score": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 850
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reported credit score",
+      "x-universe": "Respondents who know a current credit score.",
+      "x-unit": "score points"
+    },
+    "credit_application_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household applied for credit in past 12 months"
+    },
+    "credit_denied_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Any credit application denied or only partly approved",
+      "x-universe": "Households applying for credit."
+    },
+    "credit_denial_reason": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Low credit score or adverse history"
+        },
+        {
+          "const": 2,
+          "title": "Insufficient or unstable income"
+        },
+        {
+          "const": 3,
+          "title": "High existing debt"
+        },
+        {
+          "const": 4,
+          "title": "Insufficient collateral or down payment"
+        },
+        {
+          "const": 5,
+          "title": "Incomplete documentation"
+        },
+        {
+          "const": 6,
+          "title": "Reason not provided or other"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary reason credit was denied or partly approved",
+      "x-universe": "Households with a denied or partly approved credit application."
+    },
+    "debt_values_imputation_flag": {
+      "$ref": "../../common/defs.json#/$defs/imputation_flag",
+      "title": "Debt values imputation and disclosure-treatment flag"
+    }
+  },
+  "required": [
+    "credit_card_owned",
+    "credit_card_count",
+    "credit_card_balance",
+    "credit_card_min_payment",
+    "auto_loan_count",
+    "auto_loan_balance",
+    "student_loan_owed",
+    "student_loan_balance",
+    "personal_loan_owed",
+    "personal_loan_balance",
+    "payday_loan_used_12m",
+    "payday_loan_balance",
+    "tax_debt_owed",
+    "tax_debt_balance",
+    "other_debt_owed",
+    "other_debt_balance",
+    "any_payment_60days_late",
+    "late_debt_type",
+    "bankruptcy_ever",
+    "bankruptcy_year",
+    "credit_score_known",
+    "credit_score",
+    "credit_application_12m",
+    "credit_denied_12m",
+    "credit_denial_reason",
+    "debt_values_imputation_flag"
+  ]
+}

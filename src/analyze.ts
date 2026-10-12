@@ -99,11 +99,16 @@ export interface PropertyShape {
 
 export interface PropertyAnalysis {
   dataType: string;
+  /** The JSON types the value may take ("integer", "string", "null" …), from `type` and the values listed; empty when the schema does not say. */
+  types: string[];
   format: string;
   validValues: ValidValue[];
   constraints: ConstraintItem[];
   additionalInformation: Record<string, JsonValue> | null;
+  /** `title` + `description` + `$comment` text, the comments last. */
   description: string;
+  /** The `$comment` text alone (the last lines of `description`), or "". */
+  comment: string;
   shape: PropertyShape;
 }
 
@@ -136,13 +141,22 @@ interface Accumulator {
   patterns: Set<string>;
   values: ValidValue[];
   numeric: NumericBounds;
+  /** The ranges of a union's measured branches, when there are several: "0–10 or 100–200". */
+  ranges: NumericBounds[];
+  /** Values a `not` of `const`/`enum` rules out ("not": { "enum": [-666, -777] }). */
+  excluded: JsonValue[];
+  /** Values the measured branch of a mixed union rules out that its range would otherwise allow. */
+  measurementExcluded: JsonValue[];
   minLength?: number;
   maxLength?: number;
   array: { minItems?: number; maxItems?: number; uniqueItems?: boolean; minContains?: number; maxContains?: number; contains?: BranchAnalysis };
   object: { minProperties?: number; maxProperties?: number; propertyNames?: BranchAnalysis };
   extraConstraints: ConstraintItem[];
   additional: Record<string, unknown>;
+  /** `title` / `description` text, in the order met. */
   descriptions: string[];
+  /** `$comment` text, kept apart so it reads as the author's note rather than the definition. */
+  comments: string[];
   hasArray: boolean;
   hasObjectShape: boolean;
   /** The array's item schema, analysed with its own accumulator (hoisted at materialisation). */
@@ -174,10 +188,12 @@ interface InternalContext extends AnalyzeContext {
 // `not known` and `does not know` are deliberately absent -- they matched six such categories
 // in one variable while gaining nothing a narrower spelling did not already catch. The trailing
 // \b anchors matter for the same reason: "Ovarian suppression" is a therapy, "Not in formal
-// education" is an answer, and sodium is spelled Na. Add a word here only with a case that
-// needs it; `x-value-kind` is the answer for wording this cannot safely infer.
+// education" is an answer, and sodium is spelled Na. "Decline" is a noun as often as a verb
+// ("Income decline" is a kind of financial shock, "Cognitive decline" a diagnosis), so only
+// "declined" and "decline to …" count. Add a word here only with a case that needs it;
+// `x-value-kind` is the answer for wording this cannot safely infer.
 const SENTINEL_WORDS =
-  /(missing|unknown|not applicable|not assessed|not collected|not (?:on|in) (?:the )?(?:questionnaire|survey|form)\b|no answer|no response|refus|declin|do(?:n'?t| not) know\b|prefer not|\bsuppressed\b|inapplicable|\bn\/a\b|skipped?)/;
+  /(missing|unknown|not applicable|not assessed|not collected|not (?:on|in) (?:the )?(?:questionnaire|survey|form)\b|no answer|no response|refus|\bdeclined\b|\bdecline to\b|do(?:n'?t| not) know\b|prefer not|\bsuppressed\b|inapplicable|\bn\/a\b|skipped?)/;
 
 /**
  * Fold the spellings a label or an identifier can take into one: case, curly apostrophes and
@@ -282,7 +298,8 @@ export function analyzeProperty(schema: JsonSchema, context: AnalyzeContext): Pr
   const self: SchemaRef = { schema, base: context.base, ...(context.source ? { source: context.source } : {}) };
   const acc = newAccumulator(self);
   collect(schema, { ...context, depth: 0, refStack: new Set(), at: context.source }, acc);
-  return materialize(acc, "row");
+  const { text: _text, ...analysis } = materialize(acc, "row");
+  return analysis;
 }
 
 function newAccumulator(self: SchemaRef): Accumulator {
@@ -295,11 +312,15 @@ function newAccumulator(self: SchemaRef): Accumulator {
     patterns: new Set(),
     values: [],
     numeric: {},
+    ranges: [],
+    excluded: [],
+    measurementExcluded: [],
     array: {},
     object: {},
     extraConstraints: [],
     additional: {},
     descriptions: [],
+    comments: [],
     hasArray: false,
     hasObjectShape: false,
     shape: {
@@ -325,6 +346,8 @@ function collect(schema: JsonSchema, ctx: InternalContext, acc: Accumulator): vo
 
   // 2020-12 allows annotations/keywords alongside $ref; follow the ref then apply siblings.
   const beforeRef = acc.values.length;
+  const refStart = acc.descriptions.length;
+  let refTitle: string | undefined;
   const ref = refKeyword(schema);
   if (ref) {
     const loc = ctx.registry.resolve(ref, ctx.base);
@@ -341,6 +364,7 @@ function collect(schema: JsonSchema, ctx: InternalContext, acc: Accumulator): vo
           depth: ctx.depth + 1,
           refStack: nextStack
         }, acc);
+        if (isSchemaObject(loc.schema) && typeof loc.schema.title === "string") refTitle = loc.schema.title.trim();
       } else {
         acc.extraConstraints.push({ keyword: "$ref", text: `Recursive reference omitted: ${ref}.` });
         noteRecursiveTarget(loc.schema, acc);
@@ -351,7 +375,15 @@ function collect(schema: JsonSchema, ctx: InternalContext, acc: Accumulator): vo
   // A block that exists only to state a rule (`{ "$comment": …, "if": …, "then": … }` inside
   // an object's allOf) annotates the rule, which the extractor collects and the skip-pattern
   // panel shows; its prose is not a description of the variable.
-  if (!isConditionalOnly(schema)) collectAnnotations(schema, acc);
+  if (!isConditionalOnly(schema)) {
+    // The text a `$ref` brought in describes the shared definition ("Survey analysis weight");
+    // the schema's own title and description name this use of it ("Cross-sectional household
+    // weight"), so they come first, and an own title replaces the definition's.
+    const fromRef = acc.descriptions.splice(refStart);
+    collectAnnotations(schema, acc);
+    const ownTitle = typeof schema.title === "string" && schema.title.trim() ? schema.title.trim() : undefined;
+    acc.descriptions.push(...(ownTitle && refTitle ? fromRef.filter((text) => text !== refTitle) : fromRef));
+  }
   collectValueKind(schema, acc, beforeRef);
   collectTypes(schema, acc);
   collectFormatAndContent(schema, acc);
@@ -386,7 +418,7 @@ function noteRecursiveTarget(target: JsonSchema, acc: Accumulator): void {
 function collectAnnotations(schema: JsonSchemaObject, acc: Accumulator): void {
   if (typeof schema.title === "string" && schema.title.trim()) acc.descriptions.push(schema.title.trim());
   if (typeof schema.description === "string" && schema.description.trim()) acc.descriptions.push(schema.description.trim());
-  if (typeof schema.$comment === "string" && schema.$comment.trim()) acc.descriptions.push(schema.$comment.trim());
+  if (typeof schema.$comment === "string" && schema.$comment.trim()) acc.comments.push(schema.$comment.trim());
 }
 
 /**
@@ -490,6 +522,7 @@ function collectComposition(schema: JsonSchemaObject, ctx: InternalContext, acc:
     const inner = analyzeBranch(schema.not, { ...ctx, at: sourceAt(ctx.at, ctx.base, ["not"]) });
     const brief = briefOf(inner);
     if (brief) acc.extraConstraints.push({ keyword: "not", text: `Must not be: ${brief}.` });
+    if (inner.values.length > 0) acc.excluded.push(...inner.values.map((v) => v.value));
   }
 
   if (schema.if !== undefined && (schema.then !== undefined || schema.else !== undefined)) {
@@ -527,48 +560,59 @@ function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: In
   const hasMeasurement = measurements.length > 0;
   const hasCategorical = categoricals.some((b) => b.analysis.values.length > 0);
 
-  if (hasMeasurement && hasCategorical) {
+  const mixed = hasMeasurement && hasCategorical;
+  if (mixed) {
     // Mixed: measurement value + categorical sentinel codes.
     acc.mixed = true;
     for (const m of measurements) {
       for (const t of m.analysis.jsonTypes) acc.measurementBaseTypes.add(t);
+      acc.nullable ||= m.analysis.acc.nullable;
       mergeNumeric(acc.numeric, m.analysis.numeric);
+      if (hasNumericRange(m.analysis.numeric)) acc.ranges.push(m.analysis.numeric);
       if (m.analysis.minLength !== undefined) acc.minLength = m.analysis.minLength;
       if (m.analysis.maxLength !== undefined) acc.maxLength = m.analysis.maxLength;
+      // What the measured value looks like (a date, an identifier's pattern) is the variable's
+      // format, and the codes its `not` rules out are part of its definition: "-777 is never a
+      // loss of 777".
+      for (const f of m.analysis.formats) acc.formats.add(f);
+      for (const pattern of m.analysis.patterns) acc.patterns.add(pattern);
+      acc.encoding ??= m.analysis.acc.encoding;
+      for (const v of m.analysis.acc.excluded) if (withinBounds(v, m.analysis.numeric)) acc.measurementExcluded.push(v);
       acc.values.push({
         value: null,
         kind: "measurement",
         label: measurementLabel(m.analysis),
         ...(m.analysis.description ? { description: m.analysis.description } : {}),
+        ...(m.analysis.comment ? { comment: m.analysis.comment } : {}),
         ...(ctx.source ? { source: ctx.source } : {})
       });
     }
     for (const c of categoricals) {
       const refName = refNameOf(c.branch);
-      for (const v of c.analysis.values) acc.values.push({ ...v, kind: classify(v, refName, c.analysis.valueKind) });
+      for (const v of c.analysis.values) acc.values.push(withComment({ ...v, kind: classify(v, refName, c.analysis.valueKind) }, c.analysis.comment));
     }
   } else if (hasCategorical) {
     // Pure categorical: tag each value as substantive or sentinel.
     for (const c of categoricals) {
       const refName = refNameOf(c.branch);
       for (const v of c.analysis.values) {
-        acc.values.push({ ...v, kind: classify(v, refName, c.analysis.valueKind) });
+        acc.values.push(withComment({ ...v, kind: classify(v, refName, c.analysis.valueKind) }, c.analysis.comment));
         acc.jsonTypes.add(jsonTypeOf(v.value));
       }
     }
   } else {
-    // Union of measurements (e.g. several numeric ranges): merge as plain constraints.
-    for (const m of measurements) {
-      for (const t of m.analysis.jsonTypes) acc.jsonTypes.add(t);
-      mergeNumeric(acc.numeric, m.analysis.numeric);
-    }
+    // Union of measurements (several ranges, a date or a year …): every branch's facets are the
+    // property's (absorbed below, in declaration order), and each range is kept so that disjoint
+    // ones are all stated.
+    for (const m of measurements) if (hasNumericRange(m.analysis.numeric)) acc.ranges.push(m.analysis.numeric);
   }
 
-  // A branch that carries neither codes nor a measurement -- a plain `{ "type": "string" }`, a
-  // format, `{ "type": "null" }`, an object or an array -- still says what the value can be.
-  // Without this a union of such branches read "any", and `anyOf: [T, null]` lost its null.
-  for (const b of categoricals) {
-    if (b.analysis.values.length > 0) continue;
+  // A branch that carries no codes -- a plain `{ "type": "string" }`, a format, `{ "type":
+  // "null" }`, an object or an array, or (outside a mixed union) a range -- still says what the
+  // value can be. Without this a union of such branches read "any", and `anyOf: [T, null]` lost
+  // its null. The measured branches of a mixed union were taken apart above.
+  for (const b of analyzed) {
+    if (b.analysis.values.length > 0 || (mixed && b.analysis.isMeasurement)) continue;
     absorbBranch(acc, b.analysis.acc, {
       schema: b.branch,
       base: ctx.base,
@@ -661,6 +705,7 @@ interface BranchAnalysis {
   formats: string[];
   patterns: string[];
   description: string;
+  comment: string;
   isMeasurement: boolean;
   valueKind?: ValidValueKind;
   /** The branch's whole accumulator, for merging its typed/structural facets. */
@@ -677,9 +722,12 @@ function analyzeBranch(branch: JsonSchema, ctx: InternalContext): BranchAnalysis
     sub.numeric.exclusiveMaximum !== undefined ||
     sub.minLength !== undefined ||
     sub.maxLength !== undefined;
-  // A branch is a "measurement" when it constrains a numeric/string value but does not pin
-  // it to specific categorical values (no enum/const).
-  const isMeasurement = sub.values.length === 0 && (hasRange || sub.jsonTypes.has("number") || sub.jsonTypes.has("integer"));
+  // A branch is a "measurement" when it describes a number or a string -- a range, a format, a
+  // pattern, or just its type -- without pinning it to specific categorical values (no
+  // enum/const). Next to codes it is the substantive value: an identifier with string codes for
+  // "not applicable" is "string + coded values", not a list of four codes.
+  const typedValue = sub.jsonTypes.has("number") || sub.jsonTypes.has("integer") || sub.jsonTypes.has("string") || sub.formats.size > 0 || sub.patterns.size > 0;
+  const isMeasurement = sub.values.length === 0 && !sub.hasArray && !sub.hasObjectShape && (hasRange || typedValue);
   return {
     jsonTypes: sub.jsonTypes,
     values: sub.values,
@@ -689,6 +737,7 @@ function analyzeBranch(branch: JsonSchema, ctx: InternalContext): BranchAnalysis
     formats: [...sub.formats],
     patterns: [...sub.patterns],
     description: joinDescriptions(sub.descriptions),
+    comment: joinDescriptions(sub.comments),
     isMeasurement,
     ...(sub.valueKind ? { valueKind: sub.valueKind } : {}),
     acc: sub
@@ -815,7 +864,7 @@ function collectAdditional(schema: JsonSchemaObject, acc: Accumulator): void {
  * `mode` says how nullability reads: a nullable property is "integer (nullable)", a nullable
  * item is "array of nullable integer" -- the suffix belongs to the array as a whole.
  */
-function materialize(acc: Accumulator, mode: "row" | "item"): PropertyAnalysis {
+function materialize(acc: Accumulator, mode: "row" | "item"): Materialized {
   // Values from a bare `const`/`enum` never passed through a union, so nothing has classified
   // them yet. Run the same rule here: a code should not mean one thing written as `enum` and
   // another written as a `oneOf` of titled consts.
@@ -827,16 +876,36 @@ function materialize(acc: Accumulator, mode: "row" | "item"): PropertyAnalysis {
   // is hoisted into this row (Valid values, "Each item: …" constraints, the Format).
   const item = acc.items ? materialize(acc.items.acc, "item") : undefined;
   const additional = { ...acc.additional, ...(item?.additionalInformation ? { items: item.additionalInformation } : {}) };
+  const text = joinDescriptions(item ? [...acc.descriptions, item.text] : acc.descriptions);
+  const comment = joinDescriptions(item ? [...acc.comments, item.comment] : acc.comments);
   return {
     dataType: dataTypeText(acc, item?.dataType, mode),
+    types: typesOf(acc),
     format: formatText(acc) || item?.format || "",
     validValues: dedupeValues(item ? [...acc.values, ...item.validValues] : acc.values),
     constraints: buildConstraints(acc, item),
     additionalInformation: plainAdditional(additional),
-    description: joinDescriptions(item ? [...acc.descriptions, item.description] : acc.descriptions),
+    description: joinDescriptions([text, comment]),
+    comment,
+    text,
     shape: finalizeShape(acc, item)
   };
 }
+
+/**
+ * The JSON types the value may take: declared, of the measured value of a mixed union, and of
+ * the values listed. Unknown (empty) when a measured value says nothing of its type.
+ */
+function typesOf(acc: Accumulator): string[] {
+  const types = new Set([...acc.jsonTypes, ...acc.measurementBaseTypes]);
+  if (types.size === 0 && acc.values.some((v) => v.kind === "measurement")) return [];
+  for (const v of acc.values) if (v.kind !== "measurement") types.add(jsonTypeOf(v.value));
+  if (acc.nullable) types.add("null");
+  return [...types];
+}
+
+/** An analysis plus its description without the comments, which an array's row joins with its item's. */
+type Materialized = PropertyAnalysis & { text: string };
 
 function finalizeShape(acc: Accumulator, item: PropertyAnalysis | undefined): PropertyShape {
   const s = acc.shape;
@@ -869,8 +938,9 @@ function dataTypeText(acc: Accumulator, itemLabel: string | undefined, mode: "ro
   };
 
   if (acc.mixed) {
-    const base = [...acc.measurementBaseTypes].filter(Boolean);
-    const baseLabel = base.length ? base.join(" or ") : "value";
+    const formats = [...acc.formats].map((f) => formatLabel(f)).join(" / ");
+    const base = [...acc.measurementBaseTypes].filter(Boolean).map((t) => (t === "string" && formats ? formats : t));
+    const baseLabel = base.length ? [...new Set(base)].join(" or ") : "value";
     return nn(`${baseLabel} + coded values`);
   }
   if (acc.encoding) {
@@ -936,9 +1006,15 @@ function formatText(acc: Accumulator): string {
 function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined): ConstraintItem[] {
   const out: ConstraintItem[] = [];
 
-  const numericText = numericRangeText(acc.numeric);
+  // Disjoint ranges from a union's branches are all stated ("0 ≤ value ≤ 10 or 100 ≤ value ≤ 200").
+  const ranges = distinctRanges(acc.ranges);
+  const numericText = ranges.length > 1 ? ranges.map(numericRangeText).join(" or ") : numericRangeText(acc.numeric);
   if (numericText) {
     out.push({ keyword: "range", value: cloneJson(acc.numeric), text: acc.mixed ? `Measured value: ${numericText}` : numericText });
+  }
+  if (acc.measurementExcluded.length > 0) {
+    const values = [...new Map(acc.measurementExcluded.map((v) => [valueKey(v), v])).values()];
+    out.push({ keyword: "not", value: values, text: `Measured value is never ${listOr(values.map((v) => formatJsonValue(v)))}` });
   }
   if (typeof acc.numeric.multipleOf === "number") {
     out.push({ keyword: "multipleOf", value: acc.numeric.multipleOf, text: `Multiple of ${formatNumber(acc.numeric.multipleOf)}` });
@@ -1009,6 +1085,17 @@ function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined):
   return dedupeConstraints(out);
 }
 
+function distinctRanges(ranges: NumericBounds[]): NumericBounds[] {
+  const seen = new Map<string, NumericBounds>();
+  for (const r of ranges) seen.set(stableStringify(r), r);
+  return [...seen.values()];
+}
+
+/** "a", "a or b", "a, b or c". */
+function listOr(items: string[]): string {
+  return items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} or ${items[items.length - 1]}`;
+}
+
 function propertyNamesText(b: BranchAnalysis): string {
   if (b.patterns.length) return `Property names match pattern ${b.patterns.join(", ")}`;
   if (b.values.length) return `Property names are one of: ${b.values.map((v) => formatJsonValue(v.value)).join(", ")}`;
@@ -1027,6 +1114,15 @@ function propertyNamesText(b: BranchAnalysis): string {
  */
 interface DraftValue extends ValidValue {
   declaredKind?: ValidValueKind;
+}
+
+/**
+ * A union branch's `$comment` -- its own, or the one of the shared definition it `$ref`s -- is
+ * about the values that branch contributes. A value that already has one (from a union nested
+ * in the branch) keeps it: that comment is the more specific.
+ */
+function withComment(v: DraftValue, comment: string): DraftValue {
+  return comment && !v.comment ? { ...v, comment } : v;
 }
 
 function makeValue(value: JsonValue, description: string | undefined, label: string | undefined, source: SourceInfo | undefined): ValidValue {
@@ -1057,7 +1153,10 @@ export function isSentinelValue(v: ValidValue, refName?: string): boolean {
   // description only when the label is not a name at all: codebooks that put the code in the
   // title ("-3") and the meaning in the description have nothing else to go on.
   const label = v.label?.trim() ?? "";
-  const text = /\p{L}/u.test(label) ? label : (v.description ?? "");
+  // A parenthesis qualifies the label's head: "Ever (unknown current or former)" is a category
+  // of ever-users, "Missing (not collected)" is missing. Read the head when it has words.
+  const head = label.replace(/\([^()]*\)/g, " ").trim();
+  const text = /\p{L}/u.test(head) ? head : /\p{L}/u.test(label) ? label : (v.description ?? "");
   if (text.trim() && SENTINEL_WORDS.test(normalizeForMatch(text))) return true;
   if (typeof v.value === "number" && CONVENTIONAL_SENTINEL_CODES.has(v.value)) return true;
   return false;
@@ -1067,31 +1166,55 @@ function measurementLabel(b: BranchAnalysis): string {
   const numeric = numericRangeLabel(b.numeric);
   if (numeric) return numeric;
   const length = lengthRangeLabel(b.minLength, b.maxLength);
+  if (b.formats.length > 0) return [`any ${b.formats.map((f) => formatLabel(f)).join(" / ")}`, length].filter(Boolean).join(", ");
+  if (b.patterns.length > 0) return [`matches ${b.patterns.join(" and ")}`, length].filter(Boolean).join(", ");
   if (length) return length;
   const types = [...b.jsonTypes].filter((t) => t !== "null");
   return types.length ? `any ${types.join(" or ")}` : "measured value";
 }
 
+/**
+ * The bounds a range enforces: of `minimum` and `exclusiveMinimum` the stricter one (both may
+ * be given), and likewise for the maximum.
+ */
+function effectiveBounds(n: NumericBounds): { lo?: number; loExclusive: boolean; hi?: number; hiExclusive: boolean } {
+  const loExclusive = n.exclusiveMinimum !== undefined && (n.minimum === undefined || n.exclusiveMinimum >= n.minimum);
+  const hiExclusive = n.exclusiveMaximum !== undefined && (n.maximum === undefined || n.exclusiveMaximum <= n.maximum);
+  const lo = loExclusive ? n.exclusiveMinimum : n.minimum;
+  const hi = hiExclusive ? n.exclusiveMaximum : n.maximum;
+  return { ...(lo !== undefined ? { lo } : {}), loExclusive, ...(hi !== undefined ? { hi } : {}), hiExclusive };
+}
+
+function hasNumericRange(n: NumericBounds): boolean {
+  return n.minimum !== undefined || n.maximum !== undefined || n.exclusiveMinimum !== undefined || n.exclusiveMaximum !== undefined;
+}
+
+/** `value` satisfies the range (a non-number satisfies any range: it is ruled out by type, not by bounds). */
+function withinBounds(value: JsonValue, n: NumericBounds): boolean {
+  if (typeof value !== "number") return true;
+  const { lo, loExclusive, hi, hiExclusive } = effectiveBounds(n);
+  if (lo !== undefined && (loExclusive ? value <= lo : value < lo)) return false;
+  if (hi !== undefined && (hiExclusive ? value >= hi : value > hi)) return false;
+  return true;
+}
+
+/** A compact range for the code column: "20–65"; an exclusive bound reads as an inequality ("0 < value ≤ 100"). */
 function numericRangeLabel(n: NumericBounds): string {
-  const lo = n.minimum ?? n.exclusiveMinimum;
-  const hi = n.maximum ?? n.exclusiveMaximum;
-  if (lo !== undefined && hi !== undefined) return `${formatNumber(lo)}–${formatNumber(hi)}`;
-  if (lo !== undefined) return `${n.exclusiveMinimum !== undefined ? ">" : "≥"} ${formatNumber(lo)}`;
-  if (hi !== undefined) return `${n.exclusiveMaximum !== undefined ? "<" : "≤"} ${formatNumber(hi)}`;
+  const { lo, loExclusive, hi, hiExclusive } = effectiveBounds(n);
+  if (lo !== undefined && hi !== undefined) return loExclusive || hiExclusive ? numericRangeText(n) : `${formatNumber(lo)}–${formatNumber(hi)}`;
+  if (lo !== undefined) return `${loExclusive ? ">" : "≥"} ${formatNumber(lo)}`;
+  if (hi !== undefined) return `${hiExclusive ? "<" : "≤"} ${formatNumber(hi)}`;
   return "";
 }
 
 function numericRangeText(n: NumericBounds): string {
-  const hasLo = n.minimum !== undefined || n.exclusiveMinimum !== undefined;
-  const hasHi = n.maximum !== undefined || n.exclusiveMaximum !== undefined;
-  if (!hasLo && !hasHi) return "";
-  const loOp = n.exclusiveMinimum !== undefined ? "<" : "≤";
-  const hiOp = n.exclusiveMaximum !== undefined ? "<" : "≤";
-  const lo = n.minimum ?? n.exclusiveMinimum;
-  const hi = n.maximum ?? n.exclusiveMaximum;
-  if (hasLo && hasHi) return `${formatNumber(lo as number)} ${loOp} value ${hiOp} ${formatNumber(hi as number)}`;
-  if (hasLo) return `value ${n.exclusiveMinimum !== undefined ? ">" : "≥"} ${formatNumber(lo as number)}`;
-  return `value ${n.exclusiveMaximum !== undefined ? "<" : "≤"} ${formatNumber(hi as number)}`;
+  const { lo, loExclusive, hi, hiExclusive } = effectiveBounds(n);
+  const loOp = loExclusive ? "<" : "≤";
+  const hiOp = hiExclusive ? "<" : "≤";
+  if (lo !== undefined && hi !== undefined) return `${formatNumber(lo)} ${loOp} value ${hiOp} ${formatNumber(hi)}`;
+  if (lo !== undefined) return `value ${loExclusive ? ">" : "≥"} ${formatNumber(lo)}`;
+  if (hi !== undefined) return `value ${hiExclusive ? "<" : "≤"} ${formatNumber(hi)}`;
+  return "";
 }
 
 function lengthRangeLabel(min?: number, max?: number): string {

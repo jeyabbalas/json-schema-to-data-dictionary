@@ -13,7 +13,7 @@
 
 import { escapeHtml } from "../utils";
 import type { CategoryVM, ViewModel } from "./viewModel";
-import { jsonTree, multiline, rowMarkup, rulesMarkup } from "./rowMarkup";
+import { jsonTree, multiline, note, rowMarkup, rulesMarkup } from "./rowMarkup";
 import type { RowMarkupOptions } from "./rowMarkup";
 import { COLUMNS, columnStyle } from "./columns";
 
@@ -145,7 +145,9 @@ function header(vm: ViewModel, uid: string): string {
     ...(o.includeExport
       ? [
           `<button class="dd-btn" type="button" data-dd-action="copy" title="Copy the dictionary as CSV">${ICON_COPY}Copy</button>`,
-          `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV">${ICON_DOWNLOAD}CSV</button>`
+          o.exportFormat === "csv"
+            ? `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as CSV">${ICON_DOWNLOAD}CSV</button>`
+            : `<button class="dd-btn" type="button" data-dd-action="download" title="Download the dictionary as an Excel workbook (.xlsx)">${ICON_DOWNLOAD}Excel</button>`
         ]
       : [])
   ].join("")}</div>`;
@@ -157,7 +159,7 @@ function header(vm: ViewModel, uid: string): string {
   <header class="dd-header">
     <h2 class="dd-title">${escapeHtml(vm.title)}</h2>
     ${vm.description ? `<p class="dd-description">${multiline(vm.description)}</p>` : ""}
-    ${vm.comment ? `<p class="dd-comment">${multiline(vm.comment)}</p>` : ""}
+    ${vm.comment ? `<div class="dd-comment">${note(vm.comment)}</div>` : ""}
     <div class="dd-toolbar">
       <div class="dd-searchbar">
         <div class="dd-search">
@@ -226,7 +228,7 @@ function categorySection(
       </button>
     </div>
     <div class="dd-table-wrap" data-dd-table-wrap id="${id}">
-      ${c.description ? `<div class="dd-category-intro"><p class="dd-category-desc dd-pin">${multiline(c.description)}</p></div>` : ""}
+      ${c.description || c.comment ? `<div class="dd-category-intro"><div class="dd-category-desc dd-pin">${c.description ? `<p>${multiline(c.description)}</p>` : ""}${note(c.comment)}</div></div>` : ""}
       <table class="dd-table">
         ${tableHead()}
         <tbody data-dd-rows>

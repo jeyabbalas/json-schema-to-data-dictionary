@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/derived_measures.json",
+  "title": "HESP CORE - Derived financial measures",
+  "description": "Harmonized totals and analysis measures. Arithmetic identities are documented but cannot be fully enforced by standard JSON Schema.",
+  "type": "object",
+  "x-variable-group": "derived_measures",
+  "properties": {
+    "total_program_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total annual cash and near-cash program income",
+      "x-unit": "currency units per year",
+      "x-role": "derived measure",
+      "x-derivation": "Sum of harmonized cash and near-cash program amounts."
+    },
+    "total_liquid_assets": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total liquid assets",
+      "x-unit": "currency units",
+      "x-role": "derived measure",
+      "x-derivation": "Checking, savings, prepaid, money-market/CD, and cash-on-hand balances."
+    },
+    "total_assets": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -5000000,
+          "maximum": 500000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total household assets",
+      "x-unit": "currency units",
+      "x-role": "derived measure",
+      "x-derivation": "Liquid assets plus retirement, investments, business and property equity, vehicles, valuables, and primary residence value."
+    },
+    "total_mortgage_debt": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total mortgage and home-secured debt",
+      "x-unit": "currency units",
+      "x-role": "derived measure"
+    },
+    "total_nonmortgage_debt": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total nonmortgage debt",
+      "x-unit": "currency units",
+      "x-role": "derived measure"
+    },
+    "total_debt": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total household debt",
+      "x-unit": "currency units",
+      "x-role": "derived measure"
+    },
+    "net_worth": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -100000000,
+          "maximum": 500000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Household net worth",
+      "x-unit": "currency units",
+      "x-role": "derived measure",
+      "x-derivation": "Total assets minus total debt."
+    },
+    "housing_cost_income_ratio": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annualized housing cost to household income ratio",
+      "x-role": "derived measure",
+      "x-derivation": "Annualized rent or owner cost divided by positive annual household income."
+    },
+    "debt_to_income_ratio": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Debt to household income ratio",
+      "x-role": "derived measure",
+      "x-derivation": "Total debt divided by positive annual household income."
+    },
+    "income_to_needs_ratio": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Income-to-needs ratio",
+      "x-role": "derived measure",
+      "x-derivation": "Household income divided by the survey poverty threshold for household size and composition."
+    },
+    "material_hardship_index": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Material hardship index",
+      "x-role": "derived measure"
+    },
+    "financial_fragility_indicator": {
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Not financially fragile"
+        },
+        {
+          "const": 1,
+          "title": "Financially fragile"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Financial fragility indicator",
+      "x-role": "derived measure"
+    },
+    "program_participation_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Count of program categories received",
+      "x-role": "derived measure"
+    },
+    "wealth_quintile": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Lowest quintile"
+        },
+        {
+          "const": 2,
+          "title": "Second quintile"
+        },
+        {
+          "const": 3,
+          "title": "Middle quintile"
+        },
+        {
+          "const": 4,
+          "title": "Fourth quintile"
+        },
+        {
+          "const": 5,
+          "title": "Highest quintile"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Survey-weighted net-worth quintile",
+      "x-role": "derived measure"
+    },
+    "derived_data_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "All key components observed"
+        },
+        {
+          "const": 2,
+          "title": "One or more components imputed"
+        },
+        {
+          "const": 3,
+          "title": "Substantial imputation or top-coding"
+        },
+        {
+          "const": 4,
+          "title": "Derived measures unavailable"
+        }
+      ],
+      "title": "Derived-measure availability status"
+    }
+  },
+  "required": [
+    "total_program_income_annual",
+    "total_liquid_assets",
+    "total_assets",
+    "total_mortgage_debt",
+    "total_nonmortgage_debt",
+    "total_debt",
+    "net_worth",
+    "housing_cost_income_ratio",
+    "debt_to_income_ratio",
+    "income_to_needs_ratio",
+    "material_hardship_index",
+    "financial_fragility_indicator",
+    "program_participation_count",
+    "wealth_quintile",
+    "derived_data_status"
+  ],
+  "$comment": "Soft checks: net_worth = total_assets - total_debt; total_debt = total_mortgage_debt + total_nonmortgage_debt; component totals should reconcile within documented rounding and imputation tolerances."
+}

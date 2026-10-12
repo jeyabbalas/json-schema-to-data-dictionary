@@ -42,6 +42,31 @@ export function escapeHtml(value: unknown): string {
     .replaceAll("'", "&#39;");
 }
 
+const BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/** Standard base64 of `bytes` (no `Buffer` or `btoa`, so it runs anywhere). */
+export function bytesToBase64(bytes: Uint8Array): string {
+  const out: string[] = [];
+  let chunk = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const a = bytes[i] as number;
+    const b = i + 1 < bytes.length ? (bytes[i + 1] as number) : 0;
+    const c = i + 2 < bytes.length ? (bytes[i + 2] as number) : 0;
+    const n = (a << 16) | (b << 8) | c;
+    chunk +=
+      BASE64.charAt((n >> 18) & 63) +
+      BASE64.charAt((n >> 12) & 63) +
+      (i + 1 < bytes.length ? BASE64.charAt((n >> 6) & 63) : "=") +
+      (i + 2 < bytes.length ? BASE64.charAt(n & 63) : "=");
+    if (chunk.length >= 8192) {
+      out.push(chunk);
+      chunk = "";
+    }
+  }
+  out.push(chunk);
+  return out.join("");
+}
+
 export function slugify(input: string): string {
   const slug = input
     .toLowerCase()

@@ -1,0 +1,449 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/income.json",
+  "title": "HESP CORE - Household income",
+  "description": "Annual household income sources, tax filing, refundable tax credits, and total cash income.",
+  "type": "object",
+  "x-variable-group": "income",
+  "properties": {
+    "wage_income_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Wages, salaries, commissions, and tips received in reference year"
+    },
+    "wage_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: wages, salaries, commissions, and tips",
+      "x-universe": "Households reporting wages, salaries, commissions, and tips.",
+      "x-unit": "currency units per year"
+    },
+    "selfemp_income_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Net self-employment income received in reference year"
+    },
+    "selfemp_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -5000000,
+          "maximum": 50000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: net self-employment income",
+      "x-universe": "Households reporting net self-employment income.",
+      "x-unit": "currency units per year"
+    },
+    "interest_dividend_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Interest and dividend income received in reference year"
+    },
+    "interest_dividend_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: interest and dividend income",
+      "x-universe": "Households reporting interest and dividend income.",
+      "x-unit": "currency units per year"
+    },
+    "retirement_income_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Pension, annuity, and retirement-account distributions received in reference year"
+    },
+    "retirement_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: pension, annuity, and retirement-account distributions",
+      "x-universe": "Households reporting pension, annuity, and retirement-account distributions.",
+      "x-unit": "currency units per year"
+    },
+    "rental_income_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Net rental and royalty income received in reference year"
+    },
+    "rental_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -5000000,
+          "maximum": 20000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: net rental and royalty income",
+      "x-universe": "Households reporting net rental and royalty income.",
+      "x-unit": "currency units per year"
+    },
+    "child_support_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Child support received received in reference year"
+    },
+    "child_support_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: child support received",
+      "x-universe": "Households reporting child support received.",
+      "x-unit": "currency units per year"
+    },
+    "alimony_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Alimony or maintenance received received in reference year"
+    },
+    "alimony_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: alimony or maintenance received",
+      "x-universe": "Households reporting alimony or maintenance received.",
+      "x-unit": "currency units per year"
+    },
+    "private_transfer_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Cash gifts or transfers from persons outside the household received in reference year"
+    },
+    "private_transfer_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: cash gifts or transfers from persons outside the household",
+      "x-universe": "Households reporting cash gifts or transfers from persons outside the household.",
+      "x-unit": "currency units per year"
+    },
+    "other_income_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Other private cash income received in reference year"
+    },
+    "other_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -1000000,
+          "maximum": 10000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual amount: other private cash income",
+      "x-universe": "Households reporting other private cash income.",
+      "x-unit": "currency units per year"
+    },
+    "tax_return_filed": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household filed an income-tax return for reference year"
+    },
+    "tax_filing_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Single"
+        },
+        {
+          "const": 2,
+          "title": "Married filing jointly"
+        },
+        {
+          "const": 3,
+          "title": "Married filing separately"
+        },
+        {
+          "const": 4,
+          "title": "Head of household"
+        },
+        {
+          "const": 5,
+          "title": "Other filing status"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Tax filing status",
+      "x-universe": "Households that filed an income-tax return."
+    },
+    "eitc_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Earned income tax credit received",
+      "x-universe": "Households that filed an income-tax return."
+    },
+    "eitc_amount": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Earned income tax credit amount",
+      "x-universe": "Households receiving the earned income tax credit.",
+      "x-unit": "currency units"
+    },
+    "child_tax_credit_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Child-related tax credit received",
+      "x-universe": "Households that filed an income-tax return."
+    },
+    "child_tax_credit_amount": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Child-related tax credit amount",
+      "x-universe": "Households receiving a child-related tax credit.",
+      "x-unit": "currency units"
+    },
+    "total_household_income_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -10000000,
+          "maximum": 100000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total household cash income",
+      "description": "Sum of private income, public cash benefits, and refundable tax credits before taxes. Component-sum agreement is a soft consistency check.",
+      "x-unit": "currency units per year",
+      "x-role": "analysis measure"
+    },
+    "income_imputation_flag": {
+      "$ref": "../../common/defs.json#/$defs/imputation_flag",
+      "title": "Income imputation and disclosure-treatment flag"
+    }
+  },
+  "required": [
+    "wage_income_received",
+    "wage_income_annual",
+    "selfemp_income_received",
+    "selfemp_income_annual",
+    "interest_dividend_received",
+    "interest_dividend_annual",
+    "retirement_income_received",
+    "retirement_income_annual",
+    "rental_income_received",
+    "rental_income_annual",
+    "child_support_received",
+    "child_support_annual",
+    "alimony_received",
+    "alimony_annual",
+    "private_transfer_received",
+    "private_transfer_annual",
+    "other_income_received",
+    "other_income_annual",
+    "tax_return_filed",
+    "tax_filing_status",
+    "eitc_received",
+    "eitc_amount",
+    "child_tax_credit_received",
+    "child_tax_credit_amount",
+    "total_household_income_annual",
+    "income_imputation_flag"
+  ],
+  "$comment": "Soft check: total_household_income_annual should equal the sum of reported private income, public cash benefits, and refundable credits after harmonization."
+}

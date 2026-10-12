@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/assets.json",
+  "title": "HESP CORE - Household assets",
+  "description": "Ownership and values of liquid accounts, retirement and investment assets, business and property equity, vehicles, valuables, and cash.",
+  "type": "object",
+  "x-variable-group": "assets",
+  "properties": {
+    "checking_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Checking account owned"
+    },
+    "checking_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of checking account",
+      "x-universe": "Households owning a checking account.",
+      "x-unit": "currency units"
+    },
+    "savings_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Savings account owned"
+    },
+    "savings_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of savings account",
+      "x-universe": "Households owning a savings account.",
+      "x-unit": "currency units"
+    },
+    "prepaid_account_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Reloadable prepaid or stored-value account owned"
+    },
+    "prepaid_account_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of reloadable prepaid or stored-value account",
+      "x-universe": "Households owning a reloadable prepaid or stored-value account.",
+      "x-unit": "currency units"
+    },
+    "money_market_cd_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Money-market account or certificate of deposit owned"
+    },
+    "money_market_cd_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of money-market account or certificate of deposit",
+      "x-universe": "Households owning a money-market account or certificate of deposit.",
+      "x-unit": "currency units"
+    },
+    "retirement_account_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Employer or individual retirement account owned"
+    },
+    "retirement_account_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of employer or individual retirement account",
+      "x-universe": "Households owning a employer or individual retirement account.",
+      "x-unit": "currency units"
+    },
+    "stocks_bonds_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Stocks, bonds, mutual funds, or exchange-traded funds owned"
+    },
+    "stocks_bonds_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of stocks, bonds, mutual funds, or exchange-traded funds",
+      "x-universe": "Households owning a stocks, bonds, mutual funds, or exchange-traded funds.",
+      "x-unit": "currency units"
+    },
+    "business_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Privately held business owned"
+    },
+    "business_equity": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -5000000,
+          "maximum": 100000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Net equity in privately held business",
+      "x-universe": "Households owning a privately held business.",
+      "x-unit": "currency units"
+    },
+    "other_real_estate_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Real estate other than primary residence owned"
+    },
+    "other_real_estate_equity": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": -5000000,
+          "maximum": 100000000,
+          "not": {
+            "enum": [
+              -666,
+              -777,
+              -888,
+              -999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Net equity in real estate other than primary residence",
+      "x-universe": "Households owning a real estate other than primary residence.",
+      "x-unit": "currency units"
+    },
+    "valuables_owned": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Valuable items held primarily as assets owned"
+    },
+    "valuables_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance or value of valuable items held primarily as assets",
+      "x-universe": "Households owning a valuable items held primarily as assets.",
+      "x-unit": "currency units"
+    },
+    "vehicle_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Household vehicles owned or leased",
+      "x-unit": "vehicles"
+    },
+    "vehicle_value1": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Market value of vehicle slot 1",
+      "x-universe": "Households with at least one vehicle.",
+      "x-unit": "currency units"
+    },
+    "vehicle_value2": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Market value of vehicle slot 2",
+      "x-universe": "Households with at least two vehicles.",
+      "x-unit": "currency units"
+    },
+    "vehicle_value3": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Market value of vehicle slot 3",
+      "x-universe": "Households with at least three vehicles.",
+      "x-unit": "currency units"
+    },
+    "cash_on_hand": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Cash held outside financial accounts",
+      "x-unit": "currency units"
+    },
+    "asset_values_imputation_flag": {
+      "$ref": "../../common/defs.json#/$defs/imputation_flag",
+      "title": "Asset values imputation and disclosure-treatment flag"
+    }
+  },
+  "required": [
+    "checking_owned",
+    "checking_balance",
+    "savings_owned",
+    "savings_balance",
+    "prepaid_account_owned",
+    "prepaid_account_balance",
+    "money_market_cd_owned",
+    "money_market_cd_balance",
+    "retirement_account_owned",
+    "retirement_account_balance",
+    "stocks_bonds_owned",
+    "stocks_bonds_balance",
+    "business_owned",
+    "business_equity",
+    "other_real_estate_owned",
+    "other_real_estate_equity",
+    "valuables_owned",
+    "valuables_balance",
+    "vehicle_count",
+    "vehicle_value1",
+    "vehicle_value2",
+    "vehicle_value3",
+    "cash_on_hand",
+    "asset_values_imputation_flag"
+  ]
+}

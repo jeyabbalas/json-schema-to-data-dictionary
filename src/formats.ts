@@ -164,17 +164,12 @@ export function describeEncodedContent(contentEncoding?: string, contentMediaTyp
   return pieces.join(", ");
 }
 
-/** Recognise a handful of common structured-string patterns so the Format cell reads nicely. */
+/**
+ * The Format cell of a `pattern`. A pattern says what a value looks like, not what it means:
+ * five digits are a ZIP code, a county FIPS code or a lab batch number alike, and naming one
+ * of them ("US ZIP code", "US Social Security Number") would state a meaning the schema does
+ * not. The variable's own description says what it is.
+ */
 export function describePattern(pattern: string): string {
-  const friendly = friendlyPatternName(pattern);
-  return friendly ? `${friendly} — pattern ${pattern}` : `Matches pattern ${pattern}`;
-}
-
-function friendlyPatternName(pattern: string): string | undefined {
-  const p = pattern;
-  if (/\\d\{5\}(\(\?:\)|\(|\\-|-)?.*\\d\{4\}/.test(p) || /\^\\d\{5\}/.test(p)) return "US ZIP code";
-  if (/\\d\{3\}.*\\d\{2\}.*\\d\{4\}/.test(p)) return "US Social Security Number";
-  if (/(\d\{4\}).*(\d\{2\}).*(\d\{2\})/.test(p) && p.includes("/")) return "Date (dd/mm/yyyy)";
-  if (/[+]?\\d\{1,3\}.*\\d/.test(p) && /phone|tel/i.test(p)) return "Phone number";
-  return undefined;
+  return `Matches pattern ${pattern}`;
 }

@@ -1,0 +1,345 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/hardship_shocks.json",
+  "title": "HESP CORE - Economic shocks and hardship",
+  "description": "Income shocks, job loss, unexpected expenses, displacement, payment hardship, food-related hardship, emergency capacity, and coping strategies.",
+  "type": "object",
+  "x-variable-group": "hardship_shocks",
+  "properties": {
+    "income_drop_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household income fell substantially in past 12 months"
+    },
+    "income_drop_percent": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Approximate percentage decline in household income",
+      "x-universe": "Households reporting a substantial income decline.",
+      "x-unit": "percent"
+    },
+    "household_job_loss_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Any household adult lost a job involuntarily in past 12 months"
+    },
+    "major_unplanned_expense_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household had a major unplanned expense in past 12 months"
+    },
+    "major_unplanned_expense_amount": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Largest unplanned expense amount",
+      "x-universe": "Households reporting a major unplanned expense.",
+      "x-unit": "currency units"
+    },
+    "disaster_displacement_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household displaced by a natural disaster or infrastructure failure in past 12 months"
+    },
+    "disaster_displacement_days": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Days displaced from home",
+      "x-universe": "Households displaced by a disaster or infrastructure failure.",
+      "x-unit": "days"
+    },
+    "utility_shutoff_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Utility service disconnected for nonpayment in past 12 months"
+    },
+    "missed_housing_payment_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Missed or paid late a rent or mortgage payment in past 12 months",
+      "x-universe": "Households with a cash rent or mortgage payment."
+    },
+    "missed_debt_payment_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Missed or paid late a nonhousing debt payment in past 12 months"
+    },
+    "food_insecurity_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household reduced food quantity or skipped meals because of cost in past 12 months"
+    },
+    "food_insecurity_frequency": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Once or twice"
+        },
+        {
+          "const": 2,
+          "title": "Some months"
+        },
+        {
+          "const": 3,
+          "title": "Almost every month"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Frequency of food-related hardship",
+      "x-universe": "Households reporting food-related hardship."
+    },
+    "emergency_expense_ability": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Cash or savings"
+        },
+        {
+          "const": 2,
+          "title": "Credit paid in full at next statement"
+        },
+        {
+          "const": 3,
+          "title": "Borrow, sell assets, or use high-cost credit"
+        },
+        {
+          "const": 4,
+          "title": "Could not fully cover the expense"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "How household would cover a moderate emergency expense"
+    },
+    "emergency_savings_months": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Months of essential expenses covered by liquid savings",
+      "x-unit": "months"
+    },
+    "coping_any": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Used any coping strategy for a financial shock in past 12 months"
+    },
+    "coping_used_savings": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Used savings to cope with a shock",
+      "x-universe": "Households using at least one coping strategy."
+    },
+    "coping_borrowed_family": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Borrowed from family or friends to cope with a shock",
+      "x-universe": "Households using at least one coping strategy."
+    },
+    "coping_used_credit": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Used credit or a loan to cope with a shock",
+      "x-universe": "Households using at least one coping strategy."
+    },
+    "coping_sold_assets": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Sold or pawned assets to cope with a shock",
+      "x-universe": "Households using at least one coping strategy."
+    },
+    "coping_skipped_bills": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Delayed or skipped bills to cope with a shock",
+      "x-universe": "Households using at least one coping strategy."
+    },
+    "primary_shock_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Income decline"
+        },
+        {
+          "const": 2,
+          "title": "Job loss"
+        },
+        {
+          "const": 3,
+          "title": "Major unplanned expense"
+        },
+        {
+          "const": 4,
+          "title": "Disaster displacement"
+        },
+        {
+          "const": 5,
+          "title": "Other shock"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Most consequential financial shock",
+      "x-universe": "Households reporting at least one major shock."
+    },
+    "largest_shock_amount": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Estimated financial magnitude of most consequential shock",
+      "x-universe": "Households reporting at least one major shock.",
+      "x-unit": "currency units"
+    },
+    "financial_stress_frequency": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Never"
+        },
+        {
+          "const": 2,
+          "title": "Rarely"
+        },
+        {
+          "const": 3,
+          "title": "Sometimes"
+        },
+        {
+          "const": 4,
+          "title": "Usually"
+        },
+        {
+          "const": 5,
+          "title": "Always"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Frequency of worry about meeting regular expenses"
+    }
+  },
+  "required": [
+    "income_drop_12m",
+    "income_drop_percent",
+    "household_job_loss_12m",
+    "major_unplanned_expense_12m",
+    "major_unplanned_expense_amount",
+    "disaster_displacement_12m",
+    "disaster_displacement_days",
+    "utility_shutoff_12m",
+    "missed_housing_payment_12m",
+    "missed_debt_payment_12m",
+    "food_insecurity_12m",
+    "food_insecurity_frequency",
+    "emergency_expense_ability",
+    "emergency_savings_months",
+    "coping_any",
+    "coping_used_savings",
+    "coping_borrowed_family",
+    "coping_used_credit",
+    "coping_sold_assets",
+    "coping_skipped_bills",
+    "primary_shock_type",
+    "largest_shock_amount",
+    "financial_stress_frequency"
+  ]
+}

@@ -7,7 +7,7 @@ import type { JsonValue } from "../types";
 import { escapeHtml } from "../utils";
 import { PLAIN } from "./highlight";
 import type { Highlighter } from "./highlight";
-import type { ConditionVM, ConstraintVM, RowVM, RuleVM, ValueVM, ViewModel } from "./viewModel";
+import type { ConditionVM, ConstraintVM, RowVM, RuleGroupVM, RuleVM, ValueVM, ViewModel } from "./viewModel";
 
 export interface RowMarkupOptions {
   /** Emit the `data-search` blob the static inline script filters on. */
@@ -55,7 +55,7 @@ export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): st
   return `
           <tr class="dd-row" data-dd-row${indexAttr}${depthAttr}${matchAttr}${searchAttr}>
             <th class="dd-col-name" scope="row"${titleAttr}><code>${name}</code>${categoryTag}${skips.toggle}</th>
-            <td class="dd-desc">${row.description ? multiline(row.description, hl) : empty}</td>
+            <td class="dd-desc">${row.description || row.comment ? `${multiline(row.description, hl)}${note(row.comment, hl)}` : empty}</td>
             <td class="dd-type">${row.dataType ? `<span class="dd-badge" data-mixed="${mixed}">${hl(row.dataType)}</span>` : empty}</td>
             <td class="dd-format">${row.format ? multiline(row.format, hl) : empty}</td>
             <td class="dd-values">${validValues(row, vm, hl) || empty}</td>
@@ -64,13 +64,16 @@ export function rowMarkup(row: RowVM, vm: ViewModel, opts: RowMarkupOptions): st
           </tr>${skips.detail}`;
 }
 
+/** A measured range up to this long ("1900–2030") lines up with the codes under it. */
+const MEASURE_ALIGNED = 9;
+
 function validValues(row: RowVM, vm: ViewModel, hl: Highlighter): string {
   if (row.measurements.length === 0 && row.values.length === 0 && row.sentinels.length === 0) return "";
   const parts: string[] = [`<dl class="dd-vv">`];
 
   for (const m of row.measurements) {
     parts.push(
-      `<div class="dd-vv-row dd-measure"><dt><span class="dd-measure-label">${hl(m.display)}</span></dt><dd>${hl(m.description ?? "measured value")}</dd></div>`
+      `<div class="dd-vv-row dd-measure${m.display.length > MEASURE_ALIGNED ? " dd-measure-wide" : ""}"><dt><span class="dd-measure-label">${hl(m.display)}</span></dt><dd>${hl(m.description ?? "measured value")}${why(m.comment, hl)}</dd></div>`
     );
   }
   for (const v of row.values) parts.push(valueRow(v, false, row, vm, hl));
@@ -88,11 +91,28 @@ function validValues(row: RowVM, vm: ViewModel, hl: Highlighter): string {
 
 function valueRow(v: ValueVM, sentinel: boolean, row: RowVM, vm: ViewModel, hl: Highlighter): string {
   const text = v.label ?? v.description ?? "";
-  // One line per skip pattern that sets the variable to this value: "if parous = 0".
+  // One line per skip pattern that sets the variable to this value: "if parous = 0", with the
+  // rule's comment -- why it does -- under it.
   const when = v.conditions
-    .map((c) => `<span class="dd-when"><span class="dd-kw">if</span> ${condition(c, vm, row.name, hl)}</span>`)
+    .map((c) => `<span class="dd-when"><span class="dd-kw">if</span> ${condition(c, vm, row.name, hl)}</span>${why(c.comment, hl)}`)
     .join("");
-  return `<div class="dd-vv-row${sentinel ? " dd-sentinel" : ""}"><dt><code class="dd-code">${hl(v.display)}</code></dt><dd>${hl(text)}${when}</dd></div>`;
+  // A value's description, when it has a label too, is there on hover ("-999 Not collected:
+  // in universe, but not collected or unavailable after processing").
+  const title = v.label && v.description && v.description !== v.label ? ` title="${escapeHtml(v.description)}"` : "";
+  return `<div class="dd-vv-row${sentinel ? " dd-sentinel" : ""}"><dt><code class="dd-code">${hl(v.display)}</code></dt><dd><span${title}>${hl(text)}</span>${why(v.comment, hl)}${when}</dd></div>`;
+}
+
+/**
+ * A `$comment` on the variable, its section or the dataset: the schema author's note, set apart
+ * from the definition it annotates.
+ */
+export function note(text: string | undefined, hl: Highlighter = PLAIN): string {
+  return text ? `<div class="dd-note"><span class="dd-note-tag">Note</span> ${multiline(text, hl)}</div>` : "";
+}
+
+/** A rule's or a value's `$comment`, under the line it explains. */
+function why(text: string | undefined, hl: Highlighter): string {
+  return text ? `<span class="dd-why">${multiline(text, hl)}</span>` : "";
 }
 
 function constraintsCell(row: RowVM, vm: ViewModel, hl: Highlighter): string {
@@ -102,8 +122,8 @@ function constraintsCell(row: RowVM, vm: ViewModel, hl: Highlighter): string {
 }
 
 function constraintItem(c: ConstraintVM, vm: ViewModel, self: string, hl: Highlighter): string {
-  if (!c.conditional) return `<li>${hl(c.text)}</li>`;
-  return `<li class="dd-conditional">${linkNames(c.text, c.triggers, vm, self, hl)}</li>`;
+  if (!c.conditional) return `<li>${hl(c.text)}${why(c.comment, hl)}</li>`;
+  return `<li class="dd-conditional">${linkNames(c.text, [...c.triggers, ...c.references], vm, self, hl)}${why(c.comment, hl)}</li>`;
 }
 
 let detailCounter = 0;
@@ -144,28 +164,45 @@ function rulesOf(row: RowVM, vm: ViewModel): RuleVM[] {
   return row.skipRules.map((i) => vm.rules[i]).filter((r): r is RuleVM => r !== undefined);
 }
 
-/** A list of skip patterns: "if <condition>  →  <value> <label>  <variables>". */
+/** A list of skip patterns: "if <condition>  →  <value> <label>  <variables>", with the rule's comment under it. */
 export function rulesMarkup(rules: RuleVM[], vm: ViewModel, self: string | undefined): string {
   let lastTrigger: string | undefined;
   const items = rules.map((rule) => {
     const first = rule.triggers[0];
     const opens = first !== lastTrigger;
     lastTrigger = first;
-    const title = rule.description ? ` title="${escapeHtml(rule.description)}"` : "";
     const groups = rule.groups
       .map((g) => {
-        const values = g.values.length
-          ? g.values.map((value) => `<code class="dd-code">${escapeHtml(value)}</code>`).join("")
-          : `<span class="dd-muted">constrained</span>`;
-        const label = g.label ? ` <span class="dd-rule-label">${escapeHtml(g.label)}</span>` : "";
         const variables = g.variables.map((name) => reference(name, vm, name === self, PLAIN)).join("");
-        return `<div class="dd-rule-group"><div class="dd-rule-set"><span class="dd-kw" aria-hidden="true">→</span>${values}${label}</div><div class="dd-rule-vars">${variables}</div></div>`;
+        return `<div class="dd-rule-group"><div class="dd-rule-set"><span class="dd-kw" aria-hidden="true">→</span>${ruleSet(g, vm, self)}</div><div class="dd-rule-vars">${variables}</div></div>`;
       })
       .join("");
     const cond = condition({ text: rule.condition, triggers: rule.triggers }, vm, self, PLAIN);
-    return `<div class="dd-rule${opens ? " dd-rule-opens" : ""}"${title}><div class="dd-rule-if"><span class="dd-kw">if</span> ${cond}</div><div class="dd-rule-then">${groups}</div></div>`;
+    const comment = rule.description ? `<div class="dd-rule-note">${multiline(rule.description)}</div>` : "";
+    return `<div class="dd-rule${opens ? " dd-rule-opens" : ""}"><div class="dd-rule-if"><span class="dd-kw">if</span> ${cond}</div><div class="dd-rule-then">${groups}</div>${comment}</div>`;
   });
   return `<div class="dd-rules">${items.join("")}</div>`;
+}
+
+/** What a rule does to a group of variables: the value it sets (`→ 777 Nonparous`), allows or rules out, or its requirement in words. */
+function ruleSet(g: RuleGroupVM, vm: ViewModel, self: string | undefined): string {
+  const codes = g.values.map((value) => `<code class="dd-code">${escapeHtml(value)}</code>`).join("");
+  const label = g.label ? ` <span class="dd-rule-label">${escapeHtml(g.label)}</span>` : "";
+  const kw = (word: string): string => `<span class="dd-kw">${word}</span>`;
+  switch (g.kind) {
+    case undefined:
+    case "equals":
+      return g.values.length ? `${codes}${label}` : `<span class="dd-muted">constrained</span>`;
+    case "oneOf":
+      return `${kw("one of")}${codes}`;
+    case "notEquals":
+      return `${kw("not")}${codes}${label}`;
+    case "notOneOf":
+      return `${kw("none of")}${codes}`;
+    default:
+      // A requirement in words names other variables when it is shared ("at least one of …").
+      return `<span class="dd-rule-text">${g.text ? linkNames(g.text, g.kind === "combination" ? g.variables : [], vm, self, PLAIN) : "constrained"}</span>`;
+  }
 }
 
 /** A condition, with each variable it reads that has a row as a link to that row. */
@@ -176,6 +213,7 @@ function condition(c: ConditionVM, vm: ViewModel, self: string | undefined, hl: 
 /**
  * `text` with every occurrence of the `names` (as whole names, longest first) turned into a
  * reference to that variable's row. `self` is the row being rendered: named, never linked.
+ * A code's label ("parous = 0 (Non-parous)") and a quoted value are text, never references.
  */
 function linkNames(text: string, names: string[], vm: ViewModel, self: string | undefined, hl: Highlighter): string {
   const candidates = [...new Set(names)].filter((n) => n.length > 0).sort((a, b) => b.length - a.length);
@@ -185,8 +223,9 @@ function linkNames(text: string, names: string[], vm: ViewModel, self: string | 
   for (let i = 0; i < text.length; ) {
     const name = candidates.find((n) => text.startsWith(n, i) && !isNameChar(text.charAt(i - 1)) && !isNameChar(text.charAt(i + n.length)));
     if (name === undefined) {
-      plain += text.charAt(i);
-      i += 1;
+      const end = labelEnd(text, i) ?? quotedEnd(text, i) ?? i + 1;
+      plain += text.slice(i, end);
+      i = end;
       continue;
     }
     out += hl(plain) + reference(name, vm, name === self, hl);
@@ -198,6 +237,30 @@ function linkNames(text: string, names: string[], vm: ViewModel, self: string | 
 
 function isNameChar(ch: string): boolean {
   return ch !== "" && /[\w$.[\]"]/.test(ch);
+}
+
+/** A value written before "(" at `i` -- "0 (", "-666 (", "\"NA\" (", "true (" -- opens its label. */
+const VALUE_BEFORE_LABEL = /(?:^|[\s{,(])(?:-?\d[\d.eE+-]*|"(?:[^"\\]|\\.)*"|true|false|null) $/;
+
+/** The end of the code label that opens at `i` (balanced parentheses), if one does. */
+function labelEnd(text: string, i: number): number | undefined {
+  if (text.charAt(i) !== "(" || !VALUE_BEFORE_LABEL.test(text.slice(0, i))) return undefined;
+  let depth = 0;
+  for (let j = i; j < text.length; j += 1) {
+    if (text.charAt(j) === "(") depth += 1;
+    else if (text.charAt(j) === ")" && (depth -= 1) === 0) return j + 1;
+  }
+  return undefined;
+}
+
+/** The end of the JSON string that opens at `i`, if one does. */
+function quotedEnd(text: string, i: number): number | undefined {
+  if (text.charAt(i) !== '"') return undefined;
+  for (let j = i + 1; j < text.length; j += 1) {
+    if (text.charAt(j) === "\\") j += 1;
+    else if (text.charAt(j) === '"') return j + 1;
+  }
+  return undefined;
 }
 
 /** A variable named in a skip pattern: a button that jumps to its row, or plain code without one. */

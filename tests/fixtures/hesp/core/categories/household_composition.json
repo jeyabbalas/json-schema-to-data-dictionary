@@ -1,0 +1,825 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/household_composition.json",
+  "title": "HESP CORE - Household composition",
+  "description": "Household roster counts and selected characteristics of the reference person, resident partner, and up to four children. Roster count arithmetic is documented as a soft consistency check because standard JSON Schema cannot compare sums across properties.",
+  "type": "object",
+  "x-variable-group": "household_composition",
+  "properties": {
+    "household_size": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total household members",
+      "description": "Number of people who usually live in the household, including the reference person.",
+      "x-unit": "persons"
+    },
+    "adult_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Adults age 18 or older",
+      "x-unit": "persons"
+    },
+    "child_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Children under age 18",
+      "x-unit": "persons"
+    },
+    "older_adult_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Adults age 65 or older",
+      "x-unit": "persons"
+    },
+    "dependent_adult_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Dependent adults age 18 or older",
+      "description": "Adults financially dependent on another household member, excluding the reference person and partner.",
+      "x-unit": "persons"
+    },
+    "partner_present": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Spouse or cohabiting partner lives in household"
+    },
+    "reference_age": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 18,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person age",
+      "x-unit": "years"
+    },
+    "reference_gender": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Woman or girl"
+        },
+        {
+          "const": 2,
+          "title": "Man or boy"
+        },
+        {
+          "const": 3,
+          "title": "Nonbinary or another gender"
+        },
+        {
+          "const": 4,
+          "title": "Sex or gender not reported in source roster"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person gender"
+    },
+    "reference_race_group": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "White"
+        },
+        {
+          "const": 2,
+          "title": "Black or African American"
+        },
+        {
+          "const": 3,
+          "title": "Asian"
+        },
+        {
+          "const": 4,
+          "title": "American Indian or Alaska Native"
+        },
+        {
+          "const": 5,
+          "title": "Native Hawaiian or other Pacific Islander"
+        },
+        {
+          "const": 6,
+          "title": "Multiple races or another race"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person race group"
+    },
+    "reference_hispanic_origin": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Reference person Hispanic or Latino origin"
+    },
+    "marital_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Married"
+        },
+        {
+          "const": 2,
+          "title": "Cohabiting"
+        },
+        {
+          "const": 3,
+          "title": "Separated"
+        },
+        {
+          "const": 4,
+          "title": "Divorced"
+        },
+        {
+          "const": 5,
+          "title": "Widowed"
+        },
+        {
+          "const": 6,
+          "title": "Never married"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person marital or partnership status"
+    },
+    "reference_education": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Less than high school"
+        },
+        {
+          "const": 2,
+          "title": "High school credential"
+        },
+        {
+          "const": 3,
+          "title": "Some college, no degree"
+        },
+        {
+          "const": 4,
+          "title": "Associate degree"
+        },
+        {
+          "const": 5,
+          "title": "Bachelor's degree"
+        },
+        {
+          "const": 6,
+          "title": "Graduate or professional degree"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person highest education"
+    },
+    "reference_citizenship_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Citizen by birth"
+        },
+        {
+          "const": 2,
+          "title": "Naturalized citizen"
+        },
+        {
+          "const": 3,
+          "title": "Permanent resident"
+        },
+        {
+          "const": 4,
+          "title": "Other noncitizen status"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reference person citizenship status"
+    },
+    "primary_language_home": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "English"
+        },
+        {
+          "const": 2,
+          "title": "Spanish"
+        },
+        {
+          "const": 3,
+          "title": "Another Indo-European language"
+        },
+        {
+          "const": 4,
+          "title": "Asian or Pacific language"
+        },
+        {
+          "const": 5,
+          "title": "Another language"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary language spoken at home"
+    },
+    "moved_since_last_wave": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Household moved since prior wave",
+      "x-universe": "Follow-up records only; structurally not applicable at baseline."
+    },
+    "move_reason": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Employment or education"
+        },
+        {
+          "const": 2,
+          "title": "Lower housing cost or affordability"
+        },
+        {
+          "const": 3,
+          "title": "Household formation or dissolution"
+        },
+        {
+          "const": 4,
+          "title": "Eviction, foreclosure, or displacement"
+        },
+        {
+          "const": 5,
+          "title": "Neighborhood or dwelling preference"
+        },
+        {
+          "const": 6,
+          "title": "Other reason"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary reason for move",
+      "x-universe": "Households that moved since the prior wave."
+    },
+    "partner_age": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 18,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner age",
+      "x-universe": "Households with a resident spouse or cohabiting partner.",
+      "x-unit": "years"
+    },
+    "partner_gender": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Woman or girl"
+        },
+        {
+          "const": 2,
+          "title": "Man or boy"
+        },
+        {
+          "const": 3,
+          "title": "Nonbinary or another gender"
+        },
+        {
+          "const": 4,
+          "title": "Sex or gender not reported in source roster"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner gender",
+      "x-universe": "Households with a resident spouse or cohabiting partner."
+    },
+    "partner_education": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Less than high school"
+        },
+        {
+          "const": 2,
+          "title": "High school credential"
+        },
+        {
+          "const": 3,
+          "title": "Some college, no degree"
+        },
+        {
+          "const": 4,
+          "title": "Associate degree"
+        },
+        {
+          "const": 5,
+          "title": "Bachelor's degree"
+        },
+        {
+          "const": 6,
+          "title": "Graduate or professional degree"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner highest education",
+      "x-universe": "Households with a resident spouse or cohabiting partner."
+    },
+    "partner_citizenship_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Citizen by birth"
+        },
+        {
+          "const": 2,
+          "title": "Naturalized citizen"
+        },
+        {
+          "const": 3,
+          "title": "Permanent resident"
+        },
+        {
+          "const": 4,
+          "title": "Other noncitizen status"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner citizenship status",
+      "x-universe": "Households with a resident spouse or cohabiting partner."
+    },
+    "child_age1": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Age of child roster slot 1",
+      "description": "Children are ordered from youngest to oldest; only the first four children are represented in the wide CORE table.",
+      "x-universe": "Households with at least 1 child(ren) under age 18.",
+      "x-unit": "years"
+    },
+    "child_school_status1": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Not yet school age"
+        },
+        {
+          "const": 2,
+          "title": "Preschool or pre-kindergarten"
+        },
+        {
+          "const": 3,
+          "title": "Public K-12 school"
+        },
+        {
+          "const": 4,
+          "title": "Private K-12 school"
+        },
+        {
+          "const": 5,
+          "title": "Home school"
+        },
+        {
+          "const": 6,
+          "title": "School age and not enrolled"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "School enrollment status of child roster slot 1",
+      "x-universe": "Households with at least 1 child(ren) under age 18."
+    },
+    "child_age2": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Age of child roster slot 2",
+      "description": "Children are ordered from youngest to oldest; only the first four children are represented in the wide CORE table.",
+      "x-universe": "Households with at least 2 child(ren) under age 18.",
+      "x-unit": "years"
+    },
+    "child_school_status2": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Not yet school age"
+        },
+        {
+          "const": 2,
+          "title": "Preschool or pre-kindergarten"
+        },
+        {
+          "const": 3,
+          "title": "Public K-12 school"
+        },
+        {
+          "const": 4,
+          "title": "Private K-12 school"
+        },
+        {
+          "const": 5,
+          "title": "Home school"
+        },
+        {
+          "const": 6,
+          "title": "School age and not enrolled"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "School enrollment status of child roster slot 2",
+      "x-universe": "Households with at least 2 child(ren) under age 18."
+    },
+    "child_age3": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Age of child roster slot 3",
+      "description": "Children are ordered from youngest to oldest; only the first four children are represented in the wide CORE table.",
+      "x-universe": "Households with at least 3 child(ren) under age 18.",
+      "x-unit": "years"
+    },
+    "child_school_status3": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Not yet school age"
+        },
+        {
+          "const": 2,
+          "title": "Preschool or pre-kindergarten"
+        },
+        {
+          "const": 3,
+          "title": "Public K-12 school"
+        },
+        {
+          "const": 4,
+          "title": "Private K-12 school"
+        },
+        {
+          "const": 5,
+          "title": "Home school"
+        },
+        {
+          "const": 6,
+          "title": "School age and not enrolled"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "School enrollment status of child roster slot 3",
+      "x-universe": "Households with at least 3 child(ren) under age 18."
+    },
+    "child_age4": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 17
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Age of child roster slot 4",
+      "description": "Children are ordered from youngest to oldest; only the first four children are represented in the wide CORE table.",
+      "x-universe": "Households with at least 4 child(ren) under age 18.",
+      "x-unit": "years"
+    },
+    "child_school_status4": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Not yet school age"
+        },
+        {
+          "const": 2,
+          "title": "Preschool or pre-kindergarten"
+        },
+        {
+          "const": 3,
+          "title": "Public K-12 school"
+        },
+        {
+          "const": 4,
+          "title": "Private K-12 school"
+        },
+        {
+          "const": 5,
+          "title": "Home school"
+        },
+        {
+          "const": 6,
+          "title": "School age and not enrolled"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "School enrollment status of child roster slot 4",
+      "x-universe": "Households with at least 4 child(ren) under age 18."
+    }
+  },
+  "required": [
+    "household_size",
+    "adult_count",
+    "child_count",
+    "older_adult_count",
+    "dependent_adult_count",
+    "partner_present",
+    "reference_age",
+    "reference_gender",
+    "reference_race_group",
+    "reference_hispanic_origin",
+    "marital_status",
+    "reference_education",
+    "reference_citizenship_status",
+    "primary_language_home",
+    "moved_since_last_wave",
+    "move_reason",
+    "partner_age",
+    "partner_gender",
+    "partner_education",
+    "partner_citizenship_status",
+    "child_age1",
+    "child_school_status1",
+    "child_age2",
+    "child_school_status2",
+    "child_age3",
+    "child_school_status3",
+    "child_age4",
+    "child_school_status4"
+  ],
+  "$comment": "Soft checks: adult_count + child_count should equal household_size; older_adult_count <= adult_count; dependent_adult_count < adult_count."
+}

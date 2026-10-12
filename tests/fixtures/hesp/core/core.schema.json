@@ -1,0 +1,5116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/core.schema.json",
+  "title": "HESP - Household Economic Security Panel CORE table",
+  "description": "Array of household-wave records. One element is one sampled household at one annual interview wave. Every record is the union of category object schemas. Structurally skipped values remain as reserved sentinel codes so the dataset stays rectangular, and the principal routing rules are enforced below.",
+  "$comment": "Standard JSON Schema cannot enforce uniqueness of record_id across nonidentical objects or arithmetic identities between properties. Production ingestion should add those key and reconciliation checks.",
+  "type": "array",
+  "minItems": 1,
+  "uniqueItems": true,
+  "items": {
+    "type": "object",
+    "title": "HESP household-wave record",
+    "allOf": [
+      {
+        "$ref": "categories/identification.json"
+      },
+      {
+        "$ref": "categories/household_composition.json"
+      },
+      {
+        "$ref": "categories/housing.json"
+      },
+      {
+        "$ref": "categories/employment.json"
+      },
+      {
+        "$ref": "categories/income.json"
+      },
+      {
+        "$ref": "categories/social_programs.json"
+      },
+      {
+        "$ref": "categories/assets.json"
+      },
+      {
+        "$ref": "categories/debts_credit.json"
+      },
+      {
+        "$ref": "categories/financial_services.json"
+      },
+      {
+        "$ref": "categories/hardship_shocks.json"
+      },
+      {
+        "$ref": "categories/panel_status.json"
+      },
+      {
+        "$ref": "categories/derived_measures.json"
+      },
+      {
+        "$comment": "Skip pattern: baseline records have no prior-wave move comparison.",
+        "if": {
+          "required": [
+            "baseline_record"
+          ],
+          "properties": {
+            "baseline_record": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "moved_since_last_wave": {
+              "const": -666
+            },
+            "move_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: households that did not move have no move reason.",
+        "if": {
+          "required": [
+            "moved_since_last_wave"
+          ],
+          "properties": {
+            "moved_since_last_wave": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "move_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: households that moved must provide a substantive or item-missing move reason, not structural NA.",
+        "if": {
+          "required": [
+            "moved_since_last_wave"
+          ],
+          "properties": {
+            "moved_since_last_wave": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "move_reason": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: no resident partner means all partner demographic and employment fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "partner_present"
+          ],
+          "properties": {
+            "partner_present": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_age": {
+              "const": -666
+            },
+            "partner_gender": {
+              "const": -666
+            },
+            "partner_education": {
+              "const": -666
+            },
+            "partner_citizenship_status": {
+              "const": -666
+            },
+            "partner_labor_status": {
+              "const": -666
+            },
+            "partner_weeks_worked": {
+              "const": -666
+            },
+            "partner_usual_hours": {
+              "const": -666
+            },
+            "partner_pay_basis": {
+              "const": -666
+            },
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "const": -666
+            },
+            "partner_industry_group": {
+              "const": -666
+            },
+            "partner_occupation_group": {
+              "const": -666
+            },
+            "partner_unemp_duration_weeks": {
+              "const": -666
+            },
+            "partner_job_search_active": {
+              "const": -666
+            },
+            "partner_nlf_reason": {
+              "const": -666
+            },
+            "partner_laid_off_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: a resident partner must have a non-NA labor-force status and core demographics.",
+        "if": {
+          "required": [
+            "partner_present"
+          ],
+          "properties": {
+            "partner_present": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_age": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_gender": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_education": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_citizenship_status": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_labor_status": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_laid_off_12m": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: fewer than 1 children means child roster slot 1 is structurally not applicable.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age1": {
+              "const": -666
+            },
+            "child_school_status1": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: households with at least 1 children must populate child roster slot 1 or an item-missing code.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age1": {
+              "not": {
+                "const": -666
+              }
+            },
+            "child_school_status1": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 1: ages 0-2 are coded not yet school age.",
+        "if": {
+          "required": [
+            "child_age1"
+          ],
+          "properties": {
+            "child_age1": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status1": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 1: ages 3-4 may be not yet school age, in preschool, or not enrolled.",
+        "if": {
+          "required": [
+            "child_age1"
+          ],
+          "properties": {
+            "child_age1": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status1": {
+              "enum": [
+                1,
+                2,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 1: ages 5-17 use school-age enrollment categories.",
+        "if": {
+          "required": [
+            "child_age1"
+          ],
+          "properties": {
+            "child_age1": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 17
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status1": {
+              "enum": [
+                3,
+                4,
+                5,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: fewer than 2 children means child roster slot 2 is structurally not applicable.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age2": {
+              "const": -666
+            },
+            "child_school_status2": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: households with at least 2 children must populate child roster slot 2 or an item-missing code.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 10
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age2": {
+              "not": {
+                "const": -666
+              }
+            },
+            "child_school_status2": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 2: ages 0-2 are coded not yet school age.",
+        "if": {
+          "required": [
+            "child_age2"
+          ],
+          "properties": {
+            "child_age2": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status2": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 2: ages 3-4 may be not yet school age, in preschool, or not enrolled.",
+        "if": {
+          "required": [
+            "child_age2"
+          ],
+          "properties": {
+            "child_age2": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status2": {
+              "enum": [
+                1,
+                2,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 2: ages 5-17 use school-age enrollment categories.",
+        "if": {
+          "required": [
+            "child_age2"
+          ],
+          "properties": {
+            "child_age2": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 17
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status2": {
+              "enum": [
+                3,
+                4,
+                5,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: fewer than 3 children means child roster slot 3 is structurally not applicable.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age3": {
+              "const": -666
+            },
+            "child_school_status3": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: households with at least 3 children must populate child roster slot 3 or an item-missing code.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 10
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age3": {
+              "not": {
+                "const": -666
+              }
+            },
+            "child_school_status3": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 3: ages 0-2 are coded not yet school age.",
+        "if": {
+          "required": [
+            "child_age3"
+          ],
+          "properties": {
+            "child_age3": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status3": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 3: ages 3-4 may be not yet school age, in preschool, or not enrolled.",
+        "if": {
+          "required": [
+            "child_age3"
+          ],
+          "properties": {
+            "child_age3": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status3": {
+              "enum": [
+                1,
+                2,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 3: ages 5-17 use school-age enrollment categories.",
+        "if": {
+          "required": [
+            "child_age3"
+          ],
+          "properties": {
+            "child_age3": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 17
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status3": {
+              "enum": [
+                3,
+                4,
+                5,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Skip pattern: fewer than 4 children means child roster slot 4 is structurally not applicable.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age4": {
+              "const": -666
+            },
+            "child_school_status4": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Applicability: households with at least 4 children must populate child roster slot 4 or an item-missing code.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 4,
+              "maximum": 10
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_age4": {
+              "not": {
+                "const": -666
+              }
+            },
+            "child_school_status4": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 4: ages 0-2 are coded not yet school age.",
+        "if": {
+          "required": [
+            "child_age4"
+          ],
+          "properties": {
+            "child_age4": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status4": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 4: ages 3-4 may be not yet school age, in preschool, or not enrolled.",
+        "if": {
+          "required": [
+            "child_age4"
+          ],
+          "properties": {
+            "child_age4": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status4": {
+              "enum": [
+                1,
+                2,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child slot 4: ages 5-17 use school-age enrollment categories.",
+        "if": {
+          "required": [
+            "child_age4"
+          ],
+          "properties": {
+            "child_age4": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 17
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_school_status4": {
+              "enum": [
+                3,
+                4,
+                5,
+                6,
+                -777,
+                -888,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: owners do not answer renter-only items.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "enum": [
+                1,
+                2
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "monthly_rent": {
+              "const": -666
+            },
+            "rent_includes_utilities": {
+              "const": -666
+            },
+            "landlord_type": {
+              "const": -666
+            },
+            "rent_subsidized": {
+              "const": -666
+            },
+            "public_housing": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: cash renters do not answer owner and mortgage items.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "owner_estimated_value": {
+              "const": -666
+            },
+            "mortgage_count": {
+              "const": -666
+            },
+            "first_mortgage_balance": {
+              "const": -666
+            },
+            "first_mortgage_payment": {
+              "const": -666
+            },
+            "first_mortgage_rate": {
+              "const": -666
+            },
+            "first_mortgage_start_year": {
+              "const": -6666
+            },
+            "second_mortgage_balance": {
+              "const": -666
+            },
+            "second_mortgage_payment": {
+              "const": -666
+            },
+            "property_tax_annual": {
+              "const": -666
+            },
+            "homeowners_insurance_annual": {
+              "const": -666
+            },
+            "condo_fee_monthly": {
+              "const": -666
+            },
+            "monthly_rent": {
+              "not": {
+                "const": -666
+              }
+            },
+            "landlord_type": {
+              "not": {
+                "const": -666
+              }
+            },
+            "rent_subsidized": {
+              "not": {
+                "const": -666
+              }
+            },
+            "public_housing": {
+              "not": {
+                "const": -666
+              }
+            },
+            "housing_payment_arrears_12m": {
+              "not": {
+                "const": -666
+              }
+            },
+            "eviction_or_foreclosure_notice_12m": {
+              "not": {
+                "const": -666
+              }
+            },
+            "missed_housing_payment_12m": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: noncash and nonstandard arrangements have neither owner nor renter financial details.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "enum": [
+                4,
+                5
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "monthly_rent": {
+              "const": -666
+            },
+            "rent_includes_utilities": {
+              "const": -666
+            },
+            "landlord_type": {
+              "const": -666
+            },
+            "rent_subsidized": {
+              "const": -666
+            },
+            "public_housing": {
+              "const": -666
+            },
+            "owner_estimated_value": {
+              "const": -666
+            },
+            "mortgage_count": {
+              "const": -666
+            },
+            "first_mortgage_balance": {
+              "const": -666
+            },
+            "first_mortgage_payment": {
+              "const": -666
+            },
+            "first_mortgage_rate": {
+              "const": -666
+            },
+            "first_mortgage_start_year": {
+              "const": -6666
+            },
+            "second_mortgage_balance": {
+              "const": -666
+            },
+            "second_mortgage_payment": {
+              "const": -666
+            },
+            "property_tax_annual": {
+              "const": -666
+            },
+            "homeowners_insurance_annual": {
+              "const": -666
+            },
+            "condo_fee_monthly": {
+              "const": -666
+            },
+            "housing_payment_arrears_12m": {
+              "const": -666
+            },
+            "months_housing_arrears": {
+              "const": -666
+            },
+            "eviction_or_foreclosure_notice_12m": {
+              "const": -666
+            },
+            "missed_housing_payment_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: owners with a mortgage must report one or two mortgages and first-mortgage fields cannot be structural NA.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "mortgage_count": {
+              "enum": [
+                1,
+                2,
+                -777,
+                -888,
+                -999
+              ]
+            },
+            "owner_estimated_value": {
+              "not": {
+                "const": -666
+              }
+            },
+            "first_mortgage_balance": {
+              "not": {
+                "const": -666
+              }
+            },
+            "first_mortgage_payment": {
+              "not": {
+                "const": -666
+              }
+            },
+            "first_mortgage_rate": {
+              "not": {
+                "const": -666
+              }
+            },
+            "first_mortgage_start_year": {
+              "not": {
+                "const": -6666
+              }
+            },
+            "housing_payment_arrears_12m": {
+              "not": {
+                "const": -666
+              }
+            },
+            "eviction_or_foreclosure_notice_12m": {
+              "not": {
+                "const": -666
+              }
+            },
+            "missed_housing_payment_12m": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: owners free and clear have zero mortgages and no mortgage-detail fields.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "mortgage_count": {
+              "const": 0
+            },
+            "first_mortgage_balance": {
+              "const": -666
+            },
+            "first_mortgage_payment": {
+              "const": -666
+            },
+            "first_mortgage_rate": {
+              "const": -666
+            },
+            "first_mortgage_start_year": {
+              "const": -6666
+            },
+            "second_mortgage_balance": {
+              "const": -666
+            },
+            "second_mortgage_payment": {
+              "const": -666
+            },
+            "housing_payment_arrears_12m": {
+              "const": -666
+            },
+            "months_housing_arrears": {
+              "const": -666
+            },
+            "missed_housing_payment_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: fewer than two mortgages means second-mortgage fields are not applicable.",
+        "if": {
+          "required": [
+            "mortgage_count"
+          ],
+          "properties": {
+            "mortgage_count": {
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "second_mortgage_balance": {
+              "const": -666
+            },
+            "second_mortgage_payment": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Housing routing: two mortgages require populated second-mortgage fields or item-missing codes.",
+        "if": {
+          "required": [
+            "mortgage_count"
+          ],
+          "properties": {
+            "mortgage_count": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "second_mortgage_balance": {
+              "not": {
+                "const": -666
+              }
+            },
+            "second_mortgage_payment": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Public housing is a subsidized cash-rental arrangement administered by a public housing authority.",
+        "if": {
+          "required": [
+            "public_housing"
+          ],
+          "properties": {
+            "public_housing": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tenure": {
+              "const": 3
+            },
+            "rent_subsidized": {
+              "const": 1
+            },
+            "landlord_type": {
+              "const": 2
+            },
+            "housing_assistance_received": {
+              "const": 1
+            },
+            "housing_assistance_type": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Rental housing assistance implies cash-rental tenure and subsidized rent.",
+        "if": {
+          "required": [
+            "housing_assistance_received"
+          ],
+          "properties": {
+            "housing_assistance_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tenure": {
+              "const": 3
+            },
+            "rent_subsidized": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A public-housing assistance type implies the dwelling is coded as public housing.",
+        "if": {
+          "required": [
+            "housing_assistance_type"
+          ],
+          "properties": {
+            "housing_assistance_type": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "public_housing": {
+              "const": 1
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No housing-payment arrears implies zero months in arrears.",
+        "if": {
+          "required": [
+            "housing_payment_arrears_12m"
+          ],
+          "properties": {
+            "housing_payment_arrears_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "months_housing_arrears": {
+              "const": 0
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Any housing-payment arrears requires at least one month in arrears or an item-missing code.",
+        "if": {
+          "required": [
+            "housing_payment_arrears_12m"
+          ],
+          "properties": {
+            "housing_payment_arrears_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "months_housing_arrears": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                {
+                  "enum": [
+                    -777,
+                    -888,
+                    -999
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Employment routing: wage and salary workers do not answer self-employment or unemployment/NILF follow-ups.",
+        "if": {
+          "required": [
+            "resp_labor_status"
+          ],
+          "properties": {
+            "resp_labor_status": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_business_employees": {
+              "const": -666
+            },
+            "resp_business_start_year": {
+              "const": -6666
+            },
+            "resp_unemp_duration_weeks": {
+              "const": -666
+            },
+            "resp_job_search_active": {
+              "const": -666
+            },
+            "resp_nlf_reason": {
+              "const": -666
+            },
+            "resp_multiple_jobs": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_weeks_worked": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_usual_hours": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_work_location": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_pay_basis": {
+              "enum": [
+                1,
+                2,
+                3,
+                -777,
+                -888,
+                -999
+              ]
+            },
+            "resp_industry_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_occupation_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_employer_size": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_union_member": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_job_start_year": {
+              "not": {
+                "const": -6666
+              }
+            },
+            "resp_schedule_predictability": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Employment routing: self-employed respondents have self-employment fields and no employee wage/salary or employer fields.",
+        "if": {
+          "required": [
+            "resp_labor_status"
+          ],
+          "properties": {
+            "resp_labor_status": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_multiple_jobs": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_weeks_worked": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_usual_hours": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_work_location": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_pay_basis": {
+              "const": 4
+            },
+            "resp_hourly_wage": {
+              "const": -666
+            },
+            "resp_annual_salary": {
+              "const": -666
+            },
+            "resp_industry_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_occupation_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_employer_size": {
+              "const": -666
+            },
+            "resp_union_member": {
+              "const": -666
+            },
+            "resp_job_start_year": {
+              "not": {
+                "const": -6666
+              }
+            },
+            "resp_business_employees": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_business_start_year": {
+              "not": {
+                "const": -6666
+              }
+            },
+            "resp_unemp_duration_weeks": {
+              "const": -666
+            },
+            "resp_job_search_active": {
+              "const": -666
+            },
+            "resp_nlf_reason": {
+              "const": -666
+            },
+            "resp_schedule_predictability": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Employment routing: unemployed respondents have unemployment follow-ups and no current-job fields.",
+        "if": {
+          "required": [
+            "resp_labor_status"
+          ],
+          "properties": {
+            "resp_labor_status": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_multiple_jobs": {
+              "const": -666
+            },
+            "resp_weeks_worked": {
+              "const": -666
+            },
+            "resp_usual_hours": {
+              "const": -666
+            },
+            "resp_work_location": {
+              "const": -666
+            },
+            "resp_pay_basis": {
+              "const": -666
+            },
+            "resp_hourly_wage": {
+              "const": -666
+            },
+            "resp_annual_salary": {
+              "const": -666
+            },
+            "resp_industry_group": {
+              "const": -666
+            },
+            "resp_occupation_group": {
+              "const": -666
+            },
+            "resp_employer_size": {
+              "const": -666
+            },
+            "resp_union_member": {
+              "const": -666
+            },
+            "resp_job_start_year": {
+              "const": -6666
+            },
+            "resp_schedule_predictability": {
+              "const": -666
+            },
+            "resp_business_employees": {
+              "const": -666
+            },
+            "resp_business_start_year": {
+              "const": -6666
+            },
+            "resp_unemp_duration_weeks": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_job_search_active": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_nlf_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Employment routing: respondents outside the labor force have an NILF reason and no job or unemployment-search fields.",
+        "if": {
+          "required": [
+            "resp_labor_status"
+          ],
+          "properties": {
+            "resp_labor_status": {
+              "const": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_multiple_jobs": {
+              "const": -666
+            },
+            "resp_weeks_worked": {
+              "const": -666
+            },
+            "resp_usual_hours": {
+              "const": -666
+            },
+            "resp_work_location": {
+              "const": -666
+            },
+            "resp_pay_basis": {
+              "const": -666
+            },
+            "resp_hourly_wage": {
+              "const": -666
+            },
+            "resp_annual_salary": {
+              "const": -666
+            },
+            "resp_industry_group": {
+              "const": -666
+            },
+            "resp_occupation_group": {
+              "const": -666
+            },
+            "resp_employer_size": {
+              "const": -666
+            },
+            "resp_union_member": {
+              "const": -666
+            },
+            "resp_job_start_year": {
+              "const": -6666
+            },
+            "resp_schedule_predictability": {
+              "const": -666
+            },
+            "resp_business_employees": {
+              "const": -666
+            },
+            "resp_business_start_year": {
+              "const": -6666
+            },
+            "resp_unemp_duration_weeks": {
+              "const": -666
+            },
+            "resp_job_search_active": {
+              "const": -666
+            },
+            "resp_nlf_reason": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hourly pay basis requires an hourly wage and no annual salary rate.",
+        "if": {
+          "required": [
+            "resp_pay_basis"
+          ],
+          "properties": {
+            "resp_pay_basis": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_hourly_wage": {
+              "not": {
+                "const": -666
+              }
+            },
+            "resp_annual_salary": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Salary pay basis requires an annual salary rate and no hourly wage.",
+        "if": {
+          "required": [
+            "resp_pay_basis"
+          ],
+          "properties": {
+            "resp_pay_basis": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_hourly_wage": {
+              "const": -666
+            },
+            "resp_annual_salary": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Commission or piece-rate pay has no standardized hourly or annual salary rate.",
+        "if": {
+          "required": [
+            "resp_pay_basis"
+          ],
+          "properties": {
+            "resp_pay_basis": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "resp_hourly_wage": {
+              "const": -666
+            },
+            "resp_annual_salary": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner employment routing: employed wage/salary partners have current-job fields and no unemployment/NILF follow-ups.",
+        "if": {
+          "required": [
+            "partner_labor_status"
+          ],
+          "properties": {
+            "partner_labor_status": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_weeks_worked": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_usual_hours": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_pay_basis": {
+              "enum": [
+                1,
+                2,
+                3,
+                -777,
+                -888,
+                -999
+              ]
+            },
+            "partner_industry_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_occupation_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_unemp_duration_weeks": {
+              "const": -666
+            },
+            "partner_job_search_active": {
+              "const": -666
+            },
+            "partner_nlf_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner employment routing: self-employed partners use self-employment pay basis and no standardized wage or salary rate.",
+        "if": {
+          "required": [
+            "partner_labor_status"
+          ],
+          "properties": {
+            "partner_labor_status": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_weeks_worked": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_usual_hours": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_pay_basis": {
+              "const": 4
+            },
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "const": -666
+            },
+            "partner_industry_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_occupation_group": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_unemp_duration_weeks": {
+              "const": -666
+            },
+            "partner_job_search_active": {
+              "const": -666
+            },
+            "partner_nlf_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner employment routing: unemployed partners have unemployment follow-ups and no current-job fields.",
+        "if": {
+          "required": [
+            "partner_labor_status"
+          ],
+          "properties": {
+            "partner_labor_status": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_weeks_worked": {
+              "const": -666
+            },
+            "partner_usual_hours": {
+              "const": -666
+            },
+            "partner_pay_basis": {
+              "const": -666
+            },
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "const": -666
+            },
+            "partner_industry_group": {
+              "const": -666
+            },
+            "partner_occupation_group": {
+              "const": -666
+            },
+            "partner_unemp_duration_weeks": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_job_search_active": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_nlf_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner employment routing: partners outside the labor force have an NILF reason and no job or unemployment-search fields.",
+        "if": {
+          "required": [
+            "partner_labor_status"
+          ],
+          "properties": {
+            "partner_labor_status": {
+              "const": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_weeks_worked": {
+              "const": -666
+            },
+            "partner_usual_hours": {
+              "const": -666
+            },
+            "partner_pay_basis": {
+              "const": -666
+            },
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "const": -666
+            },
+            "partner_industry_group": {
+              "const": -666
+            },
+            "partner_occupation_group": {
+              "const": -666
+            },
+            "partner_unemp_duration_weeks": {
+              "const": -666
+            },
+            "partner_job_search_active": {
+              "const": -666
+            },
+            "partner_nlf_reason": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner hourly pay basis requires an hourly wage and no annual salary rate.",
+        "if": {
+          "required": [
+            "partner_pay_basis"
+          ],
+          "properties": {
+            "partner_pay_basis": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_hourly_wage": {
+              "not": {
+                "const": -666
+              }
+            },
+            "partner_annual_salary": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner salary pay basis requires an annual salary rate and no hourly wage.",
+        "if": {
+          "required": [
+            "partner_pay_basis"
+          ],
+          "properties": {
+            "partner_pay_basis": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Partner commission or piece-rate pay has no standardized wage or salary rate.",
+        "if": {
+          "required": [
+            "partner_pay_basis"
+          ],
+          "properties": {
+            "partner_pay_basis": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "partner_hourly_wage": {
+              "const": -666
+            },
+            "partner_annual_salary": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no wages, salaries, commissions, and tips means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "wage_income_received"
+          ],
+          "properties": {
+            "wage_income_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "wage_income_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of wages, salaries, commissions, and tips requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "wage_income_received"
+          ],
+          "properties": {
+            "wage_income_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "wage_income_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no net self-employment income means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "selfemp_income_received"
+          ],
+          "properties": {
+            "selfemp_income_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "selfemp_income_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of net self-employment income requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "selfemp_income_received"
+          ],
+          "properties": {
+            "selfemp_income_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "selfemp_income_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no interest and dividend income means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "interest_dividend_received"
+          ],
+          "properties": {
+            "interest_dividend_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "interest_dividend_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of interest and dividend income requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "interest_dividend_received"
+          ],
+          "properties": {
+            "interest_dividend_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "interest_dividend_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no pension, annuity, and retirement-account distributions means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "retirement_income_received"
+          ],
+          "properties": {
+            "retirement_income_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "retirement_income_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of pension, annuity, and retirement-account distributions requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "retirement_income_received"
+          ],
+          "properties": {
+            "retirement_income_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "retirement_income_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no net rental and royalty income means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "rental_income_received"
+          ],
+          "properties": {
+            "rental_income_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "rental_income_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of net rental and royalty income requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "rental_income_received"
+          ],
+          "properties": {
+            "rental_income_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "rental_income_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no child support received means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "child_support_received"
+          ],
+          "properties": {
+            "child_support_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_support_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of child support received requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "child_support_received"
+          ],
+          "properties": {
+            "child_support_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_support_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no alimony or maintenance received means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "alimony_received"
+          ],
+          "properties": {
+            "alimony_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "alimony_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of alimony or maintenance received requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "alimony_received"
+          ],
+          "properties": {
+            "alimony_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "alimony_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no cash gifts or transfers from persons outside the household means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "private_transfer_received"
+          ],
+          "properties": {
+            "private_transfer_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "private_transfer_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of cash gifts or transfers from persons outside the household requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "private_transfer_received"
+          ],
+          "properties": {
+            "private_transfer_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "private_transfer_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: no other private cash income means the annual amount is structurally not applicable.",
+        "if": {
+          "required": [
+            "other_income_received"
+          ],
+          "properties": {
+            "other_income_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_income_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Income routing: receipt of other private cash income requires an amount or item-missing code, not structural NA.",
+        "if": {
+          "required": [
+            "other_income_received"
+          ],
+          "properties": {
+            "other_income_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_income_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Tax routing: nonfilers have no filing status or refundable tax-credit follow-ups.",
+        "if": {
+          "required": [
+            "tax_return_filed"
+          ],
+          "properties": {
+            "tax_return_filed": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tax_filing_status": {
+              "const": -666
+            },
+            "eitc_received": {
+              "const": -666
+            },
+            "eitc_amount": {
+              "const": -666
+            },
+            "child_tax_credit_received": {
+              "const": -666
+            },
+            "child_tax_credit_amount": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Tax routing: filers have substantive tax filing status and credit receipt indicators.",
+        "if": {
+          "required": [
+            "tax_return_filed"
+          ],
+          "properties": {
+            "tax_return_filed": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tax_filing_status": {
+              "not": {
+                "const": -666
+              }
+            },
+            "eitc_received": {
+              "not": {
+                "const": -666
+              }
+            },
+            "child_tax_credit_received": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No earned income tax credit means the credit amount is not applicable.",
+        "if": {
+          "required": [
+            "eitc_received"
+          ],
+          "properties": {
+            "eitc_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "eitc_amount": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Receipt of the earned income tax credit requires an amount or item-missing code.",
+        "if": {
+          "required": [
+            "eitc_received"
+          ],
+          "properties": {
+            "eitc_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "eitc_amount": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No child-related tax credit means the credit amount is not applicable.",
+        "if": {
+          "required": [
+            "child_tax_credit_received"
+          ],
+          "properties": {
+            "child_tax_credit_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_tax_credit_amount": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Receipt of the child-related tax credit requires an amount or item-missing code.",
+        "if": {
+          "required": [
+            "child_tax_credit_received"
+          ],
+          "properties": {
+            "child_tax_credit_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "child_tax_credit_amount": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no snap receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "snap_received"
+          ],
+          "properties": {
+            "snap_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "snap_months": {
+              "const": -666
+            },
+            "snap_avg_monthly": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: snap receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "snap_received"
+          ],
+          "properties": {
+            "snap_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "snap_months": {
+              "not": {
+                "const": -666
+              }
+            },
+            "snap_avg_monthly": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no cash assistance receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "cash_assistance_received"
+          ],
+          "properties": {
+            "cash_assistance_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "cash_assistance_months": {
+              "const": -666
+            },
+            "cash_assistance_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: cash assistance receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "cash_assistance_received"
+          ],
+          "properties": {
+            "cash_assistance_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "cash_assistance_months": {
+              "not": {
+                "const": -666
+              }
+            },
+            "cash_assistance_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no unemployment benefit receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "unemployment_benefit_received"
+          ],
+          "properties": {
+            "unemployment_benefit_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "unemployment_benefit_weeks": {
+              "const": -666
+            },
+            "unemployment_benefit_total": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: unemployment benefit receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "unemployment_benefit_received"
+          ],
+          "properties": {
+            "unemployment_benefit_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "unemployment_benefit_weeks": {
+              "not": {
+                "const": -666
+              }
+            },
+            "unemployment_benefit_total": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no housing assistance receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "housing_assistance_received"
+          ],
+          "properties": {
+            "housing_assistance_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "housing_assistance_type": {
+              "const": -666
+            },
+            "housing_assistance_months": {
+              "const": -666
+            },
+            "housing_assistance_value_monthly": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: housing assistance receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "housing_assistance_received"
+          ],
+          "properties": {
+            "housing_assistance_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "housing_assistance_type": {
+              "not": {
+                "const": -666
+              }
+            },
+            "housing_assistance_months": {
+              "not": {
+                "const": -666
+              }
+            },
+            "housing_assistance_value_monthly": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no energy assistance receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "energy_assistance_received"
+          ],
+          "properties": {
+            "energy_assistance_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "energy_assistance_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: energy assistance receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "energy_assistance_received"
+          ],
+          "properties": {
+            "energy_assistance_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "energy_assistance_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no childcare subsidy receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "childcare_subsidy_received"
+          ],
+          "properties": {
+            "childcare_subsidy_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "childcare_subsidy_months": {
+              "const": -666
+            },
+            "childcare_subsidy_annual": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: childcare subsidy receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "childcare_subsidy_received"
+          ],
+          "properties": {
+            "childcare_subsidy_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "childcare_subsidy_months": {
+              "not": {
+                "const": -666
+              }
+            },
+            "childcare_subsidy_annual": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: no school meal program receipt means detail fields are structurally not applicable.",
+        "if": {
+          "required": [
+            "school_meal_program_received"
+          ],
+          "properties": {
+            "school_meal_program_received": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "school_meal_children_count": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Program routing: school meal program receipt requires program details or item-missing codes.",
+        "if": {
+          "required": [
+            "school_meal_program_received"
+          ],
+          "properties": {
+            "school_meal_program_received": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "school_meal_children_count": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child-related program routing: households with no children do not answer childcare subsidy or school meal items.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "childcare_subsidy_received": {
+              "const": -666
+            },
+            "childcare_subsidy_months": {
+              "const": -666
+            },
+            "childcare_subsidy_annual": {
+              "const": -666
+            },
+            "school_meal_program_received": {
+              "const": -666
+            },
+            "school_meal_children_count": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Child-related program applicability: households with children receive substantive yes/no indicators.",
+        "if": {
+          "required": [
+            "child_count"
+          ],
+          "properties": {
+            "child_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "childcare_subsidy_received": {
+              "not": {
+                "const": -666
+              }
+            },
+            "school_meal_program_received": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Rental-assistance routing: only cash renters answer rental housing assistance items.",
+        "if": {
+          "required": [
+            "tenure"
+          ],
+          "properties": {
+            "tenure": {
+              "enum": [
+                1,
+                2,
+                4,
+                5
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "housing_assistance_received": {
+              "const": -666
+            },
+            "housing_assistance_type": {
+              "const": -666
+            },
+            "housing_assistance_months": {
+              "const": -666
+            },
+            "housing_assistance_value_monthly": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Benefit application routing: no application means denial fields are not applicable.",
+        "if": {
+          "required": [
+            "benefit_application_any"
+          ],
+          "properties": {
+            "benefit_application_any": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "benefit_denied_any": {
+              "const": -666
+            },
+            "denied_program_code": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Benefit application routing: an application requires a substantive denial indicator.",
+        "if": {
+          "required": [
+            "benefit_application_any"
+          ],
+          "properties": {
+            "benefit_application_any": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "benefit_denied_any": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No benefit denial means there is no denied-program code.",
+        "if": {
+          "required": [
+            "benefit_denied_any"
+          ],
+          "properties": {
+            "benefit_denied_any": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "denied_program_code": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A benefit denial requires a denied-program code or item-missing code.",
+        "if": {
+          "required": [
+            "benefit_denied_any"
+          ],
+          "properties": {
+            "benefit_denied_any": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "denied_program_code": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning checking account have no value field.",
+        "if": {
+          "required": [
+            "checking_owned"
+          ],
+          "properties": {
+            "checking_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "checking_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of checking account requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "checking_owned"
+          ],
+          "properties": {
+            "checking_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "checking_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning savings account have no value field.",
+        "if": {
+          "required": [
+            "savings_owned"
+          ],
+          "properties": {
+            "savings_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "savings_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of savings account requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "savings_owned"
+          ],
+          "properties": {
+            "savings_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "savings_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning reloadable prepaid or stored-value account have no value field.",
+        "if": {
+          "required": [
+            "prepaid_account_owned"
+          ],
+          "properties": {
+            "prepaid_account_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "prepaid_account_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of reloadable prepaid or stored-value account requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "prepaid_account_owned"
+          ],
+          "properties": {
+            "prepaid_account_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "prepaid_account_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning money-market account or certificate of deposit have no value field.",
+        "if": {
+          "required": [
+            "money_market_cd_owned"
+          ],
+          "properties": {
+            "money_market_cd_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "money_market_cd_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of money-market account or certificate of deposit requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "money_market_cd_owned"
+          ],
+          "properties": {
+            "money_market_cd_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "money_market_cd_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning employer or individual retirement account have no value field.",
+        "if": {
+          "required": [
+            "retirement_account_owned"
+          ],
+          "properties": {
+            "retirement_account_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "retirement_account_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of employer or individual retirement account requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "retirement_account_owned"
+          ],
+          "properties": {
+            "retirement_account_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "retirement_account_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning stocks, bonds, mutual funds, or exchange-traded funds have no value field.",
+        "if": {
+          "required": [
+            "stocks_bonds_owned"
+          ],
+          "properties": {
+            "stocks_bonds_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "stocks_bonds_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of stocks, bonds, mutual funds, or exchange-traded funds requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "stocks_bonds_owned"
+          ],
+          "properties": {
+            "stocks_bonds_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "stocks_bonds_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning privately held business have no value field.",
+        "if": {
+          "required": [
+            "business_owned"
+          ],
+          "properties": {
+            "business_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "business_equity": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of privately held business requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "business_owned"
+          ],
+          "properties": {
+            "business_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "business_equity": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning real estate other than primary residence have no value field.",
+        "if": {
+          "required": [
+            "other_real_estate_owned"
+          ],
+          "properties": {
+            "other_real_estate_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_real_estate_equity": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of real estate other than primary residence requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "other_real_estate_owned"
+          ],
+          "properties": {
+            "other_real_estate_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_real_estate_equity": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: households not owning valuable items held primarily as assets have no value field.",
+        "if": {
+          "required": [
+            "valuables_owned"
+          ],
+          "properties": {
+            "valuables_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "valuables_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Asset routing: ownership of valuable items held primarily as assets requires a value or item-missing code.",
+        "if": {
+          "required": [
+            "valuables_owned"
+          ],
+          "properties": {
+            "valuables_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "valuables_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: fewer than 1 vehicles means vehicle value slot 1 is not applicable.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value1": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: at least 1 vehicles requires vehicle value slot 1 or an item-missing code.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value1": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: fewer than 2 vehicles means vehicle value slot 2 is not applicable.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value2": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: at least 2 vehicles requires vehicle value slot 2 or an item-missing code.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 6
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value2": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: fewer than 3 vehicles means vehicle value slot 3 is not applicable.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value3": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Vehicle routing: at least 3 vehicles requires vehicle value slot 3 or an item-missing code.",
+        "if": {
+          "required": [
+            "vehicle_count"
+          ],
+          "properties": {
+            "vehicle_count": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 6
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "vehicle_value3": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Credit-card routing: households without a credit card have zero cards and no card balance or payment fields.",
+        "if": {
+          "required": [
+            "credit_card_owned"
+          ],
+          "properties": {
+            "credit_card_owned": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_card_count": {
+              "const": 0
+            },
+            "credit_card_balance": {
+              "const": -666
+            },
+            "credit_card_min_payment": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Credit-card routing: cardholders have at least one card and card balance/payment fields are applicable.",
+        "if": {
+          "required": [
+            "credit_card_owned"
+          ],
+          "properties": {
+            "credit_card_owned": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_card_count": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                },
+                {
+                  "enum": [
+                    -777,
+                    -888,
+                    -999
+                  ]
+                }
+              ]
+            },
+            "credit_card_balance": {
+              "not": {
+                "const": -666
+              }
+            },
+            "credit_card_min_payment": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No vehicle loan means no vehicle-loan balance.",
+        "if": {
+          "required": [
+            "auto_loan_count"
+          ],
+          "properties": {
+            "auto_loan_count": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "auto_loan_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "At least one vehicle loan requires a vehicle-loan balance or item-missing code.",
+        "if": {
+          "required": [
+            "auto_loan_count"
+          ],
+          "properties": {
+            "auto_loan_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "auto_loan_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: student loan owed = no means the balance is not applicable.",
+        "if": {
+          "required": [
+            "student_loan_owed"
+          ],
+          "properties": {
+            "student_loan_owed": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "student_loan_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: student loan owed = yes requires a balance or item-missing code.",
+        "if": {
+          "required": [
+            "student_loan_owed"
+          ],
+          "properties": {
+            "student_loan_owed": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "student_loan_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: personal loan owed = no means the balance is not applicable.",
+        "if": {
+          "required": [
+            "personal_loan_owed"
+          ],
+          "properties": {
+            "personal_loan_owed": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "personal_loan_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: personal loan owed = yes requires a balance or item-missing code.",
+        "if": {
+          "required": [
+            "personal_loan_owed"
+          ],
+          "properties": {
+            "personal_loan_owed": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "personal_loan_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: payday loan used 12m = no means the balance is not applicable.",
+        "if": {
+          "required": [
+            "payday_loan_used_12m"
+          ],
+          "properties": {
+            "payday_loan_used_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "payday_loan_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: payday loan used 12m = yes requires a balance or item-missing code.",
+        "if": {
+          "required": [
+            "payday_loan_used_12m"
+          ],
+          "properties": {
+            "payday_loan_used_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "payday_loan_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: tax debt owed = no means the balance is not applicable.",
+        "if": {
+          "required": [
+            "tax_debt_owed"
+          ],
+          "properties": {
+            "tax_debt_owed": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tax_debt_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: tax debt owed = yes requires a balance or item-missing code.",
+        "if": {
+          "required": [
+            "tax_debt_owed"
+          ],
+          "properties": {
+            "tax_debt_owed": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "tax_debt_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: other debt owed = no means the balance is not applicable.",
+        "if": {
+          "required": [
+            "other_debt_owed"
+          ],
+          "properties": {
+            "other_debt_owed": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_debt_balance": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Debt routing: other debt owed = yes requires a balance or item-missing code.",
+        "if": {
+          "required": [
+            "other_debt_owed"
+          ],
+          "properties": {
+            "other_debt_owed": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "other_debt_balance": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No serious delinquency means there is no late-debt type.",
+        "if": {
+          "required": [
+            "any_payment_60days_late"
+          ],
+          "properties": {
+            "any_payment_60days_late": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "late_debt_type": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A serious delinquency requires a late-debt type or item-missing code.",
+        "if": {
+          "required": [
+            "any_payment_60days_late"
+          ],
+          "properties": {
+            "any_payment_60days_late": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "late_debt_type": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No bankruptcy history means bankruptcy year is not applicable.",
+        "if": {
+          "required": [
+            "bankruptcy_ever"
+          ],
+          "properties": {
+            "bankruptcy_ever": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "bankruptcy_year": {
+              "const": -6666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A bankruptcy history requires a filing year or item-missing year code.",
+        "if": {
+          "required": [
+            "bankruptcy_ever"
+          ],
+          "properties": {
+            "bankruptcy_ever": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "bankruptcy_year": {
+              "not": {
+                "const": -6666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Unknown credit score means no numeric credit score.",
+        "if": {
+          "required": [
+            "credit_score_known"
+          ],
+          "properties": {
+            "credit_score_known": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_score": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Known credit score requires a score or item-missing code.",
+        "if": {
+          "required": [
+            "credit_score_known"
+          ],
+          "properties": {
+            "credit_score_known": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_score": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No recent credit application means denial and denial-reason fields are not applicable.",
+        "if": {
+          "required": [
+            "credit_application_12m"
+          ],
+          "properties": {
+            "credit_application_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_denied_12m": {
+              "const": -666
+            },
+            "credit_denial_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A recent credit application requires a denial indicator.",
+        "if": {
+          "required": [
+            "credit_application_12m"
+          ],
+          "properties": {
+            "credit_application_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_denied_12m": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No credit denial means there is no denial reason.",
+        "if": {
+          "required": [
+            "credit_denied_12m"
+          ],
+          "properties": {
+            "credit_denied_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_denial_reason": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A credit denial requires a denial reason or item-missing code.",
+        "if": {
+          "required": [
+            "credit_denied_12m"
+          ],
+          "properties": {
+            "credit_denied_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "credit_denial_reason": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Banking classification: banked households own an account, do not use alternative services, and answer account-service items.",
+        "if": {
+          "required": [
+            "banked_status"
+          ],
+          "properties": {
+            "banked_status": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "checking_owned"
+                  ],
+                  "properties": {
+                    "checking_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "savings_owned"
+                  ],
+                  "properties": {
+                    "savings_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "prepaid_account_owned"
+                  ],
+                  "properties": {
+                    "prepaid_account_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "money_market_cd_owned"
+                  ],
+                  "properties": {
+                    "money_market_cd_owned": {
+                      "const": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "properties": {
+                "primary_account_provider": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "direct_deposit": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "online_banking": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "mobile_banking": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "overdraft_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "automatic_savings": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "alternative_service_12m": {
+                  "const": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "$comment": "Banking classification: underbanked households own an account, use an alternative service, and answer account-service items.",
+        "if": {
+          "required": [
+            "banked_status"
+          ],
+          "properties": {
+            "banked_status": {
+              "const": 2
+            }
+          }
+        },
+        "then": {
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "checking_owned"
+                  ],
+                  "properties": {
+                    "checking_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "savings_owned"
+                  ],
+                  "properties": {
+                    "savings_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "prepaid_account_owned"
+                  ],
+                  "properties": {
+                    "prepaid_account_owned": {
+                      "const": 1
+                    }
+                  }
+                },
+                {
+                  "required": [
+                    "money_market_cd_owned"
+                  ],
+                  "properties": {
+                    "money_market_cd_owned": {
+                      "const": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "properties": {
+                "primary_account_provider": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "direct_deposit": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "online_banking": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "mobile_banking": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "overdraft_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "automatic_savings": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "alternative_service_12m": {
+                  "const": 1
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "$comment": "Banking classification: unbanked households own no transaction or deposit account and have no account-service details.",
+        "if": {
+          "required": [
+            "banked_status"
+          ],
+          "properties": {
+            "banked_status": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "checking_owned": {
+              "const": 0
+            },
+            "savings_owned": {
+              "const": 0
+            },
+            "prepaid_account_owned": {
+              "const": 0
+            },
+            "money_market_cd_owned": {
+              "const": 0
+            },
+            "primary_account_provider": {
+              "const": -666
+            },
+            "direct_deposit": {
+              "const": -666
+            },
+            "online_banking": {
+              "const": -666
+            },
+            "mobile_banking": {
+              "const": -666
+            },
+            "overdraft_12m": {
+              "const": -666
+            },
+            "automatic_savings": {
+              "const": -666
+            },
+            "overdraft_fees_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No alternative financial service use means service-specific follow-ups are not applicable.",
+        "if": {
+          "required": [
+            "alternative_service_12m"
+          ],
+          "properties": {
+            "alternative_service_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "check_cashing_12m": {
+              "const": -666
+            },
+            "money_order_12m": {
+              "const": -666
+            },
+            "pawnshop_12m": {
+              "const": -666
+            },
+            "rent_to_own_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Alternative-service use requires all service indicators and at least one affirmative service.",
+        "if": {
+          "required": [
+            "alternative_service_12m"
+          ],
+          "properties": {
+            "alternative_service_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "allOf": [
+            {
+              "properties": {
+                "check_cashing_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "money_order_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "pawnshop_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "rent_to_own_12m": {
+                  "not": {
+                    "const": -666
+                  }
+                }
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "check_cashing_12m": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "check_cashing_12m"
+                  ]
+                },
+                {
+                  "properties": {
+                    "money_order_12m": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "money_order_12m"
+                  ]
+                },
+                {
+                  "properties": {
+                    "pawnshop_12m": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "pawnshop_12m"
+                  ]
+                },
+                {
+                  "properties": {
+                    "rent_to_own_12m": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "rent_to_own_12m"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "$comment": "No overdraft event implies zero overdraft fees.",
+        "if": {
+          "required": [
+            "overdraft_12m"
+          ],
+          "properties": {
+            "overdraft_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "overdraft_fees_12m": {
+              "const": 0
+            }
+          }
+        }
+      },
+      {
+        "$comment": "An overdraft event requires a positive fee amount or item-missing code.",
+        "if": {
+          "required": [
+            "overdraft_12m"
+          ],
+          "properties": {
+            "overdraft_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "overdraft_fees_12m": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100000
+                },
+                {
+                  "enum": [
+                    -777,
+                    -888,
+                    -999
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No remittance means remittance amount is not applicable.",
+        "if": {
+          "required": [
+            "remittance_sent_12m"
+          ],
+          "properties": {
+            "remittance_sent_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "remittance_amount_12m": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "A remittance requires an amount or item-missing code.",
+        "if": {
+          "required": [
+            "remittance_sent_12m"
+          ],
+          "properties": {
+            "remittance_sent_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "remittance_amount_12m": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: income drop 12m = no means the detail is not applicable.",
+        "if": {
+          "required": [
+            "income_drop_12m"
+          ],
+          "properties": {
+            "income_drop_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "income_drop_percent": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: income drop 12m = yes requires the detail or an item-missing code.",
+        "if": {
+          "required": [
+            "income_drop_12m"
+          ],
+          "properties": {
+            "income_drop_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "income_drop_percent": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: major unplanned expense 12m = no means the detail is not applicable.",
+        "if": {
+          "required": [
+            "major_unplanned_expense_12m"
+          ],
+          "properties": {
+            "major_unplanned_expense_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "major_unplanned_expense_amount": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: major unplanned expense 12m = yes requires the detail or an item-missing code.",
+        "if": {
+          "required": [
+            "major_unplanned_expense_12m"
+          ],
+          "properties": {
+            "major_unplanned_expense_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "major_unplanned_expense_amount": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: disaster displacement 12m = no means the detail is not applicable.",
+        "if": {
+          "required": [
+            "disaster_displacement_12m"
+          ],
+          "properties": {
+            "disaster_displacement_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "disaster_displacement_days": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Hardship routing: disaster displacement 12m = yes requires the detail or an item-missing code.",
+        "if": {
+          "required": [
+            "disaster_displacement_12m"
+          ],
+          "properties": {
+            "disaster_displacement_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "disaster_displacement_days": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No food-related hardship means frequency is not applicable.",
+        "if": {
+          "required": [
+            "food_insecurity_12m"
+          ],
+          "properties": {
+            "food_insecurity_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "food_insecurity_frequency": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Food-related hardship requires a frequency or item-missing code.",
+        "if": {
+          "required": [
+            "food_insecurity_12m"
+          ],
+          "properties": {
+            "food_insecurity_12m": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "food_insecurity_frequency": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No coping strategy use means all method indicators are not applicable.",
+        "if": {
+          "required": [
+            "coping_any"
+          ],
+          "properties": {
+            "coping_any": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "coping_used_savings": {
+              "const": -666
+            },
+            "coping_borrowed_family": {
+              "const": -666
+            },
+            "coping_used_credit": {
+              "const": -666
+            },
+            "coping_sold_assets": {
+              "const": -666
+            },
+            "coping_skipped_bills": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Coping strategy use requires all method indicators and at least one affirmative method.",
+        "if": {
+          "required": [
+            "coping_any"
+          ],
+          "properties": {
+            "coping_any": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "allOf": [
+            {
+              "properties": {
+                "coping_used_savings": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "coping_borrowed_family": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "coping_used_credit": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "coping_sold_assets": {
+                  "not": {
+                    "const": -666
+                  }
+                },
+                "coping_skipped_bills": {
+                  "not": {
+                    "const": -666
+                  }
+                }
+              }
+            },
+            {
+              "anyOf": [
+                {
+                  "properties": {
+                    "coping_used_savings": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "coping_used_savings"
+                  ]
+                },
+                {
+                  "properties": {
+                    "coping_borrowed_family": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "coping_borrowed_family"
+                  ]
+                },
+                {
+                  "properties": {
+                    "coping_used_credit": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "coping_used_credit"
+                  ]
+                },
+                {
+                  "properties": {
+                    "coping_sold_assets": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "coping_sold_assets"
+                  ]
+                },
+                {
+                  "properties": {
+                    "coping_skipped_bills": {
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "coping_skipped_bills"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "$comment": "At least one major shock requires a primary shock type and estimated magnitude.",
+        "if": {
+          "anyOf": [
+            {
+              "required": [
+                "income_drop_12m"
+              ],
+              "properties": {
+                "income_drop_12m": {
+                  "const": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "household_job_loss_12m"
+              ],
+              "properties": {
+                "household_job_loss_12m": {
+                  "const": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "major_unplanned_expense_12m"
+              ],
+              "properties": {
+                "major_unplanned_expense_12m": {
+                  "const": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "disaster_displacement_12m"
+              ],
+              "properties": {
+                "disaster_displacement_12m": {
+                  "const": 1
+                }
+              }
+            }
+          ]
+        },
+        "then": {
+          "properties": {
+            "primary_shock_type": {
+              "not": {
+                "const": -666
+              }
+            },
+            "largest_shock_amount": {
+              "not": {
+                "const": -666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "No major shock means primary shock type and magnitude are not applicable.",
+        "if": {
+          "required": [
+            "income_drop_12m",
+            "household_job_loss_12m",
+            "major_unplanned_expense_12m",
+            "disaster_displacement_12m"
+          ],
+          "properties": {
+            "income_drop_12m": {
+              "const": 0
+            },
+            "household_job_loss_12m": {
+              "const": 0
+            },
+            "major_unplanned_expense_12m": {
+              "const": 0
+            },
+            "disaster_displacement_12m": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "primary_shock_type": {
+              "const": -666
+            },
+            "largest_shock_amount": {
+              "const": -666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Households eligible for the next wave have no exit reason and must have recontact fields.",
+        "if": {
+          "required": [
+            "eligible_next_wave"
+          ],
+          "properties": {
+            "eligible_next_wave": {
+              "const": 1
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "exit_reason": {
+              "const": -666
+            },
+            "contact_permission_next_wave": {
+              "not": {
+                "const": -666
+              }
+            },
+            "followup_interval_months": {
+              "not": {
+                "const": -666
+              }
+            },
+            "next_wave_target_year": {
+              "not": {
+                "const": -6666
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Households not eligible for the next wave require an exit reason and have no future-contact schedule.",
+        "if": {
+          "required": [
+            "eligible_next_wave"
+          ],
+          "properties": {
+            "eligible_next_wave": {
+              "const": 0
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "exit_reason": {
+              "not": {
+                "const": -666
+              }
+            },
+            "contact_permission_next_wave": {
+              "const": -666
+            },
+            "followup_interval_months": {
+              "const": -666
+            },
+            "next_wave_target_year": {
+              "const": -6666
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Split-off households require an origin household ID.",
+        "if": {
+          "required": [
+            "panel_membership_status"
+          ],
+          "properties": {
+            "panel_membership_status": {
+              "const": 3
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "split_origin_household_id": {
+              "not": {
+                "enum": [
+                  "NA"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Households that are not split-offs use the string NA sentinel for split origin.",
+        "if": {
+          "required": [
+            "panel_membership_status"
+          ],
+          "properties": {
+            "panel_membership_status": {
+              "enum": [
+                1,
+                2,
+                4
+              ]
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "split_origin_household_id": {
+              "const": "NA"
+            }
+          }
+        }
+      },
+      {
+        "$comment": "Nonpositive household income makes income-denominator ratios structurally not applicable.",
+        "if": {
+          "required": [
+            "total_household_income_annual"
+          ],
+          "properties": {
+            "total_household_income_annual": {
+              "type": "integer",
+              "maximum": 0,
+              "not": {
+                "enum": [
+                  -666,
+                  -777,
+                  -888,
+                  -999
+                ]
+              }
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "housing_cost_income_ratio": {
+              "enum": [
+                -666,
+                -999
+              ]
+            },
+            "debt_to_income_ratio": {
+              "enum": [
+                -666,
+                -999
+              ]
+            }
+          }
+        }
+      },
+      {
+        "$comment": "When derived measures are unavailable, every derived metric uses the processing-missing sentinel.",
+        "if": {
+          "required": [
+            "derived_data_status"
+          ],
+          "properties": {
+            "derived_data_status": {
+              "const": 4
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "total_program_income_annual": {
+              "const": -999
+            },
+            "total_liquid_assets": {
+              "const": -999
+            },
+            "total_assets": {
+              "const": -999
+            },
+            "total_mortgage_debt": {
+              "const": -999
+            },
+            "total_nonmortgage_debt": {
+              "const": -999
+            },
+            "total_debt": {
+              "const": -999
+            },
+            "net_worth": {
+              "const": -999
+            },
+            "housing_cost_income_ratio": {
+              "const": -999
+            },
+            "debt_to_income_ratio": {
+              "const": -999
+            },
+            "income_to_needs_ratio": {
+              "const": -999
+            },
+            "material_hardship_index": {
+              "const": -999
+            },
+            "financial_fragility_indicator": {
+              "const": -999
+            },
+            "program_participation_count": {
+              "const": -999
+            },
+            "wealth_quintile": {
+              "const": -999
+            }
+          }
+        }
+      }
+    ],
+    "unevaluatedProperties": false
+  }
+}

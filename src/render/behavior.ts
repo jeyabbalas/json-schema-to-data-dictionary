@@ -1,8 +1,9 @@
 // Interactive behavior for the web component: the search box drives one ranked results
 // list (the categories are hidden as a whole while a query is active — rows never move),
 // category collapse/expand (materialising lazy rows on demand), the toolbar's panels, jumps
-// to the variables skip patterns name, column resizing, CSV copy/download, the semantic
-// status chip and keyboard shortcuts ("/" to focus, Esc to clear).
+// to the variables skip patterns name, column resizing, CSV copy and the download (an Excel
+// workbook by default), the semantic status chip and keyboard shortcuts ("/" to focus, Esc to
+// clear).
 //
 // `attachBehavior` wires a live DOM tree around a `SearchEngine`. `inlineScript` returns
 // the self-contained script of the static `tableToHtml` output, which keeps its own in-place
@@ -21,11 +22,20 @@ import type { WidthsByKey } from "./columns";
 import { eventTarget, focusRow, insertRows } from "./dom";
 import type { Root } from "./dom";
 
+/** A file the download button saves. */
+export interface DownloadFile {
+  data: Uint8Array | string;
+  filename: string;
+  /** Media type of the file. */
+  type: string;
+}
+
 export interface BehaviorOptions {
   vm: ViewModel;
-  /** CSV export, computed on first use. */
+  /** CSV text for the copy button, computed on first use. */
   csv: () => string;
-  filename: string;
+  /** The file the download button saves (an Excel workbook or a CSV file), computed on use. */
+  download: () => DownloadFile;
   engine: SearchEngine;
   /** Drives the status chip when semantic search is configured. */
   semanticIndex?: SemanticIndex | undefined;
@@ -235,7 +245,7 @@ export function attachBehavior(root: Root, opts: BehaviorOptions): () => void {
     } else if (action === "copy") {
       void navigator.clipboard?.writeText(opts.csv()).then(() => flash(button, "Copied"));
     } else if (action === "download") {
-      downloadCsv(opts.csv(), opts.filename);
+      downloadFile(opts.download());
     }
   };
   root.addEventListener("click", onClick);
@@ -351,12 +361,12 @@ function flash(btn: HTMLElement, text: string): void {
   }, 1200);
 }
 
-function downloadCsv(csv: string, filename: string): void {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+function downloadFile(file: DownloadFile): void {
+  const blob = new Blob([file.data as BlobPart], { type: file.type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.download = file.filename;
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
@@ -365,14 +375,25 @@ function downloadCsv(csv: string, filename: string): void {
 }
 
 /**
+ * The file the static page's download button saves, embedded in the page: text as it is, an
+ * Excel workbook as base64.
+ */
+export interface EmbeddedFile {
+  name: string;
+  type: string;
+  text?: string;
+  base64?: string;
+}
+
+/**
  * Self-contained behavior script for the static HTML output, scoped to `#${rootId}`: the
  * in-place filter (hide/highlight rows, per-category counts), collapse/expand, the toolbar's
  * panels, jumps to the variables skip patterns name, column resizing (the component's own
- * `attachColumnResize`, inlined as source), CSV export and shortcuts. `<` is escaped in the
- * embedded JSON so no value can close the script.
+ * `attachColumnResize`, inlined as source), CSV copy, the download and shortcuts. `<` is
+ * escaped in the embedded JSON so no value can close the script.
  */
-export function inlineScript(rootId: string, csv: string, filename: string, widths: WidthsByKey = {}): string {
-  const data = JSON.stringify({ id: rootId, csv, filename, widths }).replace(/</g, "\\u003c");
+export function inlineScript(rootId: string, csv: string, file: EmbeddedFile | null, widths: WidthsByKey = {}): string {
+  const data = JSON.stringify({ id: rootId, csv, file, widths }).replace(/</g, "\\u003c");
   return `(function(){
 var D=${data};var root=document.getElementById(D.id);if(!root)return;var dd=root.querySelector('[data-dd-root]');
 function isTyping(t){return t&&t.tagName&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)||t.isContentEditable);}
@@ -400,7 +421,7 @@ if(t.closest('[data-dd-panel-close]')){var p=t.closest('[data-dd-panel]');if(p)p
 var b=t.closest('[data-dd-action]');if(!b)return;var a=b.getAttribute('data-dd-action');
 if(a==='expand-all'||a==='collapse-all'){var col=a==='collapse-all';cats().forEach(function(c){setCollapsed(c,col);});syncAll();}
 else if(a==='copy'){if(navigator.clipboard)navigator.clipboard.writeText(D.csv).then(function(){var o=b.innerHTML;b.textContent='Copied';setTimeout(function(){b.innerHTML=o;},1200);});}
-else if(a==='download'){var bl=new Blob([D.csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(bl),an=document.createElement('a');an.href=u;an.download=D.filename;document.body.appendChild(an);an.click();an.remove();setTimeout(function(){URL.revokeObjectURL(u);},1000);}});
+else if(a==='download'&&D.file){var f=D.file,body=f.text;if(f.base64){var bin=atob(f.base64);body=new Uint8Array(bin.length);for(var k=0;k<bin.length;k++)body[k]=bin.charCodeAt(k);}var bl=new Blob([body],{type:f.type}),u=URL.createObjectURL(bl),an=document.createElement('a');an.href=u;an.download=f.name;document.body.appendChild(an);an.click();an.remove();setTimeout(function(){URL.revokeObjectURL(u);},1000);}});
 document.addEventListener('keydown',function(e){var t=origin(e);if(e.key==='/'&&!isTyping(t)){e.preventDefault();if(search)search.focus();}else if(e.key==='Escape'&&t===search&&search){if(timer){clearTimeout(timer);timer=null;}search.value='';filter('');}else if(e.key==='Escape'&&t&&t.closest&&root.contains(t)&&t.closest('[data-dd-panel]')){panel(t.closest('[data-dd-panel]').getAttribute('data-dd-panel'),false);}});
 if(dd)(${String(attachColumnResize)})(dd,D.widths,null);
 })();`;

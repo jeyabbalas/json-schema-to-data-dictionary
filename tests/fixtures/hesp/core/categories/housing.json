@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/housing.json",
+  "title": "HESP CORE - Housing and housing costs",
+  "description": "Housing tenure, dwelling characteristics, rent or mortgage costs, and housing-payment distress.",
+  "type": "object",
+  "x-variable-group": "housing",
+  "properties": {
+    "tenure": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Owned with one or more mortgages or home-secured loans"
+        },
+        {
+          "const": 2,
+          "title": "Owned free and clear"
+        },
+        {
+          "const": 3,
+          "title": "Rented for cash rent"
+        },
+        {
+          "const": 4,
+          "title": "Occupied without cash rent"
+        },
+        {
+          "const": 5,
+          "title": "Temporary, group, or other nonstandard arrangement"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Housing tenure"
+    },
+    "dwelling_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Detached house"
+        },
+        {
+          "const": 2,
+          "title": "Attached house or townhouse"
+        },
+        {
+          "const": 3,
+          "title": "Apartment in building with 2-4 units"
+        },
+        {
+          "const": 4,
+          "title": "Apartment in building with 5 or more units"
+        },
+        {
+          "const": 5,
+          "title": "Mobile or manufactured home"
+        },
+        {
+          "const": 6,
+          "title": "Other dwelling"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Dwelling type"
+    },
+    "bedrooms": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Number of bedrooms",
+      "x-unit": "rooms"
+    },
+    "move_in_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Year household moved into current dwelling",
+      "x-unit": "calendar year"
+    },
+    "monthly_rent": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Monthly cash rent",
+      "x-universe": "Cash renters.",
+      "x-unit": "currency units per month"
+    },
+    "rent_includes_utilities": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Rent includes any utilities",
+      "x-universe": "Cash renters."
+    },
+    "landlord_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Private individual or company"
+        },
+        {
+          "const": 2,
+          "title": "Public housing authority"
+        },
+        {
+          "const": 3,
+          "title": "Employer, relative, or nonprofit"
+        },
+        {
+          "const": 4,
+          "title": "Other"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Landlord type",
+      "x-universe": "Cash renters."
+    },
+    "rent_subsidized": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Rent is reduced by a housing subsidy",
+      "x-universe": "Cash renters."
+    },
+    "public_housing": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Dwelling is public housing",
+      "x-universe": "Cash renters."
+    },
+    "owner_estimated_value": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Owner-estimated market value of primary residence",
+      "x-universe": "Owner-occupied households.",
+      "x-unit": "currency units"
+    },
+    "mortgage_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Number of mortgages or home-secured loans",
+      "x-universe": "Owner-occupied households.",
+      "x-unit": "loans"
+    },
+    "first_mortgage_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance on first mortgage",
+      "x-universe": "Owners with a mortgage.",
+      "x-unit": "currency units"
+    },
+    "first_mortgage_payment": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Monthly payment on first mortgage",
+      "x-universe": "Owners with a mortgage.",
+      "x-unit": "currency units per month"
+    },
+    "first_mortgage_rate": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Interest rate on first mortgage",
+      "x-universe": "Owners with a mortgage.",
+      "x-unit": "percent"
+    },
+    "first_mortgage_start_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Year first mortgage originated or refinanced",
+      "x-universe": "Owners with a mortgage.",
+      "x-unit": "calendar year"
+    },
+    "second_mortgage_balance": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Balance on second mortgage or home-equity loan",
+      "x-universe": "Owners with two home-secured loans.",
+      "x-unit": "currency units"
+    },
+    "second_mortgage_payment": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Monthly payment on second mortgage or home-equity loan",
+      "x-universe": "Owners with two home-secured loans.",
+      "x-unit": "currency units per month"
+    },
+    "property_tax_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual property tax",
+      "x-universe": "Owner-occupied households.",
+      "x-unit": "currency units per year"
+    },
+    "homeowners_insurance_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual homeowners insurance premium",
+      "x-universe": "Owner-occupied households.",
+      "x-unit": "currency units per year"
+    },
+    "condo_fee_monthly": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Monthly condominium or association fee",
+      "x-universe": "Owner-occupied households; enter 0 if no fee.",
+      "x-unit": "currency units per month"
+    },
+    "utilities_total_monthly": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Average monthly household utility cost",
+      "x-unit": "currency units per month"
+    },
+    "housing_payment_arrears_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Behind on rent or mortgage at any time in past 12 months",
+      "x-universe": "Households with a cash rent or mortgage payment."
+    },
+    "months_housing_arrears": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Number of months behind on housing payments in past 12 months",
+      "x-universe": "Households with a cash rent or mortgage payment.",
+      "x-unit": "months"
+    },
+    "eviction_or_foreclosure_notice_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Received eviction or foreclosure notice in past 12 months",
+      "x-universe": "Cash renters and owner-occupiers."
+    }
+  },
+  "required": [
+    "tenure",
+    "dwelling_type",
+    "bedrooms",
+    "move_in_year",
+    "monthly_rent",
+    "rent_includes_utilities",
+    "landlord_type",
+    "rent_subsidized",
+    "public_housing",
+    "owner_estimated_value",
+    "mortgage_count",
+    "first_mortgage_balance",
+    "first_mortgage_payment",
+    "first_mortgage_rate",
+    "first_mortgage_start_year",
+    "second_mortgage_balance",
+    "second_mortgage_payment",
+    "property_tax_annual",
+    "homeowners_insurance_annual",
+    "condo_fee_monthly",
+    "utilities_total_monthly",
+    "housing_payment_arrears_12m",
+    "months_housing_arrears",
+    "eviction_or_foreclosure_notice_12m"
+  ]
+}

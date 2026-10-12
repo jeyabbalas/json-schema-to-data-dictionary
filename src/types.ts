@@ -157,8 +157,15 @@ export interface ValidValue {
    * from; set `x-value-kind` in the schema to declare it instead.
    */
   kind?: ValidValueKind | undefined;
-  /** Skip-pattern / conditional context under which the value applies (e.g. "when meno_status = 2"). */
+  /**
+   * When a skip pattern sets the variable to this value (e.g. "meno_status = 2 (Premenopausal)");
+   * the conditions of several patterns are joined by " or ", a compound one in parentheses. Only
+   * a pattern that pins the variable to this one value is listed here; one that allows a set of
+   * values is a constraint of the row.
+   */
   condition?: string | undefined;
+  /** The schema author's `$comment` on this value (on its `const`/`enum` branch or the shared definition it came from). */
+  comment?: string | undefined;
   source?: SourceInfo | undefined;
 }
 
@@ -177,6 +184,10 @@ export interface ConstraintItem {
   condition?: string | undefined;
   /** Variables `condition` reads, by row name (`["parous", "parity"]`). */
   triggers?: string[] | undefined;
+  /** Other variables `text` names: the rest of a group of which at least one must satisfy a rule. */
+  references?: string[] | undefined;
+  /** The schema author's `$comment` explaining the rule this constraint comes from. */
+  comment?: string | undefined;
   source?: SourceInfo | undefined;
 }
 
@@ -200,6 +211,11 @@ export interface DataDictionaryRow {
   "Additional information": Record<string, JsonValue> | null;
   __category?: string | undefined;
   __source?: SourceInfo | undefined;
+  /**
+   * The schema author's `$comment`s on the variable (joined by newlines). They are the last
+   * lines of `Description` too, so a flat export keeps them; renderers show them as notes.
+   */
+  __comment?: string | undefined;
   /** Variable name of the row this one is a field of (`visits` for `visits[].date`); absent on top-level rows. */
   __parent?: string | undefined;
   /** Nesting depth: 0 for a property of the row object, 1 for a field inside one, and so on. */
@@ -219,13 +235,29 @@ export interface DataDictionaryCategory {
   source?: SourceInfo | undefined;
 }
 
-/** One effect of a conditional (skip-pattern) rule: a variable forced to a value/codes. */
+/**
+ * What a rule requires of a variable: set to one value (`equals`), one of a set (`oneOf`), anything
+ * but a value or set (`notEquals`, `notOneOf`), present (`required`), absent (`absent`), some other
+ * constraint such as a range (`constraint`), a requirement it shares with other variables
+ * (`combination`: "at least one of …"), or nothing at all — the condition is not allowed (`forbidden`).
+ */
+export type ConditionalEffectKind = "equals" | "oneOf" | "notEquals" | "notOneOf" | "required" | "absent" | "constraint" | "combination" | "forbidden";
+
+/** One effect of a conditional (skip-pattern) rule on one variable. */
 export interface ConditionalEffect {
   variable: string;
-  /** A single forced value (`const`) or a set of allowed values (`enum`). */
+  /** A single forced value (`const`) or a set of allowed values (`enum`); `[]` for any other kind of effect. */
   value: JsonValue | JsonValue[];
-  /** Resolved human label(s) for the value(s), when known (e.g. "Nonparous"). */
+  /** Resolved human label for a forced (or, for `notEquals`, the excluded) value, when known (e.g. "Nonparous"). */
   label?: string | undefined;
+  /** What the effect is; absent on rules built before 0.8. */
+  kind?: ConditionalEffectKind | undefined;
+  /** The values a `notEquals` / `notOneOf` effect rules out. */
+  excluded?: JsonValue[] | undefined;
+  /** The requirement in words, about "value": "value ≠ -666 (Not applicable)", "1 ≤ value ≤ 12 or value is one of …". */
+  text?: string | undefined;
+  /** The `$comment` of the part of the rule that states this effect, when it has its own. */
+  comment?: string | undefined;
 }
 
 /** A parsed `if/then` (or dependency) rule describing structural missingness / skip logic. */
@@ -308,6 +340,18 @@ export interface SchemaToTableOptions {
   maxNestingDepth?: number | undefined;
 }
 
+/** Options for the Excel workbook (`tableToXlsx`). */
+export interface XlsxExportOptions {
+  /** Title in the workbook's properties and on its About sheet. Default: the table's title. */
+  title?: string | undefined;
+  /** Add the "Skip logic" sheet listing every rule (when the table has any). Default: true. */
+  includeSkipLogic?: boolean | undefined;
+  /** Add the "About" sheet: the dataset's description and notes, its categories, a key to the formatting. Default: true. */
+  includeAbout?: boolean | undefined;
+  /** DEFLATE-compress the file. Default: true. */
+  compress?: boolean | undefined;
+}
+
 export interface PlainRowsOptions {
   /** Convert complex columns to strings so the result exports directly to CSV/XLSX. Default: true. */
   stringifyComplexColumns?: boolean | undefined;
@@ -346,8 +390,14 @@ export interface RenderHtmlOptions {
   emptyCell?: string | undefined;
   /** Search box placeholder text. */
   searchPlaceholder?: string | undefined;
-  /** Show the copy / download-CSV controls. Default: true. */
+  /** Show the copy / download controls. Default: true. */
   includeExport?: boolean | undefined;
+  /**
+   * What the download button saves: a formatted Excel workbook (`"xlsx"`, the default — codes,
+   * special codes, skip patterns and notes keep their formatting) or a plain CSV file (`"csv"`).
+   * The copy button always copies CSV text.
+   */
+  exportFormat?: "xlsx" | "csv" | undefined;
   /** Start with category sections expanded. Default: true. */
   expandCategories?: boolean | undefined;
   /** Start with "Additional information" trees expanded. Default: false. */

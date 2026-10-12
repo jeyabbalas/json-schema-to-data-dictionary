@@ -61,6 +61,12 @@ const SOURCES = [
     label: "BCRPP CORE",
     description: "A breast-cancer cohort with special codes and skip logic",
     dir: "multiple_schema_2"
+  },
+  {
+    key: "hesp",
+    label: "HESP household panel",
+    description: "265 variables, 171 skip-pattern and consistency rules",
+    dir: "hesp"
   }
 ];
 

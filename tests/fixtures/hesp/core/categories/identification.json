@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/identification.json",
+  "title": "HESP CORE - Identification and survey administration",
+  "description": "Keys, interview timing, mode, completion status, survey-design variables, and analysis weights.",
+  "type": "object",
+  "x-variable-group": "identification",
+  "properties": {
+    "record_id": {
+      "$ref": "../../common/defs.json#/$defs/record_id",
+      "title": "Household-wave record ID",
+      "x-role": "primary key"
+    },
+    "household_id": {
+      "$ref": "../../common/defs.json#/$defs/household_id",
+      "title": "Stable household ID",
+      "x-role": "entity key"
+    },
+    "respondent_id": {
+      "$ref": "../../common/defs.json#/$defs/person_id",
+      "title": "Interview respondent person ID",
+      "x-role": "respondent key"
+    },
+    "sample_household_id": {
+      "type": "string",
+      "pattern": "^S[0-9]{10}$",
+      "title": "Original sample household ID",
+      "description": "Identifier assigned at sample selection; retained across split-off households.",
+      "x-role": "sample key"
+    },
+    "interview_date": {
+      "$ref": "../../common/defs.json#/$defs/date_iso",
+      "title": "Interview completion date",
+      "x-role": "time key"
+    },
+    "reference_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        }
+      ],
+      "title": "Income and program reference year",
+      "x-unit": "calendar year",
+      "x-role": "time key"
+    },
+    "wave": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      ],
+      "title": "Panel wave number",
+      "x-role": "time key"
+    },
+    "panel_entry_wave": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        }
+      ],
+      "title": "Wave household first entered the panel"
+    },
+    "baseline_record": {
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Follow-up record"
+        },
+        {
+          "const": 1,
+          "title": "First observed record for this household"
+        }
+      ],
+      "title": "Baseline record indicator"
+    },
+    "interview_mode": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "In person"
+        },
+        {
+          "const": 2,
+          "title": "Telephone"
+        },
+        {
+          "const": 3,
+          "title": "Web"
+        },
+        {
+          "const": 4,
+          "title": "Mixed mode or administrative completion"
+        }
+      ],
+      "title": "Interview mode"
+    },
+    "interview_language": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "English"
+        },
+        {
+          "const": 2,
+          "title": "Spanish"
+        },
+        {
+          "const": 3,
+          "title": "Other language"
+        },
+        {
+          "const": 4,
+          "title": "No respondent interview; administrative completion"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        }
+      ],
+      "title": "Interview language"
+    },
+    "completion_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Complete interview"
+        },
+        {
+          "const": 2,
+          "title": "Partial interview"
+        },
+        {
+          "const": 3,
+          "title": "Administrative supplement only"
+        }
+      ],
+      "title": "Record completion status"
+    },
+    "cross_section_weight": {
+      "$ref": "../../common/defs.json#/$defs/survey_weight",
+      "title": "Cross-sectional household weight",
+      "x-role": "analysis weight"
+    },
+    "longitudinal_weight": {
+      "$ref": "../../common/defs.json#/$defs/survey_weight",
+      "title": "Longitudinal household weight",
+      "x-role": "analysis weight"
+    },
+    "sample_stratum": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 999
+        }
+      ],
+      "title": "Sample stratum code",
+      "x-role": "survey design"
+    },
+    "sample_psu": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99999
+        }
+      ],
+      "title": "Primary sampling unit code",
+      "x-role": "survey design"
+    }
+  },
+  "required": [
+    "record_id",
+    "household_id",
+    "respondent_id",
+    "sample_household_id",
+    "interview_date",
+    "reference_year",
+    "wave",
+    "panel_entry_wave",
+    "baseline_record",
+    "interview_mode",
+    "interview_language",
+    "completion_status",
+    "cross_section_weight",
+    "longitudinal_weight",
+    "sample_stratum",
+    "sample_psu"
+  ]
+}

@@ -9,12 +9,16 @@ export { SchemaRegistry } from "./registry";
 export { formatVariablePath, sourceAt } from "./paths";
 
 // --- Serialization / export ---
-export { toPlainRows, tableToCsv, validValuesText, constraintsText, additionalInfoText } from "./serialize";
+export { toPlainRows, tableToCsv, validValuesText, constraintsText, validValuesCell, constraintsCell, additionalInfoText } from "./serialize";
+export { tableToXlsx, XLSX_MEDIA_TYPE } from "./excel";
+
+// --- Excel writer (dependency-free .xlsx) ---
+export { buildXlsx, columnLetter, cellRef, _deflateRaw } from "./xlsx";
 
 // --- Rendering ---
 export { tableToHtml, STYLES } from "./render/html";
 export { renderDataDictionary, defineDataDictionaryElement, ELEMENT_TAG } from "./render/component";
-export { buildViewModel, splitVariableName } from "./render/viewModel";
+export { buildViewModel, splitVariableName, splitDescription } from "./render/viewModel";
 
 // --- Search: lexical (BM25F) index, hybrid engine, and semantic search (opt-in; bring your own Embedder) ---
 export { createSearchEngine } from "./search/engine";
@@ -47,12 +51,14 @@ export type {
   DeclaredValueKind,
   ConstraintItem,
   ConditionalEffect,
+  ConditionalEffectKind,
   ConditionalRule,
   DataDictionaryRow,
   DataDictionaryCategory,
   DataDictionaryTable,
   SchemaToTableOptions,
   PlainRowsOptions,
+  XlsxExportOptions,
   RenderHtmlOptions,
   RenderOptions,
   SemanticSearchOptions,
@@ -105,3 +111,21 @@ export type { AnalyzeContext, PropertyAnalysis, PropertyShape, PropertyShapeKind
 export type { DataDictionaryElement } from "./render/component";
 export type { ViewModel, CategoryVM, RowVM, ValueVM, ConstraintVM, ConditionVM, RuleVM, RuleGroupVM, ResolvedOptions } from "./render/viewModel";
 export type { FormatDescriptor } from "./formats";
+export type {
+  XlsxWorkbook,
+  XlsxSheet,
+  XlsxRow,
+  XlsxColumn,
+  XlsxCell,
+  XlsxValue,
+  XlsxRun,
+  XlsxFont,
+  XlsxStyle,
+  XlsxBorder,
+  XlsxBorderEdge,
+  XlsxBorderStyle,
+  XlsxAlignment,
+  XlsxColor,
+  XlsxOptions
+} from "./xlsx";
+export type { DownloadFile } from "./render/behavior";

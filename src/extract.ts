@@ -1,8 +1,10 @@
 // Orchestration: array root -> items object -> category sections -> variable rows -- and,
 // for every object-shaped variable, array of objects or array of arrays, the rows of the
 // fields inside it, named by path (`visits[].date`) and placed right after their parent --
-// then overlay the skip patterns of the row object and of the nested objects. Produces the
-// DataDictionaryTable.
+// then overlay the skip patterns of the row object and of the nested objects. The patterns
+// are read while the rows are built but put into words last, once every row is known: a
+// condition names the codes it tests by their labels (`partner_present = 0 (No)`). Produces
+// the DataDictionaryTable.
 
 import type {
   ConstraintItem,
@@ -20,10 +22,18 @@ import type {
   ValidValue
 } from "./types";
 import { SchemaRegistry, type IndexedSchemaLocation, type ResolutionBase } from "./registry";
-import { analyzeProperty, collectRequired, refKeyword, type PropertyShape, type SchemaRef } from "./analyze";
-import { collectSkipPatterns, mergeSkipPatterns, type SkipPatternResult, type VariableConditional } from "./skipPatterns";
+import { analyzeProperty, collectRequired, isSentinelValue, refKeyword, type PropertyShape, type SchemaRef } from "./analyze";
+import {
+  collectSkipPatterns,
+  mergeSkipPatterns,
+  renderSkipPatterns,
+  type ParsedSkipPatterns,
+  type SkipPatternResult,
+  type VariableConditional,
+  type VariableLookup
+} from "./skipPatterns";
 import { formatVariablePath, sourceAt } from "./paths";
-import { cloneJson, compactObject, isRecord, isSchemaObject, joinNonEmpty, typeAlternatives, uniqueSlug, valueKey } from "./utils";
+import { cloneJson, compactObject, formatJsonValue, isRecord, isSchemaObject, joinNonEmpty, typeAlternatives, uniqueSlug, valueKey } from "./utils";
 
 interface Options {
   includePatternProperties: boolean;
@@ -69,9 +79,12 @@ interface ExtractCtx {
   registry: SchemaRegistry;
   options: Options;
   warnings: string[];
-  skip: SkipPatternResult;
+  /** The skip patterns read so far: the row object's, then each nested object's as it is expanded. */
+  skip: ParsedSkipPatterns;
   /** The row object's own `required` names. */
   required: Set<string>;
+  /** The JSON types each variable's schema allows, by row name (for the skip-pattern sentences). */
+  types: Map<string, string[]>;
   usedIds: Set<string>;
   /** The row object and its category schemas: a `$ref` back into them is recursion. */
   root: Frame;
@@ -110,8 +123,8 @@ export function schemaDocumentsToTable(
   const itemObject = isSchemaObject(itemDeref.schema) ? itemDeref.schema : {};
   const itemSource = itemDeref.source ?? itemsLoc.source;
 
-  const skip = collectSkipPatterns(itemObject, itemDeref.base, { registry, maxDepth: opts.maxDepth });
   const required = collectRequired(itemObject, registry, itemDeref.base, opts.maxDepth);
+  const skip = collectSkipPatterns(itemObject, itemDeref.base, { registry, maxDepth: opts.maxDepth, required });
 
   const ctx: ExtractCtx = {
     registry,
@@ -119,6 +132,7 @@ export function schemaDocumentsToTable(
     warnings,
     skip,
     required,
+    types: new Map(),
     usedIds: new Set(),
     root: { name: "the record", identities: new Set([itemObject]) }
   };
@@ -127,6 +141,9 @@ export function schemaDocumentsToTable(
   if (categories.length === 0) warnings.push("No object properties were found; the table has no variable rows.");
 
   const rows = categories.flatMap((c) => c.rows);
+  const patterns = renderSkipPatterns(ctx.skip, variableLookup(rows, ctx.types));
+  for (const row of rows) applySkipPatterns(row, patterns, ctx.types.get(row["Variable name"]) ?? [], warnings);
+  for (const w of patterns.warnings) if (!warnings.includes(w)) warnings.push(w);
   for (const w of registry.warnings) if (!warnings.includes(w)) warnings.push(w);
 
   const additionalInformation = compactObject({
@@ -134,13 +151,15 @@ export function schemaDocumentsToTable(
     ...(isSchemaObject(itemDeref.schema) && itemDeref.schema !== root.schema ? wrapItemExtra(itemDeref.schema) : {})
   }) as Record<string, JsonValue>;
 
+  // The record's own `$comment` (on the items object) is about the dataset too.
+  const comment = joinNonEmpty([meta.comment, itemDeref.schema !== root.schema ? commentOf(itemDeref.schema) : undefined]);
   return {
     ...(meta.title ? { title: meta.title } : {}),
     ...(meta.description ? { description: meta.description } : {}),
-    ...(meta.comment ? { comment: meta.comment } : {}),
+    ...(comment ? { comment } : {}),
     rows,
     categories,
-    conditionalRules: skip.rules,
+    conditionalRules: patterns.rules,
     additionalInformation: Object.keys(additionalInformation).length > 0 ? additionalInformation : null,
     warnings,
     ...(opts.includeSource ? { source: registry.sourceFor(root) } : {})
@@ -446,6 +465,7 @@ function newCategoryBuilder(title: string, schema: JsonSchemaObject, _base: Reso
     id: uniqueSlug(title, ctx.usedIds),
     title,
     ...(categoryDescription(schema) ? { description: categoryDescription(schema) } : {}),
+    ...(commentOf(schema) ? { comment: commentOf(schema) } : {}),
     rows: new Map(),
     children: new Map(),
     additionalInformation: (schemaExtra(schema) as Record<string, JsonValue>) ?? null,
@@ -504,7 +524,10 @@ function addRow(row: DataDictionaryRow, builder: CategoryBuilder, variant = fals
     return row;
   }
   // Same property declared in more than one merged branch: union the information.
-  existing["Description"] = joinNonEmpty([existing["Description"], row["Description"]]);
+  // Each declaration's text, then every comment: the comments stay the last lines of the description.
+  const comment = [...new Set([existing.__comment, row.__comment].filter((c): c is string => !!c))].join("\n");
+  existing["Description"] = joinNonEmpty([stripComment(existing["Description"], existing.__comment), stripComment(row["Description"], row.__comment), comment]);
+  if (comment) existing.__comment = comment;
   existing["Data type"] = variant ? unionTypes(existing["Data type"], row["Data type"]) : existing["Data type"] || row["Data type"];
   existing["Format"] = joinNonEmpty([existing["Format"], row["Format"]], " ");
   existing["Valid values"] = dedupeValidValues([...existing["Valid values"], ...row["Valid values"]]);
@@ -527,6 +550,7 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
   });
 
   const validValues = analysis.validValues.slice();
+  ctx.types.set(name, [...new Set([...(ctx.types.get(name) ?? []), ...analysis.types])]);
   const constraints: ConstraintItem[] = [];
   const last = path[path.length - 1];
   // A field of one `oneOf`/`anyOf` branch says which branch: "when contact is an object" when it
@@ -555,8 +579,6 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
   }
   constraints.push(...analysis.constraints);
 
-  applySkipPatterns(name, validValues, constraints, ctx);
-
   const row = addRow(
     {
       "Variable name": name,
@@ -567,6 +589,7 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
       "Constraints": constraints,
       "Additional information": analysis.additionalInformation,
       __category: builder.title,
+      ...(analysis.comment ? { __comment: analysis.comment } : {}),
       ...(ctx.options.includeSource && ref.source ? { __source: ref.source } : {}),
       ...(enclosing.parent !== undefined ? { __parent: enclosing.parent } : {}),
       __depth: enclosing.depth,
@@ -626,8 +649,13 @@ function expandChildren(
     // Rules between the fields of this object, named by their rows, before the rows are built
     // so that each row picks up its conditions.
     const qualify = (property: string): string => formatVariablePath([...path, { kind: "property", name: property }]);
-    mergeSkipPatterns(ctx.skip, collectSkipPatterns(shape.self.schema, shape.self.base, { registry, maxDepth, qualify }));
-    for (const variant of shape.variants) mergeSkipPatterns(ctx.skip, collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, qualify }));
+    mergeSkipPatterns(ctx.skip, collectSkipPatterns(shape.self.schema, shape.self.base, { registry, maxDepth, qualify, required }));
+    for (const variant of shape.variants) {
+      const key = variantKey(variant);
+      const own = key !== undefined ? variantRequired.get(key) : undefined;
+      const inVariant = own ? new Set([...required, ...own]) : required;
+      mergeSkipPatterns(ctx.skip, collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, qualify, required: inVariant }));
+    }
 
     for (const [name, refs] of shape.properties) {
       for (const ref of refs) emitVariable([...path, { kind: "property", name }], ref, fieldsOf(ref), builder, ctx);
@@ -710,38 +738,140 @@ function pushOnce(constraints: ConstraintItem[], item: ConstraintItem): void {
   if (!constraints.some((c) => c.keyword === item.keyword && c.text === item.text)) constraints.push(item);
 }
 
-function applySkipPatterns(name: string, validValues: ValidValue[], constraints: ConstraintItem[], ctx: ExtractCtx): void {
-  const conds = ctx.skip.byVariable.get(name);
+/**
+ * What the skip-pattern sentences need of each variable: the label it gives each of its codes (a
+ * value's `label`, or a short description when it has none, an `enumDescriptions` entry), and the
+ * JSON types its schema allows.
+ */
+function variableLookup(rows: readonly DataDictionaryRow[], types: ReadonlyMap<string, readonly string[]>): VariableLookup {
+  const byVariable = new Map<string, Map<string, string>>();
+  for (const row of rows) {
+    const name = row["Variable name"];
+    if (byVariable.has(name)) continue;
+    const labels = new Map<string, string>();
+    for (const v of row["Valid values"]) {
+      if (v.kind === "measurement") continue;
+      const label = v.label?.trim() || (v.description && v.description.length <= 60 ? v.description.trim() : "");
+      if (label && !labels.has(valueKey(v.value))) labels.set(valueKey(v.value), label);
+    }
+    byVariable.set(name, labels);
+  }
+  return {
+    label: (variable, value) => byVariable.get(variable)?.get(valueKey(value)),
+    types: (variable) => types.get(variable) ?? []
+  };
+}
+
+function applySkipPatterns(row: DataDictionaryRow, patterns: SkipPatternResult, types: readonly string[], warnings: string[]): void {
+  const conds = patterns.byVariable.get(row["Variable name"]);
   if (!conds || conds.length === 0) return;
+  const pins = new Map<ValidValue, VariableConditional[]>();
   for (const cond of conds) {
-    constraints.push({
+    row["Constraints"].push({
       keyword: "conditional",
       ...(cond.value !== undefined ? { value: cond.value } : {}),
       text: cond.constraintText,
       condition: cond.condition,
       ...(cond.triggers.length > 0 ? { triggers: cond.triggers } : {}),
+      ...(cond.references && cond.references.length > 0 ? { references: cond.references } : {}),
+      ...(cond.description ? { comment: cond.description } : {}),
       ...(cond.source ? { source: cond.source } : {})
     });
-    if (cond.value === undefined) continue;
-    const values = Array.isArray(cond.value) ? cond.value : [cond.value];
-    for (const v of values) annotateOrAddCode(validValues, v, cond);
+    // A pattern that sets the variable to one value says so on that value. One that allows a
+    // set of values (`enum`) stays a constraint: "value is one of 666, 777, 888" does not make
+    // any one of them *the* value under that condition.
+    if (cond.value === undefined || Array.isArray(cond.value)) continue;
+    const target = pinnedValue(row, cond.value, cond, types, warnings);
+    if (target) pins.set(target, [...(pins.get(target) ?? []), cond]);
+  }
+  // A value several patterns set is used when any of their conditions holds.
+  for (const [value, list] of pins) {
+    const conditions = list.map((c) => (list.length > 1 && c.compound ? `(${c.condition})` : c.condition));
+    value.condition = [...(value.condition ? [value.condition] : []), ...conditions].join(" or ");
+    const label = list.find((c) => c.label)?.label;
+    if (!value.label && label) value.label = label;
   }
 }
 
-function annotateOrAddCode(validValues: ValidValue[], value: JsonValue, cond: VariableConditional): void {
-  const existing = validValues.find((vv) => valueKey(vv.value) === valueKey(value));
-  if (existing) {
-    if (existing.kind !== "value" && existing.kind !== "measurement") existing.kind = "sentinel";
-    existing.condition = existing.condition ? `${existing.condition}; ${cond.condition}` : cond.condition;
-    if (!existing.label && cond.label) existing.label = cond.label;
-    return;
+/**
+ * The listed value a pattern sets the variable to, added when the variable does not list it but
+ * its own schema allows it and it reads as a special code (`777`, or a label like "Not
+ * applicable" from the rule's comment). A pattern that sets a count to 0 or a duration to its
+ * minimum sets an ordinary measured value, which its constraint states without inventing a code;
+ * one that sets a value the variable's schema rejects contradicts it, which a warning says.
+ */
+function pinnedValue(row: DataDictionaryRow, value: JsonValue, cond: VariableConditional, types: readonly string[], warnings: string[]): ValidValue | undefined {
+  const values = row["Valid values"];
+  const existing = values.find((vv) => vv.kind !== "measurement" && valueKey(vv.value) === valueKey(value));
+  if (existing) return existing;
+  if (withinRange(row, value)) return undefined;
+  if (!admits(row, value, types)) {
+    const warning = `Skip pattern: when ${cond.condition}, ${row["Variable name"]} is set to ${formatJsonValue(value)}, which its own schema does not allow.`;
+    if (!warnings.includes(warning)) warnings.push(warning);
+    return undefined;
   }
-  validValues.push({
-    value,
-    kind: "sentinel",
-    condition: cond.condition,
-    ...(cond.label ? { label: cond.label } : {})
-  });
+  const code: ValidValue = { value, ...(cond.label ? { label: cond.label } : {}) };
+  if (!isSentinelValue(code)) return undefined;
+  const added: ValidValue = { ...code, kind: "sentinel" };
+  values.push(added);
+  return added;
+}
+
+/**
+ * Whether the variable's own schema allows a value it does not list, as far as its row tells: not
+ * when it lists codes and nothing measured, not outside its range, not of a type it does not take.
+ */
+function admits(row: DataDictionaryRow, value: JsonValue, types: readonly string[]): boolean {
+  const listed = row["Valid values"];
+  if (listed.length > 0 && !listed.some((v) => v.kind === "measurement")) return false;
+  if (types.length > 0 && !types.some((t) => hasType(value, t))) return false;
+  const range = row["Constraints"].find((c) => c.keyword === "range")?.value;
+  return !(isRecord(range) && typeof value === "number" && !withinRange(row, value));
+}
+
+function hasType(value: JsonValue, type: string): boolean {
+  switch (type) {
+    case "integer":
+      return typeof value === "number" && Number.isInteger(value);
+    case "number":
+      return typeof value === "number";
+    case "string":
+      return typeof value === "string";
+    case "boolean":
+      return typeof value === "boolean";
+    case "null":
+      return value === null;
+    case "array":
+      return Array.isArray(value);
+    case "object":
+      return isRecord(value);
+    default:
+      return true;
+  }
+}
+
+/** The value falls inside the variable's measured range (its `range` constraint). */
+function withinRange(row: DataDictionaryRow, value: JsonValue): boolean {
+  if (typeof value !== "number") return false;
+  const range = row["Constraints"].find((c) => c.keyword === "range")?.value;
+  if (!isRecord(range)) return false;
+  const num = (v: unknown): number | undefined => (typeof v === "number" ? v : undefined);
+  const min = num(range.minimum);
+  const max = num(range.maximum);
+  const exMin = num(range.exclusiveMinimum);
+  const exMax = num(range.exclusiveMaximum);
+  return (min === undefined || value >= min) && (exMin === undefined || value > exMin) && (max === undefined || value <= max) && (exMax === undefined || value < exMax);
+}
+
+/** `description` without the comment lines it ends with (as `addRow` and `analyzeProperty` build it). */
+function stripComment(description: string, comment: string | undefined): string {
+  if (!comment) return description;
+  if (description === comment) return "";
+  return description.endsWith(`\n${comment}`) ? description.slice(0, -(comment.length + 1)) : description;
+}
+
+function commentOf(schema: JsonSchema): string | undefined {
+  return isSchemaObject(schema) && typeof schema.$comment === "string" && schema.$comment.trim() ? schema.$comment.trim() : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -795,12 +925,7 @@ function categoryTitle(schema: JsonSchema, fallback: string): string {
 
 function categoryDescription(schema: JsonSchema): string | undefined {
   if (!isSchemaObject(schema)) return undefined;
-  return (
-    joinNonEmpty([
-      typeof schema.description === "string" ? schema.description : undefined,
-      typeof schema.$comment === "string" ? schema.$comment : undefined
-    ]) || undefined
-  );
+  return typeof schema.description === "string" && schema.description.trim() ? schema.description.trim() : undefined;
 }
 
 function tableMeta(schema: JsonSchema): { title?: string; description?: string; comment?: string } {
@@ -873,6 +998,7 @@ function finalizeBuilders(builders: CategoryBuilder[]): DataDictionaryCategory[]
       id: b.id,
       title: b.title,
       ...(b.description ? { description: b.description } : {}),
+      ...(b.comment ? { comment: b.comment } : {}),
       rows: orderedRows(b),
       additionalInformation: b.additionalInformation,
       ...(b.source ? { source: b.source } : {})

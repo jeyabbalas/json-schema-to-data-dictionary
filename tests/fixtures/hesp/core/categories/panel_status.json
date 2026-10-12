@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/panel_status.json",
+  "title": "HESP CORE - Panel status and follow-up",
+  "description": "Panel membership, respondent type, follow-up eligibility, recontact and linkage consent, split-off provenance, and quality review.",
+  "type": "object",
+  "x-variable-group": "panel_status",
+  "properties": {
+    "panel_membership_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Continuing original household"
+        },
+        {
+          "const": 2,
+          "title": "New sample entrant"
+        },
+        {
+          "const": 3,
+          "title": "Split-off household"
+        },
+        {
+          "const": 4,
+          "title": "Rejoined after one or more missed waves"
+        }
+      ],
+      "title": "Panel membership status at this wave"
+    },
+    "respondent_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Reference person"
+        },
+        {
+          "const": 2,
+          "title": "Resident partner proxy"
+        },
+        {
+          "const": 3,
+          "title": "Other adult household proxy"
+        }
+      ],
+      "title": "Relationship of interview respondent to household"
+    },
+    "eligible_next_wave": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Household eligible for next scheduled wave"
+    },
+    "exit_reason": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Permanent move outside study area"
+        },
+        {
+          "const": 2,
+          "title": "Institutional or nonhousehold residence"
+        },
+        {
+          "const": 3,
+          "title": "Household dissolved with no eligible successor"
+        },
+        {
+          "const": 4,
+          "title": "Permanent refusal or withdrawal"
+        },
+        {
+          "const": 5,
+          "title": "Panel completed by design"
+        },
+        {
+          "const": 6,
+          "title": "Other reason"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Reason household is not eligible for next wave",
+      "x-universe": "Households not eligible for the next wave."
+    },
+    "contact_permission_next_wave": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Permission to recontact for next wave",
+      "x-universe": "Households eligible for the next wave."
+    },
+    "linkage_consent": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Consent for linkage to administrative economic records"
+    },
+    "split_origin_household_id": {
+      "title": "Origin household ID for split-off household",
+      "description": "Household from which the split-off household originated. String sentinels are used because the substantive field is a string identifier.",
+      "x-universe": "Split-off households.",
+      "oneOf": [
+        {
+          "$ref": "../../common/defs.json#/$defs/household_id"
+        },
+        {
+          "const": "NA",
+          "title": "Not applicable / not a split-off household"
+        },
+        {
+          "const": "REFUSED",
+          "title": "Refused"
+        },
+        {
+          "const": "DONT_KNOW",
+          "title": "Don't know"
+        },
+        {
+          "const": "NOT_COLLECTED",
+          "title": "Not collected"
+        }
+      ]
+    },
+    "followup_interval_months": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 24
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Planned interval to next wave",
+      "x-universe": "Households eligible for the next wave.",
+      "x-unit": "months"
+    },
+    "next_wave_target_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Target calendar year for next interview",
+      "x-universe": "Households eligible for the next wave.",
+      "x-unit": "calendar year"
+    },
+    "quality_review_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Passed automated and manual checks"
+        },
+        {
+          "const": 2,
+          "title": "Passed with documented edits or overrides"
+        },
+        {
+          "const": 3,
+          "title": "Pending review"
+        }
+      ],
+      "title": "Data quality review status"
+    }
+  },
+  "required": [
+    "panel_membership_status",
+    "respondent_type",
+    "eligible_next_wave",
+    "exit_reason",
+    "contact_permission_next_wave",
+    "linkage_consent",
+    "split_origin_household_id",
+    "followup_interval_months",
+    "next_wave_target_year",
+    "quality_review_status"
+  ]
+}

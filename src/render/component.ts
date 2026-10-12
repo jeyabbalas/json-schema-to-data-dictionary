@@ -9,11 +9,13 @@ import type { Embedder, SemanticIndex } from "../search/types";
 import { createSemanticIndex } from "../search/semanticIndex";
 import { slugify } from "../utils";
 import { tableToCsv } from "../serialize";
+import { tableToXlsx, XLSX_MEDIA_TYPE } from "../excel";
 import { buildViewModel } from "./viewModel";
 import type { ViewModel } from "./viewModel";
 import { buildMarkup } from "./markup";
 import { STYLES } from "./styles";
 import { attachBehavior } from "./behavior";
+import type { DownloadFile } from "./behavior";
 import { columnOfKey, widthsByColumn } from "./columns";
 import type { WidthsByKey } from "./columns";
 import { createSearchEngine } from "../search/engine";
@@ -139,10 +141,13 @@ function getElementClass(): new () => DataDictionaryElement {
       if (this._widths) vm.options.columnWidths = this._widths;
       const useShadow = this._options.shadow !== false;
       const markup = buildMarkup(vm, "component");
-      const filename = `${slugify(vm.title)}.csv`;
-      // The CSV is only needed for copy/download: build it on first use, once per render.
+      // The exports are only needed when a button asks for them: built on first use, once per render.
       let csvCache: string | undefined;
       const csv = (): string => (csvCache ??= tableToCsv(table));
+      const download = (): DownloadFile =>
+        vm.options.exportFormat === "csv"
+          ? { data: `\uFEFF${csv()}`, filename: `${slugify(vm.title)}.csv`, type: "text/csv;charset=utf-8" } // the BOM tells Excel it is UTF-8
+          : { data: tableToXlsx(table, { title: vm.title }), filename: `${slugify(vm.title)}.xlsx`, type: XLSX_MEDIA_TYPE };
       const engine = this.createEngine(table);
 
       this._cleanup?.();
@@ -163,7 +168,7 @@ function getElementClass(): new () => DataDictionaryElement {
         const detail: ColumnResizeDetail = { column: columnOfKey(key), widths: widthsByColumn(widths) };
         this.dispatchEvent(new CustomEvent("dd-column-resize", { detail, bubbles: true, composed: true }));
       };
-      const detach = attachBehavior(container, { vm, csv, filename, engine, semanticIndex: this._semantic?.index, onColumnsChange });
+      const detach = attachBehavior(container, { vm, csv, download, engine, semanticIndex: this._semantic?.index, onColumnsChange });
       this._cleanup = () => {
         detach();
         engine.dispose();

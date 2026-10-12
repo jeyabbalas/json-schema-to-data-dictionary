@@ -1,0 +1,923 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/employment.json",
+  "title": "HESP CORE - Employment",
+  "description": "Current labor-force status and job characteristics for the respondent and resident partner.",
+  "type": "object",
+  "x-variable-group": "employment",
+  "properties": {
+    "resp_labor_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Employed for wages or salary"
+        },
+        {
+          "const": 2,
+          "title": "Self-employed"
+        },
+        {
+          "const": 3,
+          "title": "Unemployed and available for work"
+        },
+        {
+          "const": 4,
+          "title": "Not in the labor force"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent current labor-force status"
+    },
+    "resp_multiple_jobs": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Respondent currently holds multiple jobs",
+      "x-universe": "Employed or self-employed respondents."
+    },
+    "resp_weeks_worked": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 52
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent weeks worked in reference year",
+      "x-universe": "Employed or self-employed respondents.",
+      "x-unit": "weeks"
+    },
+    "resp_usual_hours": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent usual weekly hours across jobs",
+      "x-universe": "Employed or self-employed respondents.",
+      "x-unit": "hours per week"
+    },
+    "resp_work_location": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Primarily on site"
+        },
+        {
+          "const": 2,
+          "title": "Hybrid"
+        },
+        {
+          "const": 3,
+          "title": "Primarily remote"
+        },
+        {
+          "const": 4,
+          "title": "Variable or mobile"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent usual work location arrangement",
+      "x-universe": "Employed or self-employed respondents."
+    },
+    "resp_pay_basis": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Hourly"
+        },
+        {
+          "const": 2,
+          "title": "Annual salary"
+        },
+        {
+          "const": 3,
+          "title": "Commission, piece rate, or other variable pay"
+        },
+        {
+          "const": 4,
+          "title": "Self-employment draw or profit"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent primary-job pay basis",
+      "x-universe": "Employed or self-employed respondents."
+    },
+    "resp_hourly_wage": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent hourly wage",
+      "x-universe": "Hourly wage and salary workers.",
+      "x-unit": "currency units per hour"
+    },
+    "resp_annual_salary": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent annual salary rate",
+      "x-universe": "Salaried wage and salary workers.",
+      "x-unit": "currency units per year"
+    },
+    "resp_industry_group": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Agriculture and extraction"
+        },
+        {
+          "const": 2,
+          "title": "Construction and manufacturing"
+        },
+        {
+          "const": 3,
+          "title": "Trade, transportation, and utilities"
+        },
+        {
+          "const": 4,
+          "title": "Information, finance, and professional services"
+        },
+        {
+          "const": 5,
+          "title": "Education and public administration"
+        },
+        {
+          "const": 6,
+          "title": "Hospitality, arts, and personal services"
+        },
+        {
+          "const": 7,
+          "title": "Other services"
+        },
+        {
+          "const": 8,
+          "title": "Industry not classified"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent primary-job industry group",
+      "x-universe": "Employed respondents."
+    },
+    "resp_occupation_group": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Management and professional"
+        },
+        {
+          "const": 2,
+          "title": "Sales and office"
+        },
+        {
+          "const": 3,
+          "title": "Service"
+        },
+        {
+          "const": 4,
+          "title": "Construction and maintenance"
+        },
+        {
+          "const": 5,
+          "title": "Production and transportation"
+        },
+        {
+          "const": 6,
+          "title": "Agriculture and extraction"
+        },
+        {
+          "const": 7,
+          "title": "Military"
+        },
+        {
+          "const": 8,
+          "title": "Occupation not classified"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent primary-job occupation group",
+      "x-universe": "Employed respondents."
+    },
+    "resp_employer_size": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "1-9 workers"
+        },
+        {
+          "const": 2,
+          "title": "10-49 workers"
+        },
+        {
+          "const": 3,
+          "title": "50-249 workers"
+        },
+        {
+          "const": 4,
+          "title": "250 or more workers"
+        },
+        {
+          "const": 5,
+          "title": "Employer size unknown"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent employer size",
+      "x-universe": "Wage and salary employees."
+    },
+    "resp_union_member": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Respondent is a union member or covered by union contract",
+      "x-universe": "Wage and salary employees."
+    },
+    "resp_job_start_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Year respondent started primary job or business",
+      "x-universe": "Employed or self-employed respondents.",
+      "x-unit": "calendar year"
+    },
+    "resp_business_employees": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Employees in respondent-owned business",
+      "x-universe": "Self-employed respondents.",
+      "x-unit": "employees"
+    },
+    "resp_business_start_year": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "not": {
+            "enum": [
+              -6666,
+              -7777,
+              -8888,
+              -9999
+            ]
+          }
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know_year"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected_year"
+        }
+      ],
+      "title": "Year respondent-owned business began",
+      "x-universe": "Self-employed respondents.",
+      "x-unit": "calendar year"
+    },
+    "resp_unemp_duration_weeks": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 260
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Respondent current unemployment duration",
+      "x-universe": "Unemployed respondents.",
+      "x-unit": "weeks"
+    },
+    "resp_job_search_active": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Respondent actively searched for work in past four weeks",
+      "x-universe": "Unemployed respondents."
+    },
+    "resp_nlf_reason": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Retired"
+        },
+        {
+          "const": 2,
+          "title": "Student"
+        },
+        {
+          "const": 3,
+          "title": "Caregiving or household responsibilities"
+        },
+        {
+          "const": 4,
+          "title": "Discouraged worker"
+        },
+        {
+          "const": 5,
+          "title": "Other personal or household reason"
+        },
+        {
+          "const": 6,
+          "title": "Other reason"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary reason respondent is not in labor force",
+      "x-universe": "Respondents not in the labor force."
+    },
+    "resp_laid_off_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Respondent experienced a layoff or involuntary job separation in past 12 months"
+    },
+    "resp_schedule_predictability": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Fixed or regular"
+        },
+        {
+          "const": 2,
+          "title": "Variable with at least two weeks notice"
+        },
+        {
+          "const": 3,
+          "title": "Variable with less than two weeks notice or on call"
+        },
+        {
+          "const": 4,
+          "title": "Self-scheduled"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Predictability of respondent work schedule",
+      "x-universe": "Employed or self-employed respondents."
+    },
+    "partner_labor_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Employed for wages or salary"
+        },
+        {
+          "const": 2,
+          "title": "Self-employed"
+        },
+        {
+          "const": 3,
+          "title": "Unemployed and available for work"
+        },
+        {
+          "const": 4,
+          "title": "Not in the labor force"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner current labor-force status",
+      "x-universe": "Households with a resident partner."
+    },
+    "partner_weeks_worked": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 52
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner weeks worked in reference year",
+      "x-universe": "Resident partners who are employed or self-employed.",
+      "x-unit": "weeks"
+    },
+    "partner_usual_hours": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner usual weekly hours across jobs",
+      "x-universe": "Resident partners who are employed or self-employed.",
+      "x-unit": "hours per week"
+    },
+    "partner_pay_basis": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Hourly"
+        },
+        {
+          "const": 2,
+          "title": "Annual salary"
+        },
+        {
+          "const": 3,
+          "title": "Commission, piece rate, or other variable pay"
+        },
+        {
+          "const": 4,
+          "title": "Self-employment draw or profit"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner primary-job pay basis",
+      "x-universe": "Resident partners who are employed or self-employed."
+    },
+    "partner_hourly_wage": {
+      "anyOf": [
+        {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner hourly wage",
+      "x-universe": "Resident partners paid hourly.",
+      "x-unit": "currency units per hour"
+    },
+    "partner_annual_salary": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner annual salary rate",
+      "x-universe": "Resident partners paid an annual salary.",
+      "x-unit": "currency units per year"
+    },
+    "partner_industry_group": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Agriculture and extraction"
+        },
+        {
+          "const": 2,
+          "title": "Construction and manufacturing"
+        },
+        {
+          "const": 3,
+          "title": "Trade, transportation, and utilities"
+        },
+        {
+          "const": 4,
+          "title": "Information, finance, and professional services"
+        },
+        {
+          "const": 5,
+          "title": "Education and public administration"
+        },
+        {
+          "const": 6,
+          "title": "Hospitality, arts, and personal services"
+        },
+        {
+          "const": 7,
+          "title": "Other services"
+        },
+        {
+          "const": 8,
+          "title": "Industry not classified"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner primary-job industry group",
+      "x-universe": "Employed resident partners."
+    },
+    "partner_occupation_group": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Management and professional"
+        },
+        {
+          "const": 2,
+          "title": "Sales and office"
+        },
+        {
+          "const": 3,
+          "title": "Service"
+        },
+        {
+          "const": 4,
+          "title": "Construction and maintenance"
+        },
+        {
+          "const": 5,
+          "title": "Production and transportation"
+        },
+        {
+          "const": 6,
+          "title": "Agriculture and extraction"
+        },
+        {
+          "const": 7,
+          "title": "Military"
+        },
+        {
+          "const": 8,
+          "title": "Occupation not classified"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner primary-job occupation group",
+      "x-universe": "Employed resident partners."
+    },
+    "partner_unemp_duration_weeks": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 260
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Partner current unemployment duration",
+      "x-universe": "Unemployed resident partners.",
+      "x-unit": "weeks"
+    },
+    "partner_job_search_active": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Partner actively searched for work in past four weeks",
+      "x-universe": "Unemployed resident partners."
+    },
+    "partner_nlf_reason": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Retired"
+        },
+        {
+          "const": 2,
+          "title": "Student"
+        },
+        {
+          "const": 3,
+          "title": "Caregiving or household responsibilities"
+        },
+        {
+          "const": 4,
+          "title": "Discouraged worker"
+        },
+        {
+          "const": 5,
+          "title": "Other personal or household reason"
+        },
+        {
+          "const": 6,
+          "title": "Other reason"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary reason partner is not in labor force",
+      "x-universe": "Resident partners not in the labor force."
+    },
+    "partner_laid_off_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Partner experienced a layoff or involuntary job separation in past 12 months",
+      "x-universe": "Households with a resident partner."
+    }
+  },
+  "required": [
+    "resp_labor_status",
+    "resp_multiple_jobs",
+    "resp_weeks_worked",
+    "resp_usual_hours",
+    "resp_work_location",
+    "resp_pay_basis",
+    "resp_hourly_wage",
+    "resp_annual_salary",
+    "resp_industry_group",
+    "resp_occupation_group",
+    "resp_employer_size",
+    "resp_union_member",
+    "resp_job_start_year",
+    "resp_business_employees",
+    "resp_business_start_year",
+    "resp_unemp_duration_weeks",
+    "resp_job_search_active",
+    "resp_nlf_reason",
+    "resp_laid_off_12m",
+    "resp_schedule_predictability",
+    "partner_labor_status",
+    "partner_weeks_worked",
+    "partner_usual_hours",
+    "partner_pay_basis",
+    "partner_hourly_wage",
+    "partner_annual_salary",
+    "partner_industry_group",
+    "partner_occupation_group",
+    "partner_unemp_duration_weeks",
+    "partner_job_search_active",
+    "partner_nlf_reason",
+    "partner_laid_off_12m"
+  ]
+}

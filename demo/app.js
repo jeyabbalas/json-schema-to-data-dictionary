@@ -484,9 +484,6 @@
 
   function setExportsEnabled(on) {
     $("#export-btn").disabled = !on;
-    // Excel export also needs the (vendored) ExcelJS global to have loaded.
-    var xlsx = $('[data-export="xlsx"]');
-    if (xlsx) xlsx.disabled = !on || !window.ExcelJS;
   }
 
   function afterDocsChanged(extras) {
@@ -1035,7 +1032,8 @@
 
   function downloadCsv() {
     if (!lastTable) return;
-    downloadBlob(slug(lastTable.title) + ".csv", "text/csv;charset=utf-8", API.tableToCsv(lastTable));
+    // The byte-order mark tells Excel the file is UTF-8 (≤, ∈ and – stay readable).
+    downloadBlob(slug(lastTable.title) + ".csv", "text/csv;charset=utf-8", "\uFEFF" + API.tableToCsv(lastTable));
   }
 
   function copyCsv() {
@@ -1046,47 +1044,16 @@
     );
   }
 
-  // Build a formatted .xlsx with ExcelJS: a leading Category column plus the seven
-  // standard columns, a bold frozen header, auto-filter, sized columns and wrapped
-  // long-text cells. Complex columns are stringified by toPlainRows into one cell each.
-  var XLSX_COLUMNS = ["Category", "Variable name", "Description", "Data type", "Format", "Valid values", "Constraints", "Additional information"];
-  var XLSX_WIDTHS = { "Category": 18, "Variable name": 26, "Description": 48, "Data type": 16, "Format": 18, "Valid values": 40, "Constraints": 32, "Additional information": 30 };
-  var XLSX_WRAP = { "Description": 1, "Format": 1, "Valid values": 1, "Constraints": 1, "Additional information": 1 };
-
+  // The library's own workbook: the dictionary laid out like the table (codes, special codes,
+  // skip patterns and the schema's comments keep their formatting), a Skip logic sheet and an
+  // About sheet.
   function downloadExcel() {
-    if (!lastTable || !window.ExcelJS) return;
-
-    // includeInternalColumns adds the "Category" (and an unused "Source") field.
-    var plain = API.toPlainRows(lastTable, { includeInternalColumns: true });
-
-    var wb = new ExcelJS.Workbook();
-    var ws = wb.addWorksheet("Data dictionary", { views: [{ state: "frozen", ySplit: 1 }] });
-    ws.columns = XLSX_COLUMNS.map(function (c) {
-      return { header: c, key: c, width: XLSX_WIDTHS[c], style: { alignment: { vertical: "top", wrapText: !!XLSX_WRAP[c] } } };
-    });
-
-    // Header row: bold white text on a dark fill.
-    var head = ws.getRow(1);
-    head.font = { bold: true, color: { argb: "FFFFFFFF" } };
-    head.alignment = { vertical: "middle", wrapText: true };
-    head.eachCell(function (cell) {
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E79" } };
-    });
-
-    plain.forEach(function (r) {
-      var record = {};
-      XLSX_COLUMNS.forEach(function (c) { record[c] = r[c] != null ? r[c] : ""; });
-      ws.addRow(record);
-    });
-
-    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: XLSX_COLUMNS.length } };
-
-    wb.xlsx.writeBuffer().then(
-      function (buf) {
-        downloadBlob(slug(lastTable.title) + ".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buf);
-      },
-      function (err) { addMessage("error", "Couldn’t build the Excel file: " + err.message); }
-    );
+    if (!lastTable) return;
+    try {
+      downloadBlob(slug(lastTable.title) + ".xlsx", API.XLSX_MEDIA_TYPE, API.tableToXlsx(lastTable));
+    } catch (err) {
+      addMessage("error", "Couldn’t build the Excel file: " + err.message);
+    }
   }
 
   var EXPORTS = { html: downloadHtml, csv: downloadCsv, xlsx: downloadExcel, copy: copyCsv };

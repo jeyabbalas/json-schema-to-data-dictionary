@@ -228,6 +228,7 @@ export const STYLES = `
 .dd-category-count { font-size: 11.5px; color: var(--_muted); font-variant-numeric: tabular-nums; }
 .dd-category-intro { border-bottom: 1px solid var(--_line); }
 .dd-category-desc { margin: 0; padding: 8px 12px 9px 34px; color: var(--_muted); max-width: 120ch; }
+.dd-category-desc p { margin: 0; }
 .dd-category[data-collapsed="true"] .dd-table-wrap { display: none; }
 
 /* ---- Rows ---- */
@@ -289,6 +290,8 @@ export const STYLES = `
 }
 .dd-measure-label { font-family: var(--_mono); font-size: 12px; }
 .dd-measure dd { color: var(--_muted); }
+/* A long range spans its row rather than widening the code column under it. */
+.dd-vv-row.dd-measure-wide { display: flex; flex-wrap: wrap; column-gap: 8px; }
 .dd-vv-sep {
   grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 5px 0 1px;
   font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--_sentinel);
@@ -299,7 +302,10 @@ export const STYLES = `
 /* Skip patterns. On a value: the condition that sets it, its variables links to their rows. */
 .dd-when { display: block; margin-top: 1px; font-size: 12px; color: var(--_muted); }
 .dd-kw { color: var(--_muted); font-size: 11.5px; }
-.dd-cond { font-family: var(--_mono); font-size: 11.5px; color: var(--_fg); }
+/* A condition reads as text -- its codes carry labels ("partner_present = 0 (No)") -- with the
+   variables it names in the code font. */
+.dd-cond { font-size: 12px; color: var(--_fg); }
+.dd-cond .dd-ref, .dd-cond .dd-ref-self { font-family: var(--_mono); font-size: 11.5px; }
 .dd-ref {
   font: inherit; color: var(--_accent); background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
   text-decoration: underline dotted color-mix(in srgb, var(--_accent) 55%, transparent); text-underline-offset: 2px;
@@ -307,6 +313,9 @@ export const STYLES = `
 .dd-ref:hover { text-decoration-style: solid; }
 .dd-ref:focus-visible { outline: 2px solid var(--_accent); outline-offset: 1px; border-radius: 2px; }
 .dd-ref-self { font: inherit; }
+/* A long variable name breaks inside its cell rather than running over the next column. */
+.dd-ref { max-width: 100%; text-align: left; overflow-wrap: anywhere; }
+.dd-ref-self { overflow-wrap: anywhere; }
 
 .dd-constraints-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
 .dd-constraints-list li { position: relative; padding-left: 11px; }
@@ -331,7 +340,8 @@ export const STYLES = `
 /* A list of skip patterns, in the panel and in a detail row: a three-column grid
    "if <condition> | → <value> <label> | <variables>", rules that read the same variable first
    kept together. */
-.dd-rules { display: grid; grid-template-columns: minmax(150px, max-content) minmax(120px, max-content) minmax(0, 1fr); column-gap: 20px; }
+/* A long condition or requirement wraps within its share; the variables keep room to read. */
+.dd-rules { display: grid; grid-template-columns: fit-content(40%) fit-content(30%) minmax(12em, 1fr); column-gap: 20px; }
 .dd-rule { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; padding: 7px 0; border-top: 1px solid var(--_line); }
 .dd-rule:first-child { border-top: none; }
 .dd-rule.dd-rule-opens:not(:first-child) { border-top-color: var(--_border); }
@@ -343,6 +353,15 @@ export const STYLES = `
 .dd-rule-label { color: var(--_muted); }
 .dd-rule-vars { display: flex; flex-wrap: wrap; gap: 2px 12px; font-family: var(--_mono); font-size: 11.5px; }
 .dd-rule-vars .dd-ref-self { font-weight: 600; }
+.dd-rule-text { font-size: 12px; }
+.dd-rule-note { grid-column: 1 / -1; margin-top: 3px; font-size: 11.5px; font-style: italic; color: var(--_muted); max-width: 120ch; }
+
+/* The schema author's $comments: a note set apart from the definition it annotates (a variable,
+   a section, the dataset), and -- under a skip pattern or a value -- why it is so. */
+.dd-note { margin-top: 6px; padding: 1px 0 1px 8px; border-left: 2px solid var(--_border); font-size: 12px; color: var(--_muted); }
+.dd-note:first-child { margin-top: 0; }
+.dd-note-tag { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.dd-why { display: block; margin-top: 1px; font-size: 11.5px; font-style: italic; color: var(--_muted); }
 
 .dd-tree { font-family: var(--_mono); font-size: 11.5px; }
 .dd-tree details { margin: 0; }

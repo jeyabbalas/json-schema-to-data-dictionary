@@ -3,16 +3,17 @@
 Turn one or more interlinked **JSON Schema** documents that describe a *tabular* JSON dataset
 (an array of objects) into:
 
-1. a flat, **spreadsheet-like data dictionary** (an array of row objects), and
-2. an embeddable, **searchable HTML table** for the web.
+1. a flat, **spreadsheet-like data dictionary** (an array of row objects),
+2. an embeddable, **searchable HTML table** for the web, and
+3. a formatted **Excel workbook** for reviewers who live in spreadsheets.
 
 JSON Schema is a great single source of truth for biomedical / epidemiological data
 dictionaries — it both documents *and* validates the data. But it is not readable by domain
 experts. This library lets the schema stay authoritative while everyone sees the *view* they
 expect: data engineers read the schema, domain experts read the table.
 
-- **Zero runtime dependencies.** Ships ESM + types and a single browser bundle. (Semantic
-  search is opt-in and uses an embedding runtime you load yourself.)
+- **Zero runtime dependencies.** Ships ESM + types and a single browser bundle, including its
+  own `.xlsx` writer. (Semantic search is opt-in and uses an embedding runtime you load yourself.)
 - **Resolves `$ref` across documents** (file-position *and* `$id`-based), degrading gracefully.
 - **Understands the hard cases**: mixed measurement/categorical variables, sentinel/missing
   codes, and `if/then` **skip patterns** (structural missingness) — the bread and butter of
@@ -27,7 +28,7 @@ npm install json-schema-data-dictionary
 ## Quick start
 
 ```ts
-import { schemaDocumentsToTable, renderDataDictionary, tableToHtml, toPlainRows } from "json-schema-data-dictionary";
+import { schemaDocumentsToTable, renderDataDictionary, tableToHtml, tableToXlsx, toPlainRows } from "json-schema-data-dictionary";
 
 // 1. Build the dictionary from one or more interlinked schema documents.
 const table = schemaDocumentsToTable([
@@ -43,7 +44,8 @@ renderDataDictionary(document.querySelector("#dict"), table);
 const html = tableToHtml(table);
 
 // 2c. …or export to a spreadsheet.
-const rows = toPlainRows(table);              // array of plain row objects (CSV/XLSX-ready)
+const xlsx = tableToXlsx(table);              // Uint8Array: a formatted Excel workbook
+const rows = toPlainRows(table);              // array of plain row objects (CSV-ready)
 ```
 
 Pass schemas as bare objects or as `{ uri, name, schema }`. The `uri` is the document's
@@ -77,14 +79,16 @@ Each variable becomes one row with these columns:
 | Column | What it holds |
 | --- | --- |
 | **Variable name** | The property key — or, for a field inside an array/object variable, its path (`visits[].date`, `address.city`). |
-| **Description** | `title` + `description` + `$comment` (the codebook text), following `$ref`s. |
+| **Description** | `title` + `description` (the codebook text), following `$ref`s — the variable's own `title` first, replacing the title of a shared definition it `$ref`s — then its `$comment`s, which the table and the workbook show as a **Note**. |
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
-| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. |
+| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. A typed branch beside the codes — a range, a date, an identifier's pattern — is the substantive value (`20–65`, `any date`, `matches ^HH[0-9]{8}$`). A code's `$comment` (or its shared definition's) is shown under it. |
 | **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds (`Each item: …` for the items of an array, `Fields: …` for an object), and **conditional** rules from skip patterns. |
 | **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a JSON tree: each keyword on a line of its own, short values written out (`examples: [[1, 2, 3]]`) and longer ones collapsible. |
 
 The dataset's own `title`/`description` are shown as a header, and each externally `$ref`'d
-object schema becomes a **sub-heading** (e.g. *Demographics*, *Lab measurements*).
+object schema becomes a **sub-heading** (e.g. *Demographics*, *Lab measurements*). A `$comment`
+on the dataset (its root or row object) or on a category is kept apart from the description, as
+`table.comment` / `category.comment`, and shown as a note.
 
 ### Nested variables: arrays and objects
 
@@ -180,25 +184,55 @@ Data type     number + coded values
 Valid values  20–65            (measured value)
               ── special codes ──
               777  Premenopausal at questionnaire
-                   if meno_status = 2
+                   if meno_status = 2 (Premenopausal)
+                     Skip pattern: premenopausal (meno_status=2) => age/reason at menopause are …
               888  Missing/Unknown
 Constraints   Required · Measured value: 20 ≤ value ≤ 65
 ```
 
 The measurement range goes to **Constraints**; the codes go to **Valid values**, badged apart
 from real categories, each carrying the condition that sets it. In the data the pattern is also
-a constraint (`When meno_status = 2, value = 777 (Premenopausal/NA).`, with the pinned `value`),
-which exports and search keep; the rendered table shows it once, on the code.
+a constraint (`When meno_status = 2 (Premenopausal), value = 777 (Premenopausal at questionnaire).`, with the
+pinned `value`), which exports and search keep; the rendered table shows it once, on the code.
 `dependentRequired` and `dependentSchemas` are surfaced as conditional constraints too, and all
 `if/then` rules are collected into `table.conditionalRules`. Every rule, and every conditional
-constraint, names the variables its condition reads (`triggers: ["parous", "parity"]`), and a
-range reads as an inequality (`parous = 1 and 1 ≤ parity ≤ 2`).
+constraint, names the variables its condition reads (`triggers: ["parous", "parity"]`).
+
+A rule says exactly what the schema enforces, whatever its shape:
+
+| Schema | Reads |
+| --- | --- |
+| `if: { properties: { tenure: { enum: [4, 5] } } }` | `tenure ∈ {4 (Occupied without cash rent), 5 (Temporary …)}` — a code reads with the label the variable gives it (a "Label (777)" in the rule's comment labels only a code the variable does not) |
+| `{ minimum: 1, maximum: 2 }` | `1 ≤ parity ≤ 2` (exclusive bounds: `x > 5`, `1 ≤ x < 3`) |
+| `{ maximum: 0, not: { enum: [-777, -888] } }` | `income ≤ 0 and income ∉ {-777 (Refused), -888 (Don't know)}` |
+| `if: { anyOf: [ … ] }` / `oneOf` / `not` / `allOf` | `a = 1 (Yes) or b = 1 (Yes)` / `exactly one of: …` / `not (…)` / `… and …` |
+| a property neither `required` nor in the `if`'s `required` | `smoker = 1 (Yes) or smoker is absent` (`properties` only tests what is there) |
+| `{ minimum: 1 }` on a variable that is a number or `"NA"` | `income ≥ 1 or income is a string` (a range tests only numbers, a pattern only strings); `{ type: "integer", maximum: 50 }` of a number variable keeps its type: `weight is an integer and weight ≤ 50` |
+| `then: { properties: { x: { const: -666 } } }` | `value = -666 (Not applicable)` — shown on the code; `value = 999 (Missing) or absent` when some records lack `x` |
+| `then: { properties: { x: { not: { const: -666 } } } }` | `value ≠ -666 (Not applicable)` |
+| `then: { properties: { x: { enum: [1, 2, 6] } } }` | `value is one of 1 (…), 2 (…), 6 (…)` — a constraint, not a badge on each code: it allows them, it sets none |
+| `then: { properties: { x: { anyOf: [{ minimum: 1, maximum: 12 }, { enum: [-777, -888] }] } } }` | `1 ≤ value ≤ 12 or value is one of -777 (Refused), -888 (…)` |
+| `then: { anyOf: [{ properties: { a: { const: 1 } } }, …] }` | on `a`, `b`, …: `at least one of these holds: a = 1 (Yes); b = 1 (Yes)` |
+| `then: { required: ["x"] }` / `then: false` | `a value is required` / `Not allowed: <condition>.` |
+| `else` / an `if` nested in a `then` | the opposite condition (`smoker ≠ 1 (Yes)`; `… or smoker is absent` when the `if` requires a property some records lack) / both conditions (`a = 1 and b = 0`) |
+| `dependentRequired` / `dependentSchemas`, also inside a clause | `When a = 0 (No) and b is present, a value is required.` |
+| keywords it cannot put into words (`minProperties`, `patternProperties` …) | shown as written — `the record matches {"minProperties":5}` — and named in a table warning |
+
+The rule's `$comment` — and those of its `if`, its clause and the property it constrains — is
+the rule's `description` and each conditional constraint's `comment`: the table shows it under the
+condition it explains, in the *Skip logic* panel, and in the workbook. A value a rule pins that the
+variable does not declare is listed as a special code only when it reads as one (`777`, or a label
+like "Not applicable") and the variable's own schema allows it; a rule that sets a count to 0 pins
+a measured value, and says so as a constraint, and one that sets a value the variable's schema
+rejects is named in a table warning. A code several rules set is used when any of their
+conditions holds (`ValidValue.condition` joins them with "or").
 
 The rendered table lets you follow a pattern from either end: the variable named in a condition
 is a link to its row, a variable that patterns read carries a **Skips N** chip under its name
 that opens a row listing what each of its answers sets (`if meno_status = 2 → 777
-Premenopausal/NA · meno_age, meno_reason`), and the **Skip logic** button under the search box
-opens a panel listing every rule that way, grouped by the variable it reads.
+Premenopausal at questionnaire · meno_age`, `→ one of 666 777 888 · hrt_dur`, `→ not -666 ·
+move_reason`), and the **Skip logic** button under the search box opens a panel listing every
+rule that way, grouped by the variable it reads, each with its comment.
 
 ### Saying which codes are special: `x-value-kind`
 
@@ -245,7 +279,7 @@ styles never collide with your app. Features: instant search with highlighting +
 empty state (`/` to focus, `Esc` to clear), collapsible category sections, a sticky column
 header and frozen variable column, [resizable columns](#column-widths), skip patterns you can
 follow from either end (see [Mixed types & skip patterns](#mixed-types--skip-patterns)),
-collapsible JSON trees, copy / download-CSV, and optional
+collapsible JSON trees, copy as CSV / download as an Excel workbook, and optional
 [semantic search](#semantic-search-opt-in).
 
 Give the element a height — or put it in a container that has one — and the dictionary fills it:
@@ -281,7 +315,7 @@ Need your app's CSS to cascade in instead? Opt out of isolation:
 renderDataDictionary(container, table, { shadow: false });
 ```
 
-Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, searchPlaceholder, emptyCell, title, pageSize, resultsPageSize, columnWidths }`
+Other options: `{ theme: "light" | "dark" | "auto", expandCategories, expandAdditionalInfo, includeExport, exportFormat: "xlsx" | "csv", searchPlaceholder, emptyCell, title, pageSize, resultsPageSize, columnWidths }`
 (`pageSize: Infinity` disables lazy rendering; `resultsPageSize` is how many results are shown
 before *Show more*, default 50). Rows are materialised on demand, so read the data through
 `toPlainRows(table)` rather than by scraping the DOM.
@@ -463,15 +497,35 @@ const html = tableToHtml(table, options?);   // inline <style> + markup + a smal
 
 Self-contained and interactive (search, collapse, column resizing, skip-pattern links,
 export) without any framework — good for SSR or writing a report to disk. `columnWidths` works
-here too.
+here too. The page works offline, so the workbook its download button saves is built when the
+page is and embedded in it (base64; `exportFormat: "csv"` embeds a CSV file instead, and
+`includeExport: false` neither).
 
 ### Spreadsheet export
 
 ```ts
+tableToXlsx(table)                                   // Uint8Array: the formatted Excel workbook (XLSX_MEDIA_TYPE)
 toPlainRows(table)                                   // [{ "Variable name": …, … }]
 toPlainRows(table, { stringifyComplexColumns: false }) // keep structured values
 tableToCsv(table)                                    // RFC-4180 CSV string
 ```
+
+The **workbook** is what the download button saves. Its *Data dictionary* sheet has one row per
+variable, laid out like the table: one code per line with the code in bold, special codes under
+a *Special codes* line in amber, under a code the skip patterns that set it with the rule's
+comment in italics, conditional constraints with theirs, the variable's `$comment` as a *Note*,
+and one keyword per line in *Additional information*. Its header is frozen and filters, a
+heavier rule separates the categories, and the header repeats on printed pages. A *Skip logic*
+sheet lists every rule (condition, what it requires, the variables, its comment) and an *About*
+sheet the dataset's description and notes, its categories with theirs, its special codes with
+what each means, a key to the formatting and the dataset metadata. Options: `{ title, includeSkipLogic, includeAbout, compress }`. It is written by a
+small built-in writer (`buildXlsx`, also exported) with no dependencies.
+
+A flat cell has no formatting, so `toPlainRows` and the CSV put one value or constraint per
+line, the special codes after a `Special codes:` line, and a rule's comment after its constraint
+(`… — Note: …`); the `$comment`s of a variable are the last lines of its description. Save a CSV
+with a byte-order mark (`"\uFEFF" + tableToCsv(table)`, as the download button does) so Excel
+reads it as UTF-8.
 
 ### Drop-in `<script>` (no build step)
 
@@ -495,8 +549,10 @@ See [`examples/index.html`](examples/index.html) for a live demo and
 | `renderDataDictionary(container, table, options?)` | Mount the interactive component; returns the element. |
 | `tableToHtml(table, options?)` | Static, self-contained HTML string. |
 | `defineDataDictionaryElement(tag?)` | Register the `<json-data-dictionary>` custom element. |
-| `toPlainRows(table, options?)` / `tableToCsv(table, options?)` | Spreadsheet export. |
-| `buildViewModel(table, options?)` | The render-ready view model (for custom UIs). |
+| `tableToXlsx(table, options?)` | The formatted Excel workbook (`Uint8Array`); `XLSX_MEDIA_TYPE`. |
+| `toPlainRows(table, options?)` / `tableToCsv(table, options?)` | Flat export: plain row objects / CSV. |
+| `buildXlsx(workbook, options?)` | The dependency-free `.xlsx` writer behind `tableToXlsx`: sheets of rows of (rich-text) cells with styles, frozen panes, filters, merges. |
+| `buildViewModel(table, options?)` / `splitDescription(row)` | The render-ready view model (for custom UIs); a row's description apart from its `$comment` lines. |
 | `formatVariablePath(path)` / `splitVariableName(name, parent)` | Nested-field paths: the name of a `PathStep[]`, and the muted-prefix / leaf split a renderer shows. |
 | `createTransformersEmbedder(module, options?)` | `Embedder` adapter for Transformers.js (opt-in semantic search); `KNOWN_EMBEDDING_MODELS`, `DEFAULT_EMBEDDING_MODEL`, `detectWebGpu()`. |
 | `createSearchEngine(table, options?)` | Headless hybrid search: synchronous lexical `search()`, semantic hits via `subscribe()`. |

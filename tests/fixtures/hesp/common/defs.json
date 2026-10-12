@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/common/defs.json",
+  "title": "HESP shared schema definitions",
+  "description": "Reusable identifiers, response codes, and missing-value sentinels for the Household Economic Security Panel. Numeric fields remain numeric in the flat table. Reserved negative values distinguish structural skips, refusals, unknowns, and values not collected in a partial interview.",
+  "$defs": {
+    "not_applicable": {
+      "const": -666,
+      "title": "Not applicable / structural skip",
+      "description": "The questionnaire routing determined that the variable was outside the respondent universe."
+    },
+    "refused": {
+      "const": -777,
+      "title": "Refused",
+      "description": "The respondent explicitly declined to answer."
+    },
+    "dont_know": {
+      "const": -888,
+      "title": "Don't know / unavailable",
+      "description": "The respondent did not know the value or it could not be determined."
+    },
+    "not_collected": {
+      "const": -999,
+      "title": "Not collected / processing missing",
+      "description": "The item was in universe but was not collected or was unavailable after processing."
+    },
+    "not_applicable_year": {
+      "const": -6666,
+      "title": "Not applicable / structural skip"
+    },
+    "refused_year": {
+      "const": -7777,
+      "title": "Refused"
+    },
+    "dont_know_year": {
+      "const": -8888,
+      "title": "Don't know / unavailable"
+    },
+    "not_collected_year": {
+      "const": -9999,
+      "title": "Not collected / processing missing"
+    },
+    "household_id": {
+      "type": "string",
+      "pattern": "^HH[0-9]{8}$",
+      "title": "Household identifier",
+      "description": "Stable household identifier formatted 'HH' followed by eight digits."
+    },
+    "person_id": {
+      "type": "string",
+      "pattern": "^HH[0-9]{8}_P[0-9]{2}$",
+      "title": "Person identifier",
+      "description": "Person identifier nested under a household identifier."
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^HH[0-9]{8}_W(0[1-9]|1[0-9]|20)$",
+      "title": "Household-wave record identifier",
+      "description": "Household identifier followed by '_W' and a two-digit wave number."
+    },
+    "date_iso": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "title": "Calendar date",
+      "description": "Calendar date in YYYY-MM-DD form. Calendar-day validity beyond the regular expression is an application-level check."
+    },
+    "yes_no": {
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "#/$defs/refused"
+        },
+        {
+          "$ref": "#/$defs/dont_know"
+        },
+        {
+          "$ref": "#/$defs/not_collected"
+        }
+      ]
+    },
+    "yes_no_na": {
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "No"
+        },
+        {
+          "const": 1,
+          "title": "Yes"
+        },
+        {
+          "$ref": "#/$defs/not_applicable"
+        },
+        {
+          "$ref": "#/$defs/refused"
+        },
+        {
+          "$ref": "#/$defs/dont_know"
+        },
+        {
+          "$ref": "#/$defs/not_collected"
+        }
+      ]
+    },
+    "imputation_flag": {
+      "oneOf": [
+        {
+          "const": 0,
+          "title": "Reported or administratively observed"
+        },
+        {
+          "const": 1,
+          "title": "Partly imputed"
+        },
+        {
+          "const": 2,
+          "title": "Fully imputed"
+        },
+        {
+          "const": 3,
+          "title": "Top-coded or disclosure-perturbed"
+        },
+        {
+          "$ref": "#/$defs/not_collected"
+        }
+      ],
+      "title": "Imputation and disclosure-treatment flag"
+    },
+    "survey_weight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000000,
+      "title": "Survey analysis weight",
+      "description": "Nonnegative analysis weight. A value of zero denotes a record outside the corresponding analytic panel."
+    }
+  }
+}

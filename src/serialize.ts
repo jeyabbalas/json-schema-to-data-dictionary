@@ -1,4 +1,9 @@
 // Flatten the rich row model into plain rows / CSV for spreadsheet export.
+//
+// A flat cell has no formatting, so the layout carries the structure: one value or constraint
+// per line, the special codes under a "Special codes:" line of their own, and a rule's comment
+// on the line of the constraint it explains. (`validValuesText` / `constraintsText` stay one
+// line each: the search index matches across them.) For a formatted workbook use `tableToXlsx`.
 
 import type { ConstraintItem, DataDictionaryRow, DataDictionaryTable, PlainRowsOptions, ValidValue } from "./types";
 import { cloneJson, displayValue, stableStringify } from "./utils";
@@ -30,6 +35,26 @@ export function constraintsText(constraints: ConstraintItem[]): string {
   return constraints.map((c) => c.text).join(" ");
 }
 
+/** Valid values for a flat cell: one per line (with the author's comment on it), the special codes after a "Special codes:" line. */
+export function validValuesCell(values: ValidValue[]): string {
+  const line = (v: ValidValue): string => withNote(validValueLine(v), v.comment);
+  const lines = values.filter((v) => v.kind !== "sentinel").map(line);
+  const codes = values.filter((v) => v.kind === "sentinel").map(line);
+  if (codes.length > 0) lines.push("Special codes:", ...codes);
+  return lines.join("\n");
+}
+
+/** Constraints for a flat cell: one per line, a rule's comment after it. */
+export function constraintsCell(constraints: ConstraintItem[]): string {
+  return constraints.map((c) => withNote(c.text, c.comment)).join("\n");
+}
+
+/** `text — Note: comment`, the comment on the same line however many lines it was written on. */
+function withNote(text: string, comment: string | undefined): string {
+  const note = comment?.replace(/\s*\n\s*/g, " ").trim();
+  return note ? `${text} — Note: ${note}` : text;
+}
+
 export function additionalInfoText(info: DataDictionaryRow["Additional information"]): string {
   if (info === null || info === undefined) return "";
   return stableStringify(info);
@@ -50,8 +75,8 @@ export function toPlainRows(table: DataDictionaryTable, options: PlainRowsOption
       Description: row["Description"] || empty,
       "Data type": row["Data type"] || empty,
       Format: row["Format"] || empty,
-      "Valid values": stringify ? validValuesText(row["Valid values"]) || empty : cloneJson(row["Valid values"]),
-      Constraints: stringify ? constraintsText(row["Constraints"]) || empty : cloneJson(row["Constraints"]),
+      "Valid values": stringify ? validValuesCell(row["Valid values"]) || empty : cloneJson(row["Valid values"]),
+      Constraints: stringify ? constraintsCell(row["Constraints"]) || empty : cloneJson(row["Constraints"]),
       "Additional information": stringify ? additionalInfoText(row["Additional information"]) || empty : cloneJson(row["Additional information"])
     };
     if (options.includeInternalColumns) {
@@ -75,8 +100,8 @@ export function tableToCsv(table: DataDictionaryTable, options: PlainRowsOptions
       row["Description"],
       row["Data type"],
       row["Format"],
-      validValuesText(row["Valid values"]),
-      constraintsText(row["Constraints"]),
+      validValuesCell(row["Valid values"]),
+      constraintsCell(row["Constraints"]),
       additionalInfoText(row["Additional information"])
     ];
     if (includeCategory) cells.unshift(row.__category ?? "");

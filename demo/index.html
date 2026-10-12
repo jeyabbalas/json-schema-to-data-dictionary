@@ -113,8 +113,8 @@
   </div>
 
   <div id="export-menu" class="menu menu-export" popover>
-    <button type="button" class="menu-item" data-export="html">HTML page<span class="menu-item-note">.html</span></button>
     <button type="button" class="menu-item" data-export="xlsx">Excel workbook<span class="menu-item-note">.xlsx</span></button>
+    <button type="button" class="menu-item" data-export="html">HTML page<span class="menu-item-note">.html</span></button>
     <button type="button" class="menu-item" data-export="csv">CSV<span class="menu-item-note">.csv</span></button>
     <div class="menu-sep"></div>
     <button type="button" class="menu-item" data-export="copy">Copy as CSV</button>
@@ -146,12 +146,10 @@
   <input id="file-input" type="file" multiple accept=".json,application/json" hidden />
   <input id="folder-input" type="file" webkitdirectory hidden />
 
-  <!-- Load order matters: bundle (defines window.JsonSchemaDataDictionary and the
-       <json-data-dictionary> element) → presets (window.DEMO_PRESETS) →
-       ExcelJS (window.ExcelJS, used by the Excel export) → app. -->
+  <!-- Load order matters: bundle (defines window.JsonSchemaDataDictionary, the
+       <json-data-dictionary> element and the Excel export) → presets (window.DEMO_PRESETS) → app. -->
   <script src="json-schema-data-dictionary.global.js"></script>
   <script src="presets.js"></script>
-  <script src="exceljs.min.js"></script>
   <script src="app.js" defer></script>
 </body>
 </html>

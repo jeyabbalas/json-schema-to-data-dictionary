@@ -261,7 +261,7 @@
      "sentinel",
      "Missing/Unknown",
      "Sentinel for a missing or unknown numeric value.",
-     "visits[].fasting = 0"
+     "visits[].fasting = 0 (Non-fasting)"
     ]
    ],
    "constraints": [
@@ -272,8 +272,8 @@
     ],
     [
      "conditional",
-     "When visits[].fasting = 0, value = 999 (Missing).",
-     "visits[].fasting = 0"
+     "When visits[].fasting = 0 (Non-fasting), value = 999 (Missing/Unknown) or absent.",
+     "visits[].fasting = 0 (Non-fasting)"
     ],
     [
      "conditional",
@@ -442,7 +442,7 @@
   {
    "name": "baseline",
    "category": "General",
-   "description": "Clinic visit\nMeasurements taken at one clinic visit.\nBaseline visit\nThe enrollment visit, stored separately from the follow-up visits.",
+   "description": "Baseline visit\nThe enrollment visit, stored separately from the follow-up visits.\nMeasurements taken at one clinic visit.",
    "type": "object",
    "format": "",
    "values": [],
@@ -578,7 +578,7 @@
      "sentinel",
      "Missing/Unknown",
      "Sentinel for a missing or unknown numeric value.",
-     "baseline.fasting = 0"
+     "baseline.fasting = 0 (Non-fasting)"
     ]
    ],
    "constraints": [
@@ -589,8 +589,8 @@
     ],
     [
      "conditional",
-     "When baseline.fasting = 0, value = 999 (Missing).",
-     "baseline.fasting = 0"
+     "When baseline.fasting = 0 (Non-fasting), value = 999 (Missing/Unknown) or absent.",
+     "baseline.fasting = 0 (Non-fasting)"
     ],
     [
      "conditional",
@@ -1626,7 +1626,7 @@
      "sentinel",
      "Not applicable",
      null,
-     "vital_status = 0"
+     "vital_status = 0 (Alive)"
     ],
     [
      999,
@@ -1644,8 +1644,8 @@
     ],
     [
      "conditional",
-     "When vital_status = 0, value = 777 (Not applicable).",
-     "vital_status = 0"
+     "When vital_status = 0 (Alive), value = 777 (Not applicable) or absent.",
+     "vital_status = 0 (Alive)"
     ]
    ],
    "additional": null,
@@ -1657,7 +1657,7 @@
  ],
  "conditionalRules": [
   {
-   "condition": "vital_status = 0",
+   "condition": "vital_status = 0 (Alive)",
    "triggers": [
     "vital_status"
    ],
@@ -1666,12 +1666,14 @@
     {
      "variable": "death_year",
      "value": 777,
-     "label": "Not applicable"
+     "label": "Not applicable",
+     "kind": "equals",
+     "text": "value = 777 (Not applicable) or absent"
     }
    ]
   },
   {
-   "condition": "visits[].fasting = 0",
+   "condition": "visits[].fasting = 0 (Non-fasting)",
    "triggers": [
     "visits[].fasting"
    ],
@@ -1680,12 +1682,14 @@
     {
      "variable": "visits[].glucose_mmol",
      "value": 999,
-     "label": "Missing"
+     "label": "Missing/Unknown",
+     "kind": "equals",
+     "text": "value = 999 (Missing/Unknown) or absent"
     }
    ]
   },
   {
-   "condition": "baseline.fasting = 0",
+   "condition": "baseline.fasting = 0 (Non-fasting)",
    "triggers": [
     "baseline.fasting"
    ],
@@ -1694,7 +1698,9 @@
     {
      "variable": "baseline.glucose_mmol",
      "value": 999,
-     "label": "Missing"
+     "label": "Missing/Unknown",
+     "kind": "equals",
+     "text": "value = 999 (Missing/Unknown) or absent"
     }
    ]
   }

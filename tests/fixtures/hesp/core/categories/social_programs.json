@@ -1,0 +1,460 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/social_programs.json",
+  "title": "HESP CORE - Social program participation",
+  "description": "Receipt, duration, and amounts for major cash and in-kind social programs, plus application and denial experience.",
+  "type": "object",
+  "x-variable-group": "social_programs",
+  "properties": {
+    "snap_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Nutrition assistance received in reference year"
+    },
+    "snap_months": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Months of nutrition assistance receipt",
+      "x-universe": "Households receiving nutrition assistance.",
+      "x-unit": "months"
+    },
+    "snap_avg_monthly": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Average monthly nutrition assistance benefit",
+      "x-universe": "Households receiving nutrition assistance.",
+      "x-unit": "currency units per month"
+    },
+    "cash_assistance_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "General cash assistance received in reference year"
+    },
+    "cash_assistance_months": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Months of general cash assistance receipt",
+      "x-universe": "Households receiving general cash assistance.",
+      "x-unit": "months"
+    },
+    "cash_assistance_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual general cash assistance amount",
+      "x-universe": "Households receiving general cash assistance.",
+      "x-unit": "currency units per year"
+    },
+    "unemployment_benefit_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Unemployment insurance benefits received in reference year"
+    },
+    "unemployment_benefit_weeks": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 52
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Weeks of unemployment insurance receipt",
+      "x-universe": "Households receiving unemployment insurance benefits.",
+      "x-unit": "weeks"
+    },
+    "unemployment_benefit_total": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 500000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total unemployment insurance benefits",
+      "x-universe": "Households receiving unemployment insurance benefits.",
+      "x-unit": "currency units per year"
+    },
+    "housing_assistance_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Rental housing assistance received",
+      "x-universe": "Cash renters."
+    },
+    "housing_assistance_type": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Public housing"
+        },
+        {
+          "const": 2,
+          "title": "Tenant-based voucher"
+        },
+        {
+          "const": 3,
+          "title": "Project-based subsidy"
+        },
+        {
+          "const": 4,
+          "title": "Other rental assistance"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Rental housing assistance type",
+      "x-universe": "Cash renters receiving housing assistance."
+    },
+    "housing_assistance_months": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Months of rental housing assistance",
+      "x-universe": "Cash renters receiving housing assistance.",
+      "x-unit": "months"
+    },
+    "housing_assistance_value_monthly": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Estimated monthly value of rental housing assistance",
+      "x-universe": "Cash renters receiving housing assistance.",
+      "x-unit": "currency units per month"
+    },
+    "energy_assistance_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Home energy assistance received in reference year"
+    },
+    "energy_assistance_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual home energy assistance amount",
+      "x-universe": "Households receiving home energy assistance.",
+      "x-unit": "currency units per year"
+    },
+    "childcare_subsidy_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Childcare subsidy received in reference year",
+      "x-universe": "Households with children under age 18."
+    },
+    "childcare_subsidy_months": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Months of childcare subsidy receipt",
+      "x-universe": "Households receiving a childcare subsidy.",
+      "x-unit": "months"
+    },
+    "childcare_subsidy_annual": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Annual childcare subsidy value",
+      "x-universe": "Households receiving a childcare subsidy.",
+      "x-unit": "currency units per year"
+    },
+    "school_meal_program_received": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "At least one child received subsidized school meals",
+      "x-universe": "Households with children under age 18."
+    },
+    "school_meal_children_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Children receiving subsidized school meals",
+      "x-universe": "Households using subsidized school meal programs.",
+      "x-unit": "children"
+    },
+    "benefit_application_any": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Applied for any means-tested benefit in reference year"
+    },
+    "benefit_denied_any": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Any benefit application denied",
+      "x-universe": "Households that applied for a means-tested benefit."
+    },
+    "denied_program_code": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Nutrition assistance"
+        },
+        {
+          "const": 2,
+          "title": "Cash assistance"
+        },
+        {
+          "const": 3,
+          "title": "Rental housing assistance"
+        },
+        {
+          "const": 4,
+          "title": "Energy assistance"
+        },
+        {
+          "const": 5,
+          "title": "Childcare subsidy"
+        },
+        {
+          "const": 6,
+          "title": "Other program"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Program for most consequential benefit denial",
+      "x-universe": "Households with a denied benefit application."
+    },
+    "benefit_recipient_count": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Household members covered by at least one means-tested benefit",
+      "x-unit": "persons"
+    }
+  },
+  "required": [
+    "snap_received",
+    "snap_months",
+    "snap_avg_monthly",
+    "cash_assistance_received",
+    "cash_assistance_months",
+    "cash_assistance_annual",
+    "unemployment_benefit_received",
+    "unemployment_benefit_weeks",
+    "unemployment_benefit_total",
+    "housing_assistance_received",
+    "housing_assistance_type",
+    "housing_assistance_months",
+    "housing_assistance_value_monthly",
+    "energy_assistance_received",
+    "energy_assistance_annual",
+    "childcare_subsidy_received",
+    "childcare_subsidy_months",
+    "childcare_subsidy_annual",
+    "school_meal_program_received",
+    "school_meal_children_count",
+    "benefit_application_any",
+    "benefit_denied_any",
+    "denied_program_code",
+    "benefit_recipient_count"
+  ]
+}

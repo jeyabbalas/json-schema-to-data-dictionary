@@ -30,15 +30,16 @@ function tableWithRule(properties, rule) {
 // --- The model ---------------------------------------------------------------
 
 test("rules and conditional constraints name the variables their condition reads", () => {
-  const rule = bcrpp.conditionalRules.find((r) => r.condition === "parous = 1 and parity = 1");
+  const rule = bcrpp.conditionalRules.find((r) => r.condition === "parous = 1 (Parous) and parity = 1");
   assert.deepEqual(rule.triggers, ["parous", "parity"]);
-  assert.deepEqual(bcrpp.conditionalRules.find((r) => r.condition === "meno_status = 2").triggers, ["meno_status"]);
+  assert.deepEqual(bcrpp.conditionalRules.find((r) => r.condition === "meno_status = 2 (Premenopausal)").triggers, ["meno_status"]);
 
-  const pinned = findRow(bcrpp, "age_preg2")["Constraints"].find((c) => c.condition === "parous = 0");
+  const pinned = findRow(bcrpp, "age_preg2")["Constraints"].find((c) => c.condition === "parous = 0 (Non-parous)");
   assert.equal(pinned.keyword, "conditional");
   assert.equal(pinned.value, 777, "a skip pattern that pins the variable records the value");
   assert.deepEqual(pinned.triggers, ["parous"]);
-  assert.deepEqual(findRow(bcrpp, "hrt_dur")["Constraints"].find((c) => c.condition === "meno_status = 2").value, [666, 777, 888]);
+  assert.match(pinned.comment, /^Skip pattern: nonparous/, "the rule's $comment travels with the constraint");
+  assert.deepEqual(findRow(bcrpp, "hrt_dur")["Constraints"].find((c) => c.condition === "meno_status = 2 (Premenopausal)").value, [666, 777, 888]);
 
   const required = findRow(covid, "days_hospitalized")["Constraints"].find((c) => c.condition === "hospitalized is present");
   assert.deepEqual(required.triggers, ["hospitalized"]);
@@ -46,7 +47,7 @@ test("rules and conditional constraints name the variables their condition reads
 });
 
 test("a range condition reads as an inequality, exclusive bounds included", () => {
-  assert.ok(bcrpp.conditionalRules.some((r) => r.condition === "parous = 1 and 1 ≤ parity ≤ 2"));
+  assert.ok(bcrpp.conditionalRules.some((r) => r.condition === "parous = 1 (Parous) and 1 ≤ parity ≤ 2"));
   const props = { x: { type: "number" }, y: { type: "integer", enum: [1, 2, 777] } };
   const cases = [
     [{ exclusiveMinimum: 5 }, "x > 5"],
@@ -66,17 +67,25 @@ test("a range condition reads as an inequality, exclusive bounds included", () =
 test("view model: each special code lists the skip patterns that set it, with their variables", () => {
   const age = rowVM("age_preg2");
   const code = (v) => age.sentinels.find((s) => s.display === v);
-  assert.deepEqual(code("666").conditions, [{ text: "parous = 1 and parity = 1", triggers: ["parous", "parity"] }]);
-  assert.deepEqual(code("777").conditions, [{ text: "parous = 0", triggers: ["parous"] }]);
+  const strip = (conditions) => conditions.map(({ text, triggers }) => ({ text, triggers }));
+  assert.deepEqual(strip(code("666").conditions), [{ text: "parous = 1 (Parous) and parity = 1", triggers: ["parous", "parity"] }]);
+  assert.deepEqual(strip(code("777").conditions), [{ text: "parous = 0 (Non-parous)", triggers: ["parous"] }]);
+  assert.match(code("777").conditions[0].comment, /^Skip pattern: nonparous/, "each condition carries the rule's comment");
   assert.deepEqual(code("888").conditions, []);
-  assert.equal(code("777").condition, "parous = 0", "the joined text is kept");
+  assert.equal(code("777").condition, "parous = 0 (Non-parous)", "the joined text is kept");
 
+  // A pattern that allows a set of codes (meno_status = 2 -> one of 666, 777, 888) sets none of
+  // them in particular: it stays a constraint, and only the pattern that pins 777 is on 777.
   const hrt = rowVM("hrt_dur");
   assert.deepEqual(
     hrt.sentinels.find((s) => s.display === "777").conditions.map((c) => c.text),
-    ["meno_status = 2", "hrtuse = 0"],
-    "one entry per pattern, not a '; '-joined string"
+    ["hrtuse = 0 (Never used hormone replacement therapy)"],
+    "one entry per pattern that sets the value"
   );
+  assert.deepEqual(hrt.sentinels.find((s) => s.display === "666").conditions, []);
+  const allowed = hrt.constraints.find((c) => c.text.startsWith("When meno_status = 2"));
+  assert.equal(allowed.onValues, false, "the allowed set stays among the constraints");
+  assert.match(allowed.text, /value is one of 666 \(NA \(premenopausal\)\), 777 \(Never user\), 888 \(Missing\/Unknown\)\.$/);
 });
 
 test("view model: pinning constraints are shown on their values, the rest stay constraints", () => {
@@ -94,17 +103,20 @@ test("view model: pinning constraints are shown on their values, the rest stay c
 
 test("view model: variables know the rules they trigger; rules group their effects by value", () => {
   const index = (cond) => vm.rules.findIndex((r) => r.condition === cond);
-  assert.ok(rowVM("parous").skipRules.includes(index("parous = 0")));
+  assert.ok(rowVM("parous").skipRules.includes(index("parous = 0 (Non-parous)")));
   assert.equal(rowVM("parous").skipRules.length, 10);
   assert.equal(rowVM("parity").skipRules.length, 9);
   assert.deepEqual(rowVM("age_preg1").skipRules, []);
   assert.ok(vm.names.has("age_preg10") && !vm.names.has("nope"));
 
-  const meno = vm.rules[index("meno_status = 2")];
+  const meno = vm.rules[index("meno_status = 2 (Premenopausal)")];
   assert.deepEqual(meno.groups, [
-    { values: ["777"], label: "Premenopausal/NA", variables: ["meno_age", "meno_reason"] },
-    { values: ["666", "777", "888"], variables: ["hrt_dur", "hrtep_dur", "hrteonly_dur"] }
+    // Each code reads with its variable's own label, as in that variable's Valid values.
+    { kind: "equals", values: ["777"], label: "Premenopausal at questionnaire", variables: ["meno_age"] },
+    { kind: "equals", values: ["777"], label: "NA (premenopausal)", variables: ["meno_reason"] },
+    { kind: "oneOf", values: ["666", "777", "888"], variables: ["hrt_dur", "hrtep_dur", "hrteonly_dur"] }
   ]);
+  assert.match(meno.description, /^Skip pattern: premenopausal/);
 });
 
 test("view model: a table built without the structured fields falls back to the condition text", () => {
@@ -140,9 +152,9 @@ test("static HTML: a pinned code says when it applies, once, linking the variabl
     return html.slice(start, html.indexOf("</tr>", start));
   };
   const age = rowHtml("age_preg1");
-  assert.match(age, /<span class="dd-when"><span class="dd-kw">if<\/span> <span class="dd-cond"><button type="button" class="dd-ref" data-dd-goto="parous"[^>]*>parous<\/button> = 0<\/span><\/span>/);
-  assert.doesNotMatch(age, /When parous = 0, value = 777/, "the pinning constraint is not repeated");
-  assert.match(tableToCsv(bcrpp), /When parous = 0, value = 777 \(Nonparous\)\./, "exports keep the constraint text");
+  assert.match(age, /<span class="dd-when"><span class="dd-kw">if<\/span> <span class="dd-cond"><button type="button" class="dd-ref" data-dd-goto="parous"[^>]*>parous<\/button> = 0 \(Non-parous\)<\/span><\/span><span class="dd-why">Skip pattern: nonparous/);
+  assert.doesNotMatch(age, /When parous = 0 \(Non-parous\), value = 777/, "the pinning constraint is not repeated");
+  assert.match(tableToCsv(bcrpp), /When parous = 0 \(Non-parous\), value = 777 \(Nonparous\)\./, "exports keep the constraint text");
 });
 
 test("static HTML: a variable skip patterns read opens a detail row listing them", () => {
@@ -155,7 +167,8 @@ test("static HTML: a variable skip patterns read opens a detail row listing them
   assert.ok(detailStart > start, "the detail row follows its variable");
   const detail = html.slice(detailStart, html.indexOf("</tr>", detailStart));
   assert.equal((detail.match(/class="dd-rule[ "]/g) ?? []).length, 10, "one entry per rule parous takes part in");
-  assert.match(detail, /<code class="dd-ref-self">parous<\/code> = 0/, "the variable itself is named, not linked");
+  assert.match(detail, /<code class="dd-ref-self">parous<\/code> = 0 \(Non-parous\)/, "the variable itself is named, not linked");
+  assert.match(detail, /<div class="dd-rule-note">Skip pattern: nonparous/, "the rule's comment is shown, not hidden in a tooltip");
   assert.match(detail, /data-dd-goto="parity"/, "the other variable of a joint condition is linked");
 });
 

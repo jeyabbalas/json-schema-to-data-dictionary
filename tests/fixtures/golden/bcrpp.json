@@ -218,7 +218,7 @@
   {
    "name": "record_date",
    "category": "CORE — Identification/Dates",
-   "description": "Date of data/sample collection\nSource coding: dd/mm/yyyy; 08/08/8000 - Missing/Unknown.\nDate (dd/mm/yyyy)\nCalendar date in dd/mm/yyyy format. The reserved value 08/08/8000 denotes Missing/Unknown.\nThe sentinel 08/08/8000 deliberately satisfies this pattern (a oneOf split would double-match), so missingness is documented here rather than enforced as a separate branch.",
+   "description": "Date of data/sample collection\nDate (dd/mm/yyyy)\nCalendar date in dd/mm/yyyy format. The reserved value 08/08/8000 denotes Missing/Unknown.\nSource coding: dd/mm/yyyy; 08/08/8000 - Missing/Unknown.\nThe sentinel 08/08/8000 deliberately satisfies this pattern (a oneOf split would double-match), so missingness is documented here rather than enforced as a separate branch.",
    "type": "string",
    "format": "Matches pattern ^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4}$",
    "values": [],
@@ -1061,7 +1061,7 @@
     ],
     [
      3,
-     "sentinel",
+     "value",
      "Ever (unknown current or former)",
      null,
      null
@@ -1113,7 +1113,7 @@
      "sentinel",
      "Nondrinker",
      null,
-     "alcohol_status = 4"
+     "alcohol_status = 4 (Never)"
     ],
     [
      888,
@@ -1136,8 +1136,8 @@
     ],
     [
      "conditional",
-     "When alcohol_status = 4, value = 777 (Nondrinker).",
-     "alcohol_status = 4"
+     "When alcohol_status = 4 (Never), value = 777 (Nondrinker).",
+     "alcohol_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1165,7 +1165,7 @@
      "sentinel",
      "Nondrinker",
      null,
-     "alcohol_status = 4"
+     "alcohol_status = 4 (Never)"
     ],
     [
      888,
@@ -1188,8 +1188,8 @@
     ],
     [
      "conditional",
-     "When alcohol_status = 4, value = 777 (Nondrinker).",
-     "alcohol_status = 4"
+     "When alcohol_status = 4 (Never), value = 777 (Nondrinker).",
+     "alcohol_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1217,14 +1217,14 @@
      "sentinel",
      "N/A (no stop date)",
      null,
-     "alcohol_status = 1"
+     "alcohol_status = 1 (Current)"
     ],
     [
      777,
      "sentinel",
      "Nondrinker",
      null,
-     "alcohol_status = 4"
+     "alcohol_status = 4 (Never)"
     ],
     [
      888,
@@ -1247,13 +1247,13 @@
     ],
     [
      "conditional",
-     "When alcohol_status = 4, value = 777 (Nondrinker).",
-     "alcohol_status = 4"
+     "When alcohol_status = 4 (Never), value = 777 (Nondrinker).",
+     "alcohol_status = 4 (Never)"
     ],
     [
      "conditional",
-     "When alcohol_status = 1, value = 666 (N/A no-stop-date).",
-     "alcohol_status = 1"
+     "When alcohol_status = 1 (Current), value = 666 (N/A (no stop date)).",
+     "alcohol_status = 1 (Current)"
     ]
    ],
    "additional": null,
@@ -1281,7 +1281,7 @@
      "sentinel",
      "Nondrinker",
      null,
-     "alcohol_status = 4"
+     "alcohol_status = 4 (Never)"
     ],
     [
      888,
@@ -1304,8 +1304,8 @@
     ],
     [
      "conditional",
-     "When alcohol_status = 4, value = 777 (Nondrinker).",
-     "alcohol_status = 4"
+     "When alcohol_status = 4 (Never), value = 777 (Nondrinker).",
+     "alcohol_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1337,7 +1337,7 @@
     ],
     [
      3,
-     "sentinel",
+     "value",
      "Ever (unknown current or former)",
      null,
      null
@@ -1389,7 +1389,7 @@
      "sentinel",
      "Nonsmoker",
      null,
-     "smoking_status = 4"
+     "smoking_status = 4 (Never)"
     ],
     [
      888,
@@ -1412,8 +1412,8 @@
     ],
     [
      "conditional",
-     "When smoking_status = 4, value = 777 (Nonsmoker).",
-     "smoking_status = 4"
+     "When smoking_status = 4 (Never), value = 777 (Nonsmoker).",
+     "smoking_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1441,7 +1441,7 @@
      "sentinel",
      "Nonsmoker",
      null,
-     "smoking_status = 4"
+     "smoking_status = 4 (Never)"
     ],
     [
      888,
@@ -1464,8 +1464,8 @@
     ],
     [
      "conditional",
-     "When smoking_status = 4, value = 777 (Nonsmoker).",
-     "smoking_status = 4"
+     "When smoking_status = 4 (Never), value = 777 (Nonsmoker).",
+     "smoking_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1493,7 +1493,7 @@
      "sentinel",
      "Nonsmoker",
      null,
-     "smoking_status = 4"
+     "smoking_status = 4 (Never)"
     ],
     [
      888,
@@ -1516,8 +1516,8 @@
     ],
     [
      "conditional",
-     "When smoking_status = 4, value = 777 (Nonsmoker).",
-     "smoking_status = 4"
+     "When smoking_status = 4 (Never), value = 777 (Nonsmoker).",
+     "smoking_status = 4 (Never)"
     ]
    ],
    "additional": null,
@@ -1545,14 +1545,14 @@
      "sentinel",
      "N/A (current smoker)",
      null,
-     "smoking_status = 1"
+     "smoking_status = 1 (Current)"
     ],
     [
      777,
      "sentinel",
      "Nonsmoker",
      null,
-     "smoking_status = 4"
+     "smoking_status = 4 (Never)"
     ],
     [
      888,
@@ -1575,13 +1575,13 @@
     ],
     [
      "conditional",
-     "When smoking_status = 4, value = 777 (Nonsmoker).",
-     "smoking_status = 4"
+     "When smoking_status = 4 (Never), value = 777 (Nonsmoker).",
+     "smoking_status = 4 (Never)"
     ],
     [
      "conditional",
-     "When smoking_status = 1, value = 666 (N/A current-smoker).",
-     "smoking_status = 1"
+     "When smoking_status = 1 (Current), value = 666 (N/A (current smoker)).",
+     "smoking_status = 1 (Current)"
     ]
    ],
    "additional": null,
@@ -2439,7 +2439,7 @@
   {
    "name": "BBD_type1",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for first BBD diagnosis",
+   "description": "Type of benign breast disease for first BBD diagnosis\nSource coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -2469,7 +2469,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0"
+     "BBD_history = 0 (No) or BBD_number = 0"
     ],
     [
      888,
@@ -2487,12 +2487,12 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 777 (NA).",
      "BBD_number = 0"
     ]
    ],
@@ -2505,7 +2505,7 @@
   {
    "name": "BBD_year1",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of first benign breast disease diagnosis",
+   "description": "Year of diagnosis of first benign breast disease diagnosis\nSource coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)",
    "type": "integer + coded values",
    "format": "",
    "values": [
@@ -2521,7 +2521,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0"
+     "BBD_history = 0 (No) or BBD_number = 0"
     ],
     [
      8888,
@@ -2544,12 +2544,12 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 7777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 7777 (NA).",
      "BBD_number = 0"
     ]
    ],
@@ -2562,7 +2562,7 @@
   {
    "name": "BBD_type2",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for second BBD diagnosis",
+   "description": "Type of benign breast disease for second BBD diagnosis\nSource coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -2592,7 +2592,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1"
     ],
     [
      888,
@@ -2610,17 +2610,17 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 777 (NA).",
      "BBD_number = 1"
     ]
    ],
@@ -2633,7 +2633,7 @@
   {
    "name": "BBD_year2",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of second benign breast disease diagnosis",
+   "description": "Year of diagnosis of second benign breast disease diagnosis\nSource coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)",
    "type": "integer + coded values",
    "format": "",
    "values": [
@@ -2649,7 +2649,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1"
     ],
     [
      8888,
@@ -2672,17 +2672,17 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 7777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 7777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 7777 (NA).",
      "BBD_number = 1"
     ]
    ],
@@ -2695,7 +2695,7 @@
   {
    "name": "BBD_type3",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for third BBD diagnosis",
+   "description": "Type of benign breast disease for third BBD diagnosis\nSource coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -2725,7 +2725,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1 or BBD_number = 2"
     ],
     [
      888,
@@ -2743,22 +2743,22 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 777 (NA).",
      "BBD_number = 1"
     ],
     [
      "conditional",
-     "When BBD_number = 2, value = 777 (BBD type/year slots 3-4 are NA).",
+     "When BBD_number = 2, value = 777 (NA).",
      "BBD_number = 2"
     ]
    ],
@@ -2771,7 +2771,7 @@
   {
    "name": "BBD_year3",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of third benign breast disease diagnosis",
+   "description": "Year of diagnosis of third benign breast disease diagnosis\nSource coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)",
    "type": "integer + coded values",
    "format": "",
    "values": [
@@ -2787,7 +2787,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1 or BBD_number = 2"
     ],
     [
      8888,
@@ -2810,22 +2810,22 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 7777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 7777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 7777 (NA).",
      "BBD_number = 1"
     ],
     [
      "conditional",
-     "When BBD_number = 2, value = 7777 (BBD type/year slots 3-4 are NA).",
+     "When BBD_number = 2, value = 7777 (NA).",
      "BBD_number = 2"
     ]
    ],
@@ -2838,7 +2838,7 @@
   {
    "name": "BBD_type4",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.\nType of benign breast disease for fourth BBD diagnosis",
+   "description": "Type of benign breast disease for fourth BBD diagnosis\nSource coding: 1 - non-proliferative disease; 2 - proliferative disease without atypia; 3 - atypical hyperplasia; 777 - NA; 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -2868,7 +2868,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2; BBD_number = 3"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1 or BBD_number = 2 or BBD_number = 3"
     ],
     [
      888,
@@ -2886,27 +2886,27 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 777 (NA).",
      "BBD_number = 1"
     ],
     [
      "conditional",
-     "When BBD_number = 2, value = 777 (BBD type/year slots 3-4 are NA).",
+     "When BBD_number = 2, value = 777 (NA).",
      "BBD_number = 2"
     ],
     [
      "conditional",
-     "When BBD_number = 3, value = 777 (BBD type/year slot 4 is NA).",
+     "When BBD_number = 3, value = 777 (NA).",
      "BBD_number = 3"
     ]
    ],
@@ -2919,7 +2919,7 @@
   {
    "name": "BBD_year4",
    "category": "CORE — Personal Health History",
-   "description": "Source coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)\nYear of diagnosis of fourth benign breast disease diagnosis",
+   "description": "Year of diagnosis of fourth benign breast disease diagnosis\nSource coding: yyyy; 7777 - NA; 8888 - Missing/Unknown. (Some slots typed 'Date' in source but are 4-digit calendar years.)",
    "type": "integer + coded values",
    "format": "",
    "values": [
@@ -2935,7 +2935,7 @@
      "sentinel",
      "NA",
      null,
-     "BBD_history = 0; BBD_number = 0; BBD_number = 1; BBD_number = 2; BBD_number = 3"
+     "BBD_history = 0 (No) or BBD_number = 0 or BBD_number = 1 or BBD_number = 2 or BBD_number = 3"
     ],
     [
      8888,
@@ -2958,27 +2958,27 @@
     ],
     [
      "conditional",
-     "When BBD_history = 0, value = 7777 (BBD type/year slots are NA).",
-     "BBD_history = 0"
+     "When BBD_history = 0 (No), value = 7777 (NA).",
+     "BBD_history = 0 (No)"
     ],
     [
      "conditional",
-     "When BBD_number = 0, value = 7777 (BBD type/year slots are NA).",
+     "When BBD_number = 0, value = 7777 (NA).",
      "BBD_number = 0"
     ],
     [
      "conditional",
-     "When BBD_number = 1, value = 7777 (BBD type/year slots 2-4 are NA).",
+     "When BBD_number = 1, value = 7777 (NA).",
      "BBD_number = 1"
     ],
     [
      "conditional",
-     "When BBD_number = 2, value = 7777 (BBD type/year slots 3-4 are NA).",
+     "When BBD_number = 2, value = 7777 (NA).",
      "BBD_number = 2"
     ],
     [
      "conditional",
-     "When BBD_number = 3, value = 7777 (BBD type/year slot 4 is NA).",
+     "When BBD_number = 3, value = 7777 (NA).",
      "BBD_number = 3"
     ]
    ],
@@ -3096,7 +3096,7 @@
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3119,8 +3119,8 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ]
    ],
    "additional": null,
@@ -3172,7 +3172,7 @@
   {
    "name": "age_preg2",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at second pregnancy (full-term)\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at second pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3188,14 +3188,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity = 1"
+     "parous = 1 (Parous) and parity = 1"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3218,13 +3218,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and parity = 1, value = 666 (N/A).",
-     "parous = 1 and parity = 1"
+     "When parous = 1 (Parous) and parity = 1, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and parity = 1"
     ]
    ],
    "additional": null,
@@ -3236,7 +3236,7 @@
   {
    "name": "age_preg3",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at third pregnancy (full-term)\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at third pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3252,14 +3252,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 2"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 2"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3282,13 +3282,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 2, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 2"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 2, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 2"
     ]
    ],
    "additional": null,
@@ -3300,7 +3300,7 @@
   {
    "name": "age_preg4",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at fourth pregnancy (full-term)\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at fourth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3316,14 +3316,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 3"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 3"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3346,13 +3346,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 3, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 3"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 3, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 3"
     ]
    ],
    "additional": null,
@@ -3364,7 +3364,7 @@
   {
    "name": "age_preg5",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at fifth pregnancy (full-term)\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
+   "description": "Age at fifth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3380,14 +3380,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 4"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 4"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3410,13 +3410,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 4, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 4"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 4, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 4"
     ]
    ],
    "additional": null,
@@ -3428,7 +3428,7 @@
   {
    "name": "age_preg6",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at sixth pregnancy (full-term)\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
+   "description": "Age at sixth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing. (Source label has a stray 'first'.)",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3444,14 +3444,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 5"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 5"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3474,13 +3474,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 5, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 5"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 5, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 5"
     ]
    ],
    "additional": null,
@@ -3492,7 +3492,7 @@
   {
    "name": "age_preg7",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at seventh pregnancy (full-term)\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at seventh pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3508,14 +3508,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 6"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 6"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3538,13 +3538,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 6, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 6"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 6, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 6"
     ]
    ],
    "additional": null,
@@ -3556,7 +3556,7 @@
   {
    "name": "age_preg8",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at eighth pregnancy (full-term)\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at eighth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3572,14 +3572,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 7"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 7"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3602,13 +3602,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 7, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 7"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 7, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 7"
     ]
    ],
    "additional": null,
@@ -3620,7 +3620,7 @@
   {
    "name": "age_preg9",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at ninth pregnancy (full-term)\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at ninth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3636,14 +3636,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 8"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 8"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3666,13 +3666,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 8, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 8"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 8, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 8"
     ]
    ],
    "additional": null,
@@ -3684,7 +3684,7 @@
   {
    "name": "age_preg10",
    "category": "CORE — Reproductive History",
-   "description": "Age at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nAge at tenth pregnancy (full-term)\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Age at tenth pregnancy (full-term)\nAge at the Nth full-term pregnancy. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3700,14 +3700,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 9"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 9"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3730,13 +3730,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 9, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 9"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 9, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 9"
     ]
    ],
    "additional": null,
@@ -3771,7 +3771,7 @@
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3789,8 +3789,8 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ]
    ],
    "additional": null,
@@ -3818,7 +3818,7 @@
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3841,8 +3841,8 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ]
    ],
    "additional": null,
@@ -3870,7 +3870,7 @@
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3893,8 +3893,8 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ]
    ],
    "additional": null,
@@ -3906,7 +3906,7 @@
   {
    "name": "breastfeed_dur_b2",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for second birth\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for second birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<2 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3922,14 +3922,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and parity = 1"
+     "parous = 1 (Parous) and parity = 1"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -3952,13 +3952,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and parity = 1, value = 666 (N/A).",
-     "parous = 1 and parity = 1"
+     "When parous = 1 (Parous) and parity = 1, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and parity = 1"
     ]
    ],
    "additional": null,
@@ -3970,7 +3970,7 @@
   {
    "name": "breastfeed_dur_b3",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for third birth\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for third birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<3 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -3986,14 +3986,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 2"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 2"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4016,13 +4016,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 2, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 2"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 2, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 2"
     ]
    ],
    "additional": null,
@@ -4034,7 +4034,7 @@
   {
    "name": "breastfeed_dur_b4",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for fourth birth\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for fourth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<4 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4050,14 +4050,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 3"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 3"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4080,13 +4080,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 3, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 3"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 3, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 3"
     ]
    ],
    "additional": null,
@@ -4098,7 +4098,7 @@
   {
    "name": "breastfeed_dur_b5",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for fifth birth\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for fifth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<5 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4114,14 +4114,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 4"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 4"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4144,13 +4144,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 4, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 4"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 4, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 4"
     ]
    ],
    "additional": null,
@@ -4162,7 +4162,7 @@
   {
    "name": "breastfeed_dur_b6",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for sixth birth\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for sixth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<6 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4178,14 +4178,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 5"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 5"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4208,13 +4208,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 5, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 5"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 5, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 5"
     ]
    ],
    "additional": null,
@@ -4226,7 +4226,7 @@
   {
    "name": "breastfeed_dur_b7",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for seventh birth\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for seventh birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<7 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4242,14 +4242,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 6"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 6"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4272,13 +4272,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 6, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 6"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 6, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 6"
     ]
    ],
    "additional": null,
@@ -4290,7 +4290,7 @@
   {
    "name": "breastfeed_dur_b8",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for eighth birth\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for eighth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<8 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4306,14 +4306,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 7"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 7"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4336,13 +4336,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 7, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 7"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 7, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 7"
     ]
    ],
    "additional": null,
@@ -4354,7 +4354,7 @@
   {
    "name": "breastfeed_dur_b9",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for ninth birth\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for ninth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<9 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4370,14 +4370,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 8"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 8"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4400,13 +4400,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 8, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 8"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 8, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 8"
     ]
    ],
    "additional": null,
@@ -4418,7 +4418,7 @@
   {
    "name": "breastfeed_dur_b10",
    "category": "CORE — Reproductive History",
-   "description": "Duration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\nDuration of breastfeeding (months) for tenth birth\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
+   "description": "Duration of breastfeeding (months) for tenth birth\nDuration of breastfeeding (months) for the Nth birth. 666 - N/A (fewer than N full-term pregnancies); 777 - Nonparous; 888 - Missing.\n666 - N/A (<10 pregnancies); 777 - Nonparous; 888 - Missing.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -4434,14 +4434,14 @@
      "sentinel",
      "N/A (fewer than N full-term pregnancies)",
      null,
-     "parous = 1 and 1 ≤ parity ≤ 9"
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 9"
     ],
     [
      777,
      "sentinel",
      "Nonparous",
      null,
-     "parous = 0"
+     "parous = 0 (Non-parous)"
     ],
     [
      888,
@@ -4464,13 +4464,13 @@
     ],
     [
      "conditional",
-     "When parous = 0, value = 777 (Nonparous).",
-     "parous = 0"
+     "When parous = 0 (Non-parous), value = 777 (Nonparous).",
+     "parous = 0 (Non-parous)"
     ],
     [
      "conditional",
-     "When parous = 1 and 1 ≤ parity ≤ 9, value = 666 (N/A).",
-     "parous = 1 and 1 ≤ parity ≤ 9"
+     "When parous = 1 (Parous) and 1 ≤ parity ≤ 9, value = 666 (N/A (fewer than N full-term pregnancies)).",
+     "parous = 1 (Parous) and 1 ≤ parity ≤ 9"
     ]
    ],
    "additional": null,
@@ -4582,7 +4582,7 @@
      "sentinel",
      "NA (never user)",
      null,
-     "ocuse_ever = 0"
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ],
     [
      888,
@@ -4605,8 +4605,8 @@
     ],
     [
      "conditional",
-     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
-     "ocuse_ever = 0"
+     "When ocuse_ever = 0 (Never used oral contraceptives), value = 777 (NA (never user)).",
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ]
    ],
    "additional": null,
@@ -4634,7 +4634,7 @@
      "sentinel",
      "NA (never user)",
      null,
-     "ocuse_ever = 0"
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ],
     [
      888,
@@ -4657,8 +4657,8 @@
     ],
     [
      "conditional",
-     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
-     "ocuse_ever = 0"
+     "When ocuse_ever = 0 (Never used oral contraceptives), value = 777 (NA (never user)).",
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ]
    ],
    "additional": null,
@@ -4686,14 +4686,14 @@
      "sentinel",
      "Current user",
      null,
-     "ocuse_current = 1"
+     "ocuse_current = 1 (Yes)"
     ],
     [
      777,
      "sentinel",
      "NA (never user)",
      null,
-     "ocuse_ever = 0"
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ],
     [
      888,
@@ -4716,13 +4716,13 @@
     ],
     [
      "conditional",
-     "When ocuse_ever = 0, value = 777 (OC duration/start/stop are NA never-user).",
-     "ocuse_ever = 0"
+     "When ocuse_ever = 0 (Never used oral contraceptives), value = 777 (NA (never user)).",
+     "ocuse_ever = 0 (Never used oral contraceptives)"
     ],
     [
      "conditional",
-     "When ocuse_current = 1, value = 666 (OC stop age is Current-user).",
-     "ocuse_current = 1"
+     "When ocuse_current = 1 (Yes), value = 666 (Current user).",
+     "ocuse_current = 1 (Yes)"
     ]
    ],
    "additional": null,
@@ -4799,7 +4799,7 @@
      "sentinel",
      "NA (never user)",
      null,
-     "othcontracep_ever = 0"
+     "othcontracep_ever = 0 (Never)"
     ],
     [
      888,
@@ -4817,8 +4817,8 @@
     ],
     [
      "conditional",
-     "When othcontracep_ever = 0, value = 777 (NA never-user).",
-     "othcontracep_ever = 0"
+     "When othcontracep_ever = 0 (Never), value = 777 (NA (never user)).",
+     "othcontracep_ever = 0 (Never)"
     ]
    ],
    "additional": null,
@@ -4895,7 +4895,7 @@
      "sentinel",
      "Premenopausal at questionnaire",
      null,
-     "meno_status = 2"
+     "meno_status = 2 (Premenopausal)"
     ],
     [
      888,
@@ -4918,8 +4918,8 @@
     ],
     [
      "conditional",
-     "When meno_status = 2, value = 777 (Premenopausal/NA).",
-     "meno_status = 2"
+     "When meno_status = 2 (Premenopausal), value = 777 (Premenopausal at questionnaire).",
+     "meno_status = 2 (Premenopausal)"
     ]
    ],
    "additional": null,
@@ -4975,7 +4975,7 @@
      "sentinel",
      "NA (premenopausal)",
      null,
-     "meno_status = 2"
+     "meno_status = 2 (Premenopausal)"
     ],
     [
      888,
@@ -4993,8 +4993,8 @@
     ],
     [
      "conditional",
-     "When meno_status = 2, value = 777 (Premenopausal/NA).",
-     "meno_status = 2"
+     "When meno_status = 2 (Premenopausal), value = 777 (NA (premenopausal)).",
+     "meno_status = 2 (Premenopausal)"
     ]
    ],
    "additional": null,
@@ -5006,7 +5006,7 @@
   {
    "name": "hrtuse",
    "category": "CORE — Reproductive History",
-   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of any hormone replacement therapy",
+   "description": "Use of any hormone replacement therapy\nSource coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -5033,7 +5033,7 @@
     ],
     [
      3,
-     "sentinel",
+     "value",
      "Ever used (unknown current or former)",
      null,
      null
@@ -5062,7 +5062,7 @@
   {
    "name": "hrt_dur",
    "category": "CORE — Reproductive History",
-   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of any hormone replacement therapy (months)",
+   "description": "Lifetime duration of any hormone replacement therapy (months)\nLifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -5078,21 +5078,21 @@
      "sentinel",
      "NA (premenopausal)",
      null,
-     "meno_status = 2"
+     null
     ],
     [
      777,
      "sentinel",
      "Never user",
      null,
-     "meno_status = 2; hrtuse = 0"
+     "hrtuse = 0 (Never used hormone replacement therapy)"
     ],
     [
      888,
      "sentinel",
      "Missing/Unknown",
      "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
-     "meno_status = 2"
+     null
     ]
    ],
    "constraints": [
@@ -5108,13 +5108,13 @@
     ],
     [
      "conditional",
-     "When meno_status = 2, value is one of 666, 777, 888.",
-     "meno_status = 2"
+     "When meno_status = 2 (Premenopausal), value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown).",
+     "meno_status = 2 (Premenopausal)"
     ],
     [
      "conditional",
-     "When hrtuse = 0, value = 777 (HRT duration is Never-user).",
-     "hrtuse = 0"
+     "When hrtuse = 0 (Never used hormone replacement therapy), value = 777 (Never user).",
+     "hrtuse = 0 (Never used hormone replacement therapy)"
     ]
    ],
    "additional": null,
@@ -5126,7 +5126,7 @@
   {
    "name": "hrtuse_ep",
    "category": "CORE — Reproductive History",
-   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of E+P hormone replacement therapy",
+   "description": "Use of E+P hormone replacement therapy\nSource coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -5153,7 +5153,7 @@
     ],
     [
      3,
-     "sentinel",
+     "value",
      "Ever used (unknown current or former)",
      null,
      null
@@ -5182,7 +5182,7 @@
   {
    "name": "hrtep_dur",
    "category": "CORE — Reproductive History",
-   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of E+P hormone replacement therapy (months)",
+   "description": "Lifetime duration of E+P hormone replacement therapy (months)\nLifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -5198,21 +5198,21 @@
      "sentinel",
      "NA (premenopausal)",
      null,
-     "meno_status = 2"
+     null
     ],
     [
      777,
      "sentinel",
      "Never user",
      null,
-     "meno_status = 2; hrtuse_ep = 0"
+     "hrtuse_ep = 0 (Never used hormone replacement therapy)"
     ],
     [
      888,
      "sentinel",
      "Missing/Unknown",
      "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
-     "meno_status = 2"
+     null
     ]
    ],
    "constraints": [
@@ -5228,13 +5228,13 @@
     ],
     [
      "conditional",
-     "When meno_status = 2, value is one of 666, 777, 888.",
-     "meno_status = 2"
+     "When meno_status = 2 (Premenopausal), value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown).",
+     "meno_status = 2 (Premenopausal)"
     ],
     [
      "conditional",
-     "When hrtuse_ep = 0, value = 777 (E+P HRT duration is Never-user).",
-     "hrtuse_ep = 0"
+     "When hrtuse_ep = 0 (Never used hormone replacement therapy), value = 777 (Never user).",
+     "hrtuse_ep = 0 (Never used hormone replacement therapy)"
     ]
    ],
    "additional": null,
@@ -5246,7 +5246,7 @@
   {
    "name": "hrtuse_eonly",
    "category": "CORE — Reproductive History",
-   "description": "Source coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.\nUse of E-only hormone replacement therapy",
+   "description": "Use of E-only hormone replacement therapy\nSource coding: 0 - Never used hormone replacement therapy; 1 - Current use; 2 - Former use; 3 - Ever used (unknown current or former); 888 - Missing/Unknown.",
    "type": "categorical (integer)",
    "format": "",
    "values": [
@@ -5273,7 +5273,7 @@
     ],
     [
      3,
-     "sentinel",
+     "value",
      "Ever used (unknown current or former)",
      null,
      null
@@ -5302,7 +5302,7 @@
   {
    "name": "hrteonly_dur",
    "category": "CORE — Reproductive History",
-   "description": "Lifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.\nLifetime duration of E-only hormone replacement therapy (months)",
+   "description": "Lifetime duration of E-only hormone replacement therapy (months)\nLifetime duration in months. 666 - NA (premenopausal); 777 - Never user; 888 - Missing/Unknown.",
    "type": "number + coded values",
    "format": "",
    "values": [
@@ -5318,21 +5318,21 @@
      "sentinel",
      "NA (premenopausal)",
      null,
-     "meno_status = 2"
+     null
     ],
     [
      777,
      "sentinel",
      "Never user",
      null,
-     "meno_status = 2; hrtuse_eonly = 0"
+     "hrtuse_eonly = 0 (Never used hormone replacement therapy)"
     ],
     [
      888,
      "sentinel",
      "Missing/Unknown",
      "Sentinel denoting a missing/unknown value in a 3-digit field (integer, decimal, or categorical).",
-     "meno_status = 2"
+     null
     ]
    ],
    "constraints": [
@@ -5348,13 +5348,13 @@
     ],
     [
      "conditional",
-     "When meno_status = 2, value is one of 666, 777, 888.",
-     "meno_status = 2"
+     "When meno_status = 2 (Premenopausal), value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown).",
+     "meno_status = 2 (Premenopausal)"
     ],
     [
      "conditional",
-     "When hrtuse_eonly = 0, value = 777 (E-only HRT duration is Never-user).",
-     "hrtuse_eonly = 0"
+     "When hrtuse_eonly = 0 (Never used hormone replacement therapy), value = 777 (Never user).",
+     "hrtuse_eonly = 0 (Never used hormone replacement therapy)"
     ]
    ],
    "additional": null,
@@ -5504,7 +5504,7 @@
      "sentinel",
      "Never screened",
      null,
-     "screen_ever = 0"
+     "screen_ever = 0 (Never)"
     ],
     [
      888,
@@ -5527,8 +5527,8 @@
     ],
     [
      "conditional",
-     "When screen_ever = 0, value = 777 (Never-screened).",
-     "screen_ever = 0"
+     "When screen_ever = 0 (Never), value = 777 (Never screened).",
+     "screen_ever = 0 (Never)"
     ]
    ],
    "additional": null,
@@ -5556,7 +5556,7 @@
      "sentinel",
      "Never screened",
      null,
-     "screen_ever = 0"
+     "screen_ever = 0 (Never)"
     ],
     [
      8888,
@@ -5579,8 +5579,8 @@
     ],
     [
      "conditional",
-     "When screen_ever = 0, value = 7777 (Never-screened).",
-     "screen_ever = 0"
+     "When screen_ever = 0 (Never), value = 7777 (Never screened).",
+     "screen_ever = 0 (Never)"
     ]
    ],
    "additional": null,
@@ -5592,7 +5592,7 @@
  ],
  "conditionalRules": [
   {
-   "condition": "parous = 0",
+   "condition": "parous = 0 (Non-parous)",
    "triggers": [
     "parous"
    ],
@@ -5601,117 +5601,161 @@
     {
      "variable": "age_preg1",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg2",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg3",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg4",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg5",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg6",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg7",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg8",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg9",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "age_preg10",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b1",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b2",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b3",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b4",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b5",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b6",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b7",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b8",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b9",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     },
     {
      "variable": "breastfeed_dur_b10",
      "value": 777,
-     "label": "Nonparous"
+     "label": "Nonparous",
+     "kind": "equals",
+     "text": "value = 777 (Nonparous)"
     }
    ]
   },
   {
-   "condition": "parous = 1 and parity = 1",
+   "condition": "parous = 1 (Parous) and parity = 1",
    "triggers": [
     "parous",
     "parity"
@@ -5721,17 +5765,21 @@
     {
      "variable": "age_preg2",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b2",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 2",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 2",
    "triggers": [
     "parous",
     "parity"
@@ -5741,17 +5789,21 @@
     {
      "variable": "age_preg3",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b3",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 3",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 3",
    "triggers": [
     "parous",
     "parity"
@@ -5761,17 +5813,21 @@
     {
      "variable": "age_preg4",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b4",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 4",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 4",
    "triggers": [
     "parous",
     "parity"
@@ -5781,17 +5837,21 @@
     {
      "variable": "age_preg5",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b5",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 5",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 5",
    "triggers": [
     "parous",
     "parity"
@@ -5801,17 +5861,21 @@
     {
      "variable": "age_preg6",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b6",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 6",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 6",
    "triggers": [
     "parous",
     "parity"
@@ -5821,17 +5885,21 @@
     {
      "variable": "age_preg7",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b7",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 7",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 7",
    "triggers": [
     "parous",
     "parity"
@@ -5841,17 +5909,21 @@
     {
      "variable": "age_preg8",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b8",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 8",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 8",
    "triggers": [
     "parous",
     "parity"
@@ -5861,17 +5933,21 @@
     {
      "variable": "age_preg9",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b9",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "parous = 1 and 1 ≤ parity ≤ 9",
+   "condition": "parous = 1 (Parous) and 1 ≤ parity ≤ 9",
    "triggers": [
     "parous",
     "parity"
@@ -5881,17 +5957,21 @@
     {
      "variable": "age_preg10",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     },
     {
      "variable": "breastfeed_dur_b10",
      "value": 666,
-     "label": "N/A"
+     "label": "N/A (fewer than N full-term pregnancies)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (fewer than N full-term pregnancies))"
     }
    ]
   },
   {
-   "condition": "meno_status = 2",
+   "condition": "meno_status = 2 (Premenopausal)",
    "triggers": [
     "meno_status"
    ],
@@ -5900,12 +5980,16 @@
     {
      "variable": "meno_age",
      "value": 777,
-     "label": "Premenopausal/NA"
+     "label": "Premenopausal at questionnaire",
+     "kind": "equals",
+     "text": "value = 777 (Premenopausal at questionnaire)"
     },
     {
      "variable": "meno_reason",
      "value": 777,
-     "label": "Premenopausal/NA"
+     "label": "NA (premenopausal)",
+     "kind": "equals",
+     "text": "value = 777 (NA (premenopausal))"
     },
     {
      "variable": "hrt_dur",
@@ -5913,7 +5997,9 @@
       666,
       777,
       888
-     ]
+     ],
+     "kind": "oneOf",
+     "text": "value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown)"
     },
     {
      "variable": "hrtep_dur",
@@ -5921,7 +6007,9 @@
       666,
       777,
       888
-     ]
+     ],
+     "kind": "oneOf",
+     "text": "value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown)"
     },
     {
      "variable": "hrteonly_dur",
@@ -5929,12 +6017,14 @@
       666,
       777,
       888
-     ]
+     ],
+     "kind": "oneOf",
+     "text": "value is one of 666 (NA (premenopausal)), 777 (Never user), 888 (Missing/Unknown)"
     }
    ]
   },
   {
-   "condition": "hrtuse = 0",
+   "condition": "hrtuse = 0 (Never used hormone replacement therapy)",
    "triggers": [
     "hrtuse"
    ],
@@ -5943,12 +6033,14 @@
     {
      "variable": "hrt_dur",
      "value": 777,
-     "label": "HRT duration is Never-user"
+     "label": "Never user",
+     "kind": "equals",
+     "text": "value = 777 (Never user)"
     }
    ]
   },
   {
-   "condition": "hrtuse_ep = 0",
+   "condition": "hrtuse_ep = 0 (Never used hormone replacement therapy)",
    "triggers": [
     "hrtuse_ep"
    ],
@@ -5957,12 +6049,14 @@
     {
      "variable": "hrtep_dur",
      "value": 777,
-     "label": "E+P HRT duration is Never-user"
+     "label": "Never user",
+     "kind": "equals",
+     "text": "value = 777 (Never user)"
     }
    ]
   },
   {
-   "condition": "hrtuse_eonly = 0",
+   "condition": "hrtuse_eonly = 0 (Never used hormone replacement therapy)",
    "triggers": [
     "hrtuse_eonly"
    ],
@@ -5971,12 +6065,14 @@
     {
      "variable": "hrteonly_dur",
      "value": 777,
-     "label": "E-only HRT duration is Never-user"
+     "label": "Never user",
+     "kind": "equals",
+     "text": "value = 777 (Never user)"
     }
    ]
   },
   {
-   "condition": "alcohol_status = 4",
+   "condition": "alcohol_status = 4 (Never)",
    "triggers": [
     "alcohol_status"
    ],
@@ -5985,27 +6081,35 @@
     {
      "variable": "alcohol_init",
      "value": 777,
-     "label": "Nondrinker"
+     "label": "Nondrinker",
+     "kind": "equals",
+     "text": "value = 777 (Nondrinker)"
     },
     {
      "variable": "alcohol_amt",
      "value": 777,
-     "label": "Nondrinker"
+     "label": "Nondrinker",
+     "kind": "equals",
+     "text": "value = 777 (Nondrinker)"
     },
     {
      "variable": "alcohol_dur",
      "value": 777,
-     "label": "Nondrinker"
+     "label": "Nondrinker",
+     "kind": "equals",
+     "text": "value = 777 (Nondrinker)"
     },
     {
      "variable": "alcohol_stop",
      "value": 777,
-     "label": "Nondrinker"
+     "label": "Nondrinker",
+     "kind": "equals",
+     "text": "value = 777 (Nondrinker)"
     }
    ]
   },
   {
-   "condition": "alcohol_status = 1",
+   "condition": "alcohol_status = 1 (Current)",
    "triggers": [
     "alcohol_status"
    ],
@@ -6014,12 +6118,14 @@
     {
      "variable": "alcohol_stop",
      "value": 666,
-     "label": "N/A no-stop-date"
+     "label": "N/A (no stop date)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (no stop date))"
     }
    ]
   },
   {
-   "condition": "smoking_status = 4",
+   "condition": "smoking_status = 4 (Never)",
    "triggers": [
     "smoking_status"
    ],
@@ -6028,27 +6134,35 @@
     {
      "variable": "smoking_init",
      "value": 777,
-     "label": "Nonsmoker"
+     "label": "Nonsmoker",
+     "kind": "equals",
+     "text": "value = 777 (Nonsmoker)"
     },
     {
      "variable": "smoking_amt",
      "value": 777,
-     "label": "Nonsmoker"
+     "label": "Nonsmoker",
+     "kind": "equals",
+     "text": "value = 777 (Nonsmoker)"
     },
     {
      "variable": "smoking_dur",
      "value": 777,
-     "label": "Nonsmoker"
+     "label": "Nonsmoker",
+     "kind": "equals",
+     "text": "value = 777 (Nonsmoker)"
     },
     {
      "variable": "smoking_stop",
      "value": 777,
-     "label": "Nonsmoker"
+     "label": "Nonsmoker",
+     "kind": "equals",
+     "text": "value = 777 (Nonsmoker)"
     }
    ]
   },
   {
-   "condition": "smoking_status = 1",
+   "condition": "smoking_status = 1 (Current)",
    "triggers": [
     "smoking_status"
    ],
@@ -6057,12 +6171,14 @@
     {
      "variable": "smoking_stop",
      "value": 666,
-     "label": "N/A current-smoker"
+     "label": "N/A (current smoker)",
+     "kind": "equals",
+     "text": "value = 666 (N/A (current smoker))"
     }
    ]
   },
   {
-   "condition": "ocuse_ever = 0",
+   "condition": "ocuse_ever = 0 (Never used oral contraceptives)",
    "triggers": [
     "ocuse_ever"
    ],
@@ -6071,22 +6187,28 @@
     {
      "variable": "ocuse_dur",
      "value": 777,
-     "label": "OC duration/start/stop are NA never-user"
+     "label": "NA (never user)",
+     "kind": "equals",
+     "text": "value = 777 (NA (never user))"
     },
     {
      "variable": "ocuse_start",
      "value": 777,
-     "label": "OC duration/start/stop are NA never-user"
+     "label": "NA (never user)",
+     "kind": "equals",
+     "text": "value = 777 (NA (never user))"
     },
     {
      "variable": "ocuse_stop",
      "value": 777,
-     "label": "OC duration/start/stop are NA never-user"
+     "label": "NA (never user)",
+     "kind": "equals",
+     "text": "value = 777 (NA (never user))"
     }
    ]
   },
   {
-   "condition": "ocuse_current = 1",
+   "condition": "ocuse_current = 1 (Yes)",
    "triggers": [
     "ocuse_current"
    ],
@@ -6095,12 +6217,14 @@
     {
      "variable": "ocuse_stop",
      "value": 666,
-     "label": "OC stop age is Current-user"
+     "label": "Current user",
+     "kind": "equals",
+     "text": "value = 666 (Current user)"
     }
    ]
   },
   {
-   "condition": "othcontracep_ever = 0",
+   "condition": "othcontracep_ever = 0 (Never)",
    "triggers": [
     "othcontracep_ever"
    ],
@@ -6109,12 +6233,14 @@
     {
      "variable": "othcontracep_current",
      "value": 777,
-     "label": "NA never-user"
+     "label": "NA (never user)",
+     "kind": "equals",
+     "text": "value = 777 (NA (never user))"
     }
    ]
   },
   {
-   "condition": "screen_ever = 0",
+   "condition": "screen_ever = 0 (Never)",
    "triggers": [
     "screen_ever"
    ],
@@ -6123,17 +6249,21 @@
     {
      "variable": "screen_start",
      "value": 777,
-     "label": "Never-screened"
+     "label": "Never screened",
+     "kind": "equals",
+     "text": "value = 777 (Never screened)"
     },
     {
      "variable": "lastscreen_year",
      "value": 7777,
-     "label": "Never-screened"
+     "label": "Never screened",
+     "kind": "equals",
+     "text": "value = 7777 (Never screened)"
     }
    ]
   },
   {
-   "condition": "BBD_history = 0",
+   "condition": "BBD_history = 0 (No)",
    "triggers": [
     "BBD_history"
    ],
@@ -6142,42 +6272,58 @@
     {
      "variable": "BBD_type1",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type2",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type3",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type4",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_year1",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year2",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year3",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year4",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     }
    ]
   },
@@ -6191,42 +6337,58 @@
     {
      "variable": "BBD_type1",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type2",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type3",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type4",
      "value": 777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_year1",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year2",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year3",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year4",
      "value": 7777,
-     "label": "BBD type/year slots are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     }
    ]
   },
@@ -6240,32 +6402,44 @@
     {
      "variable": "BBD_type2",
      "value": 777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type3",
      "value": 777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type4",
      "value": 777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_year2",
      "value": 7777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year3",
      "value": 7777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year4",
      "value": 7777,
-     "label": "BBD type/year slots 2-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     }
    ]
   },
@@ -6279,22 +6453,30 @@
     {
      "variable": "BBD_type3",
      "value": 777,
-     "label": "BBD type/year slots 3-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_type4",
      "value": 777,
-     "label": "BBD type/year slots 3-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_year3",
      "value": 7777,
-     "label": "BBD type/year slots 3-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     },
     {
      "variable": "BBD_year4",
      "value": 7777,
-     "label": "BBD type/year slots 3-4 are NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     }
    ]
   },
@@ -6308,12 +6490,16 @@
     {
      "variable": "BBD_type4",
      "value": 777,
-     "label": "BBD type/year slot 4 is NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 777 (NA)"
     },
     {
      "variable": "BBD_year4",
      "value": 7777,
-     "label": "BBD type/year slot 4 is NA"
+     "label": "NA",
+     "kind": "equals",
+     "text": "value = 7777 (NA)"
     }
    ]
   }

@@ -64,7 +64,7 @@ test("lexicalDocumentFromRow / lexicalDocumentsFromTable: fields, categories by 
   const doc = lexicalDocumentFromRow(row, "My category");
   assert.equal(doc.name, "alcohol_init");
   assert.equal(doc.category, "My category");
-  assert.match(doc.values, /^10–100 \(measured value\)\n777 = Nondrinker \[when alcohol_status = 4\]\n888 = Missing\/Unknown$/, "one line per valid value, sentinels included");
+  assert.match(doc.values, /^10–100 \(measured value\)\n777 = Nondrinker \[when alcohol_status = 4 \(Never\)\]\n888 = Missing\/Unknown$/, "one line per valid value, sentinels included");
   assert.match(doc.format, /integer \+ coded values/);
   assert.match(doc.other, /Required/);
   assert.equal(lexicalDocumentFromRow(row).category, row.__category, "category defaults to the row's __category");

@@ -224,19 +224,22 @@ test("a field the enclosing object requires says so, and within what", () => {
 
 test("skip patterns inside a nested object are qualified by the path, once per use of the definition", () => {
   const rule = (condition) => T.conditionalRules.find((r) => r.condition === condition);
-  assert.equal(T.conditionalRules[0].condition, "vital_status = 0", "row-level rules come first");
-  assert.deepEqual(rule("visits[].fasting = 0").effects, [{ variable: "visits[].glucose_mmol", value: 999, label: "Missing" }]);
-  assert.match(rule("visits[].fasting = 0").description, /non-fasting visit/);
-  assert.ok(rule("baseline.fasting = 0"), "the same def used as an object gets its own rule");
-  assert.equal(rule("fasting = 0"), undefined, "no unqualified rule");
+  assert.equal(T.conditionalRules[0].condition, "vital_status = 0 (Alive)", "row-level rules come first");
+  assert.deepEqual(rule("visits[].fasting = 0 (Non-fasting)").effects, [
+    // The variable's own label for 999, and the field may be left out of a visit.
+    { variable: "visits[].glucose_mmol", value: 999, label: "Missing/Unknown", kind: "equals", text: "value = 999 (Missing/Unknown) or absent" }
+  ]);
+  assert.match(rule("visits[].fasting = 0 (Non-fasting)").description, /non-fasting visit/);
+  assert.ok(rule("baseline.fasting = 0 (Non-fasting)"), "the same def used as an object gets its own rule");
+  assert.equal(T.conditionalRules.find((r) => r.condition.startsWith("fasting")), undefined, "no unqualified rule");
   assert.equal(T.conditionalRules.length, 3);
 
   const glucose = findRow(T, "visits[].glucose_mmol");
   const code = value(glucose, 999);
   assert.equal(code.kind, "sentinel");
-  assert.equal(code.condition, "visits[].fasting = 0");
-  assert.ok(texts(glucose).includes("When visits[].fasting = 0, value = 999 (Missing)."));
-  assert.equal(value(findRow(T, "death_year"), 777).condition, "vital_status = 0", "row-level rules still annotate top-level rows");
+  assert.equal(code.condition, "visits[].fasting = 0 (Non-fasting)");
+  assert.ok(texts(glucose).includes("When visits[].fasting = 0 (Non-fasting), value = 999 (Missing/Unknown) or absent."));
+  assert.equal(value(findRow(T, "death_year"), 777).condition, "vital_status = 0 (Alive)", "row-level rules still annotate top-level rows");
 });
 
 test("dependentRequired inside a nested object is qualified too", () => {
@@ -388,7 +391,9 @@ test("unions of plain typed branches are typed (no more `any`)", () => {
   assert.equal(findRow(t, "either")["Data type"], "string or object");
   assert.ok(findRow(t, "either.a"));
   assert.equal(findRow(t, "numornull")["Data type"], "number (nullable)");
-  assert.equal(findRow(t, "dateorcode")["Data type"], "date");
+  // A date beside a missing code is the variable's substantive value, as a range is beside codes.
+  assert.equal(findRow(t, "dateorcode")["Data type"], "date + coded values");
+  assert.equal(findRow(t, "dateorcode")["Valid values"].find((v) => v.kind === "measurement")?.label, "any date");
   assert.equal(value(findRow(t, "dateorcode"), 999).kind, "sentinel");
   assert.equal(findRow(t, "intorarr")["Data type"], "integer or array of integer");
   assert.equal(findRow(t, "bools")["Data type"], "boolean or string");

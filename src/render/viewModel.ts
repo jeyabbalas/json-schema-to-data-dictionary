@@ -2,6 +2,8 @@
 // string and the interactive web component consume this, so layout stays identical.
 
 import type {
+  ConditionalEffect,
+  ConditionalEffectKind,
   ConditionalRule,
   ConstraintItem,
   DataDictionaryRow,
@@ -29,6 +31,8 @@ export interface ResolvedOptions {
   emptyCell: string;
   searchPlaceholder: string;
   includeExport: boolean;
+  /** What the download button saves. */
+  exportFormat: "xlsx" | "csv";
   expandCategories: boolean;
   expandAdditionalInfo: boolean;
   theme: "light" | "dark" | "auto";
@@ -46,6 +50,8 @@ export interface ResolvedOptions {
 export interface ConditionVM {
   text: string;
   triggers: string[];
+  /** The rule's `$comment`: why the pattern sets the value. */
+  comment?: string | undefined;
 }
 
 export interface ValueVM {
@@ -56,6 +62,8 @@ export interface ValueVM {
   condition?: string | undefined;
   /** The same conditions one by one: the skip patterns that set the variable to this value. */
   conditions: ConditionVM[];
+  /** The schema author's `$comment` on the value. */
+  comment?: string | undefined;
 }
 
 export interface ConstraintVM {
@@ -63,9 +71,14 @@ export interface ConstraintVM {
   conditional: boolean;
   /** Variables a conditional constraint's condition reads. */
   triggers: string[];
+  /** Other variables the text names (the rest of an "at least one of these" group). */
+  references: string[];
+  /** The `$comment` of the rule the constraint comes from. */
+  comment?: string | undefined;
   /**
-   * A skip pattern that pins the variable to a value: the renderer shows its condition on that
-   * value (Valid values) instead of repeating it as a constraint.
+   * A skip pattern that sets the variable to one listed value: the renderer shows its condition
+   * on that value (Valid values) instead of repeating it as a constraint. A pattern that allows a
+   * set of values stays a constraint -- it does not make any one of them *the* value.
    */
   onValues: boolean;
 }
@@ -87,7 +100,10 @@ export interface RowVM {
    */
   namePrefix: string;
   nameLeaf: string;
+  /** The `title` / `description` text (the row's `Description` without its comment lines). */
   description: string;
+  /** The schema author's `$comment`s on the variable, shown apart as a note. */
+  comment?: string | undefined;
   dataType: string;
   format: string;
   measurements: ValueVM[];
@@ -106,14 +122,23 @@ export interface CategoryVM {
   id: string;
   title: string;
   description?: string | undefined;
+  comment?: string | undefined;
   rows: RowVM[];
 }
 
-/** The variables one skip pattern sets to the same value(s). */
+/** The variables one skip pattern affects the same way. */
 export interface RuleGroupVM {
-  /** The value it pins them to, displayed; several for an `enum`, none when merely constrained. */
+  /**
+   * How they are affected: set to a value (`equals`), one of a set (`oneOf`), anything but a
+   * value or set (`notEquals`, `notOneOf`), or a requirement in words (`text`). Absent on rules
+   * built before 0.8, which only pinned values.
+   */
+  kind?: ConditionalEffectKind | undefined;
+  /** The values it sets, allows or rules out, displayed; empty when the effect is stated in `text`. */
   values: string[];
   label?: string | undefined;
+  /** The requirement in words, for effects that are not about listed values (a range, "at least one of …"). */
+  text?: string | undefined;
   variables: string[];
 }
 
@@ -148,6 +173,7 @@ export function resolveOptions(options: ViewModelOptions, table: DataDictionaryT
     emptyCell: options.emptyCell ?? "—",
     searchPlaceholder: options.searchPlaceholder ?? "Search variables, descriptions, values…",
     includeExport: options.includeExport ?? true,
+    exportFormat: options.exportFormat === "csv" ? "csv" : "xlsx",
     expandCategories: options.expandCategories ?? true,
     expandAdditionalInfo: options.expandAdditionalInfo ?? false,
     theme: options.theme ?? "auto",
@@ -209,6 +235,7 @@ export function buildViewModel(table: DataDictionaryTable, options: ViewModelOpt
     id: category.id,
     title: category.title,
     ...(category.description ? { description: category.description } : {}),
+    ...(category.comment ? { comment: category.comment } : {}),
     rows: category.rows.map((row) =>
       buildRowVM(row, rowIndex.get(row) ?? -1, category.title, rulesByTrigger.get(row["Variable name"]) ?? [], triggersByCondition)
     )
@@ -273,23 +300,27 @@ function buildRowVM(
   const values: ValueVM[] = [];
   const sentinels: ValueVM[] = [];
 
-  // Skip patterns that pin this variable to a value (or a set of values): the conditions each
-  // value is used under come from them, with the variables each condition reads. A pin whose
-  // value is listed is then shown there, and needs no repeating among the constraints.
-  const pins = row["Constraints"].filter((c) => c.keyword === "conditional" && c.value !== undefined && c.condition);
+  // Skip patterns that set this variable to one value: the conditions each value is used under
+  // come from them, with the variables each condition reads. A pin whose value is listed is then
+  // shown there, and needs no repeating among the constraints. A pattern that allows a set of
+  // values stays a constraint: under it the variable may take any of them.
+  const pins = row["Constraints"].filter((c) => c.keyword === "conditional" && c.value !== undefined && !Array.isArray(c.value) && c.condition);
   const shown = new Set<ConstraintItem>();
   const conditionsOf = (v: ValidValue): ConditionVM[] => {
     const key = valueKey(v.value);
     const out: ConditionVM[] = [];
     for (const pin of pins) {
-      const set = Array.isArray(pin.value) ? pin.value : [pin.value];
-      if (!set.some((x) => valueKey(x) === key)) continue;
+      if (valueKey(pin.value) !== key) continue;
       shown.add(pin);
-      if (!out.some((o) => o.text === pin.condition)) out.push({ text: pin.condition as string, triggers: pin.triggers ?? [] });
+      if (!out.some((o) => o.text === pin.condition)) {
+        out.push({ text: pin.condition as string, triggers: pin.triggers ?? [], ...(pin.comment ? { comment: pin.comment } : {}) });
+      }
     }
     if (out.length > 0 || !v.condition) return out;
-    // A table without the structured pins: fall back to the joined condition text.
-    return v.condition.split("; ").map((text) => ({ text, triggers: triggersByCondition.get(text) ?? [] }));
+    // A table without the structured pins: fall back to the condition text. Tables from 0.7 and
+    // earlier joined several with "; "; a condition of its own can contain one ("exactly one of: …").
+    const texts = /exactly one of|at least one of/.test(v.condition) ? [v.condition] : v.condition.split("; ");
+    return texts.map((text) => ({ text, triggers: triggersByCondition.get(text) ?? [] }));
   };
 
   for (const v of row["Valid values"]) {
@@ -303,10 +334,13 @@ function buildRowVM(
     text: c.text,
     conditional: c.keyword === "conditional" || c.keyword === "if/then" || c.keyword === "dependentRequired" || !!c.condition,
     triggers: c.triggers ?? (c.condition ? triggersByCondition.get(c.condition) ?? [] : []),
+    references: c.references ?? [],
+    ...(c.comment ? { comment: c.comment } : {}),
     onValues: shown.has(c)
   }));
 
   const searchText = rowSearchText(row);
+  const { text: description, comment } = splitDescription(row);
   return {
     index,
     category,
@@ -315,7 +349,8 @@ function buildRowVM(
     ...(parent !== undefined ? { parent } : {}),
     namePrefix,
     nameLeaf,
-    description: row["Description"],
+    description,
+    ...(comment ? { comment } : {}),
     dataType: row["Data type"],
     format: row["Format"],
     measurements,
@@ -340,12 +375,30 @@ function toValueVM(v: ValidValue, conditions: ConditionVM[]): ValueVM {
     ...(v.kind !== "measurement" && v.label ? { label: v.label } : {}),
     ...(v.description ? { description: v.description } : {}),
     ...(v.condition ? { condition: v.condition } : {}),
-    conditions
+    conditions,
+    ...(v.comment ? { comment: v.comment } : {})
   };
+}
+
+/**
+ * A row's `Description` split into its text and the `$comment` lines it ends with (as the
+ * extractor writes it). A description that does not end with them is shown whole.
+ */
+export function splitDescription(row: Pick<DataDictionaryRow, "Description" | "__comment">): { text: string; comment?: string } {
+  const description = row["Description"];
+  const comment = row.__comment?.trim();
+  if (!comment) return { text: description };
+  if (description.trim() === comment) return { text: "", comment };
+  const at = description.lastIndexOf(comment);
+  if (at > 0 && at + comment.length === description.length && /\n\s*$/.test(description.slice(0, at))) {
+    return { text: description.slice(0, at).trim(), comment };
+  }
+  return { text: description, comment };
 }
 
 function buildRuleVM(rule: ConditionalRule): RuleVM {
   const effects = rule.effects.map((e) => {
+    if (e.text && e.kind !== "equals" && e.kind !== "oneOf") return `${e.variable}: ${e.text}`;
     const value = Array.isArray(e.value)
       ? e.value.length
         ? `∈ {${e.value.map(displayValue).join(", ")}}`
@@ -357,15 +410,15 @@ function buildRuleVM(rule: ConditionalRule): RuleVM {
   const groups: RuleGroupVM[] = [];
   const byKey = new Map<string, RuleGroupVM>();
   for (const e of rule.effects) {
-    const values = Array.isArray(e.value) ? e.value : [e.value];
-    const key = JSON.stringify([values.map(valueKey), e.label ?? null]);
-    let group = byKey.get(key);
-    if (!group) {
-      group = { values: values.map(displayValue), ...(e.label ? { label: e.label } : {}), variables: [] };
-      byKey.set(key, group);
-      groups.push(group);
+    const group = groupOf(e);
+    const key = JSON.stringify([group.kind ?? null, group.values, group.label ?? null, group.text ?? null]);
+    let existing = byKey.get(key);
+    if (!existing) {
+      existing = group;
+      byKey.set(key, existing);
+      groups.push(existing);
     }
-    if (!group.variables.includes(e.variable)) group.variables.push(e.variable);
+    if (!existing.variables.includes(e.variable)) existing.variables.push(e.variable);
   }
   return {
     condition: rule.condition,
@@ -374,6 +427,24 @@ function buildRuleVM(rule: ConditionalRule): RuleVM {
     triggers: rule.triggers ?? [],
     groups
   };
+}
+
+/** How one effect shows in a rule's list: the values it is about, or its requirement in words. */
+function groupOf(e: ConditionalEffect): RuleGroupVM {
+  const label = e.label ? { label: e.label } : {};
+  switch (e.kind) {
+    case undefined:
+    case "equals":
+    case "oneOf": {
+      const values = Array.isArray(e.value) ? e.value : [e.value];
+      return { ...(e.kind ? { kind: e.kind } : {}), values: values.map(displayValue), ...label, variables: [] };
+    }
+    case "notEquals":
+    case "notOneOf":
+      return { kind: e.kind, values: (e.excluded ?? []).map(displayValue), ...label, variables: [] };
+    default:
+      return { kind: e.kind, values: [], ...(e.text ? { text: e.text } : {}), variables: [] };
+  }
 }
 
 function rowSearchText(row: DataDictionaryTable["rows"][number]): string {

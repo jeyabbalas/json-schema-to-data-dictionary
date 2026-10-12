@@ -4,6 +4,102 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+Skip patterns that say exactly what the schema enforces, the schema's comments where readers
+see them, and an Excel workbook instead of a CSV file.
+
+### Added
+
+- **Excel export.** `tableToXlsx(table, { title, includeSkipLogic, includeAbout, compress })`
+  builds a formatted workbook, and it is what the download button now saves (`exportFormat:
+  "csv"` restores the CSV file; *Copy* still copies CSV text). The *Data dictionary* sheet is laid
+  out like the table: one code per line with the code bold, special codes under a *Special codes*
+  line in amber, under a code the skip patterns that set it with the rule's comment, conditional
+  constraints with theirs, notes, a frozen and filterable header, a heavier rule between
+  categories. A *Skip logic* sheet lists every rule and an *About* sheet the dataset's
+  description and notes, its categories, a key to the formatting and the metadata. The static
+  HTML embeds the workbook so its button works offline. Written by `buildXlsx`, a small
+  dependency-free `.xlsx` writer (also exported); the demo no longer loads ExcelJS.
+- **Comments are shown.** A rule's `$comment` (and those of its `if`, its clause and the property
+  it constrains) is on each conditional constraint (`ConstraintItem.comment`) and under each code
+  it sets, and is visible in the *Skip logic* panel (it was a tooltip there and nowhere else). A
+  variable's `$comment` is a *Note* under its description (`row.__comment`; it is still the
+  description's last line, for flat exports), a code's `$comment` — on its branch or on the shared
+  definition it came from — is `ValidValue.comment` (it was dropped), and the comments of a
+  category (`category.comment`, no longer merged into its description) and of the dataset
+  (`table.comment` now also takes the row object's) are notes under their descriptions.
+- `ConditionalEffect.kind` (`equals`, `oneOf`, `notEquals`, `notOneOf`, `required`, `absent`,
+  `constraint`, `combination`, `forbidden`), `text`, `excluded` and `comment`;
+  `ConstraintItem.comment` and `references`; `ValidValue.comment`; view model `RowVM.comment`,
+  `CategoryVM.comment`, `ValueVM.comment`, `ConditionVM.comment`, `ConstraintVM.comment` and
+  `references`, `RuleGroupVM.kind` and `text`; `splitDescription`, `validValuesCell`,
+  `constraintsCell`, `XLSX_MEDIA_TYPE`; `PropertyAnalysis.types` (the JSON types a value may
+  take); types `ConditionalEffectKind`, `XlsxExportOptions` and the `Xlsx*` writer types.
+- A *HESP household panel* fixture and demo preset (`?preset=hesp`): 265 variables and 171
+  skip-pattern and consistency rules of every shape this release reads.
+
+### Changed
+
+- **Skip patterns read whatever shape they take.** A condition may use `anyOf`/`oneOf`/`allOf`/
+  `not`, a range together with excluded codes (`income ≤ 0 and income ∉ {-777, -888}`), or a
+  nested `if`; an effect may rule a value out (`value ≠ -666`), allow a range or codes (`1 ≤ value
+  ≤ 12 or value is one of -777, -888, -999`), require the variable, or constrain several variables
+  together (`at least one of these holds: checking_owned = 1; savings_owned = 1`). These read
+  "Constrained when …" or "condition holds" before (162 of HESP's constraints). `then.required`,
+  `then: false`, `else` and `dependentSchemas` say what they require too.
+- **Codes read with their labels** in conditions and effects: `partner_present = 0 (No)`,
+  `value = -666 (Not applicable / structural skip)`, each variable's own label, as in its Valid
+  values. A "Label (code)" in the rule's comment names only a code the variable does not label,
+  and only as the short phrase after its verb ("… are Nonsmoker (777)" → "Nonsmoker"). Before,
+  the comment's words replaced the variable's label for a code a rule set: BCRPP's BBD codes read
+  "(BBD type/year slots 2-4 are NA)", and a comment's label could contradict the code's own.
+- A rule that allows a *set* of codes (`enum`) is a constraint of the row, no longer an "if …"
+  on each code: it allows them, it sets none (`hrt_dur`'s 666, 777 and 888 each read "if
+  meno_status = 2"). Only a rule that sets one value is shown on that value.
+- A value a rule pins that the variable does not declare is listed as a special code only when it
+  reads as one and the variable's own schema allows it; a count set to 0 (HESP's `mortgage_count`,
+  `months_housing_arrears` …) is a measured value and stays a constraint, and a value the schema
+  rejects (777 for a score of 0–100) is a contradiction, which a table warning names.
+- Several rules that set one code are joined by "or" in `ValidValue.condition`, a compound
+  condition in parentheses (`BBD_history = 0 (No) or BBD_number = 0`); "; " could read as "and".
+- A condition on a property that may be absent says it also holds then (`smoker = 1 (Yes) or
+  smoker is absent`): `properties` only tests what is there. So does the opposite of a test the
+  `if` makes on a property it requires (an `else`, a `not`): `smoker ≠ 1 (Yes) or smoker is absent`,
+  unless every record has it. And a rule's requirement on a variable that may be absent says it
+  may be (`value = 999 (Missing) or absent`).
+- A range tests only numbers and a pattern only strings, so a condition on a variable that also
+  takes other values says they pass (`income ≥ 1 or income is a string`); a `type` beside a range
+  is kept when it narrows the variable's own (`weight is an integer and weight ≤ 50`).
+- Keywords a rule uses that the dictionary cannot put into words (`minProperties`,
+  `patternProperties` …) are shown as written (`the record matches {"minProperties":5}`) and named
+  in a table warning; an `if` of them read "always" and a clause of them was dropped.
+  `dependentRequired` and `dependentSchemas` inside a clause are rules of their own, a nested rule
+  carries the comment of the block around it, and a rule without a condition reads "In every
+  record, …".
+- A variable's own `title` comes first in its description and replaces the title of a shared
+  definition it `$ref`s ("Cross-sectional household weight", not "Survey analysis weight …").
+- A typed branch beside codes — a date, a string with a pattern, plain text — is the substantive
+  value, like a range: an identifier with string codes is `string + coded values` with `matches
+  ^HH[0-9]{8}$` listed above the codes (it listed only the codes); a date with a missing code is
+  `date + coded values`. Disjoint ranges are all stated (`0 ≤ value ≤ 10 or 100 ≤ value ≤ 200`),
+  and codes the measured branch excludes within its range are a constraint (`Measured value is
+  never -666, -777, -888 or -999`).
+- The flat export (`toPlainRows`, CSV) puts one value or constraint per line, the special codes
+  after a `Special codes:` line and a comment after the value or constraint it explains, on the
+  same line however it was written; downloaded CSV files start with a byte-order mark so Excel
+  reads them as UTF-8.
+- A `pattern` is described as itself (`Matches pattern …`): the guesses "US ZIP code" and "US
+  Social Security Number" named any pattern of five, or three-two-four, digits.
+
+### Fixed
+
+- "Income decline" and other labels where *decline* is a noun were filed as special codes
+  ("declined" still is), as were labels whose parenthesis mentions missingness: "Ever (unknown
+  current or former)" is a category of ever-users.
+- A range with an exclusive bound read as inclusive in Valid values (`0–100` for `0 < value ≤ 100`),
+  and `minimum` with a stricter `exclusiveMinimum` stated the looser bound.
+
 ## 0.7.0 - 2026-10-11
 
 A calmer table that you can size, and skip patterns you can follow.

@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.example.org/hesp/core/categories/financial_services.json",
+  "title": "HESP CORE - Financial services",
+  "description": "Banking status, transaction-account use, overdrafts, alternative financial services, remittances, advice, and budgeting.",
+  "type": "object",
+  "x-variable-group": "financial_services",
+  "properties": {
+    "banked_status": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Banked and not underbanked"
+        },
+        {
+          "const": 2,
+          "title": "Underbanked"
+        },
+        {
+          "const": 3,
+          "title": "Unbanked"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Banking status",
+      "description": "Underbanked households own a deposit or stored-value account and used at least one alternative financial service in the past 12 months."
+    },
+    "primary_account_provider": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Commercial bank"
+        },
+        {
+          "const": 2,
+          "title": "Credit union"
+        },
+        {
+          "const": 3,
+          "title": "Online-only bank"
+        },
+        {
+          "const": 4,
+          "title": "Prepaid-card or fintech provider"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary transaction-account provider",
+      "x-universe": "Banked or underbanked households."
+    },
+    "direct_deposit": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Uses direct deposit",
+      "x-universe": "Banked or underbanked households."
+    },
+    "online_banking": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Uses online banking",
+      "x-universe": "Banked or underbanked households."
+    },
+    "mobile_banking": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Uses mobile banking",
+      "x-universe": "Banked or underbanked households."
+    },
+    "overdraft_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Incurred an overdraft or nonsufficient-funds event in past 12 months",
+      "x-universe": "Banked or underbanked households."
+    },
+    "overdraft_fees_12m": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Overdraft and nonsufficient-funds fees in past 12 months",
+      "x-universe": "Banked or underbanked households.",
+      "x-unit": "currency units"
+    },
+    "alternative_service_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Used any alternative financial service in past 12 months"
+    },
+    "check_cashing_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Used a nonbank check-cashing service",
+      "x-universe": "Households using at least one alternative financial service."
+    },
+    "money_order_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Purchased a nonbank money order",
+      "x-universe": "Households using at least one alternative financial service."
+    },
+    "pawnshop_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Used a pawnshop loan",
+      "x-universe": "Households using at least one alternative financial service."
+    },
+    "rent_to_own_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Used a rent-to-own transaction",
+      "x-universe": "Households using at least one alternative financial service."
+    },
+    "remittance_sent_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Sent money to persons outside the country in past 12 months"
+    },
+    "remittance_amount_12m": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000000
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_applicable"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Total remittances sent in past 12 months",
+      "x-universe": "Households sending remittances.",
+      "x-unit": "currency units"
+    },
+    "financial_advice_used_12m": {
+      "$ref": "../../common/defs.json#/$defs/yes_no",
+      "title": "Used paid or nonprofit financial counseling in past 12 months"
+    },
+    "budgeting_method": {
+      "oneOf": [
+        {
+          "const": 1,
+          "title": "Formal written or app-based budget"
+        },
+        {
+          "const": 2,
+          "title": "Informal tracking"
+        },
+        {
+          "const": 3,
+          "title": "Automatic allocation or envelope method"
+        },
+        {
+          "const": 4,
+          "title": "No regular budgeting method"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/refused"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/dont_know"
+        },
+        {
+          "$ref": "../../common/defs.json#/$defs/not_collected"
+        }
+      ],
+      "title": "Primary household budgeting method"
+    },
+    "automatic_savings": {
+      "$ref": "../../common/defs.json#/$defs/yes_no_na",
+      "title": "Uses an automatic transfer or payroll deduction for savings",
+      "x-universe": "Banked or underbanked households."
+    }
+  },
+  "required": [
+    "banked_status",
+    "primary_account_provider",
+    "direct_deposit",
+    "online_banking",
+    "mobile_banking",
+    "overdraft_12m",
+    "overdraft_fees_12m",
+    "alternative_service_12m",
+    "check_cashing_12m",
+    "money_order_12m",
+    "pawnshop_12m",
+    "rent_to_own_12m",
+    "remittance_sent_12m",
+    "remittance_amount_12m",
+    "financial_advice_used_12m",
+    "budgeting_method",
+    "automatic_savings"
+  ]
+}
