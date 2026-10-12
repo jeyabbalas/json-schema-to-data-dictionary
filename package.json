@@ -7,7 +7,7 @@
   "author": "Jeya Balaji Balasubramanian",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeyabbalas/json-schema-to-data-dictionary.git"
+    "url": "git+https://github.com/jeyabbalas/json-schema-to-data-dictionary.git"
   },
   "homepage": "https://github.com/jeyabbalas/json-schema-to-data-dictionary#readme",
   "bugs": {
