@@ -248,20 +248,24 @@ function skipLogicSheet(vm: ViewModel): XlsxSheet {
   };
 }
 
-/** What a rule requires of a group of variables, in the words of the Skip logic panel. */
+/**
+ * What a rule requires of a group of variables, about "value" as the dictionary's sentences are:
+ * "value = "gold" or absent". The values are written as JSON, so a code "4" reads apart from 4.
+ */
 function requirement(g: RuleGroupVM): XlsxRun[] {
   const codes = (values: string[]): XlsxRun => ({ text: values.join(", "), font: { name: MONO, bold: true } });
   const label = g.label ? [{ text: ` (${g.label})` }] : [];
+  const qualifier: XlsxRun[] = g.qualifier ? [{ text: ` ${g.qualifier}`, font: { italic: true, color: COLOR.muted } }] : [];
   switch (g.kind) {
     case undefined:
     case "equals":
-      return g.values.length > 0 ? [{ text: "= " }, codes(g.values), ...label] : [{ text: "constrained" }];
+      return g.literals.length > 0 ? [{ text: "value = " }, codes(g.literals), ...label, ...qualifier] : [{ text: "constrained" }];
     case "oneOf":
-      return [{ text: "one of " }, codes(g.values)];
+      return [{ text: "value is one of " }, codes(g.literals), ...qualifier];
     case "notEquals":
-      return [{ text: "≠ " }, codes(g.values), ...label];
+      return [{ text: "value ≠ " }, codes(g.literals), ...label, ...qualifier];
     case "notOneOf":
-      return [{ text: "none of " }, codes(g.values)];
+      return [{ text: "value is not one of " }, codes(g.literals), ...qualifier];
     default:
       return [{ text: g.text ?? "constrained" }];
   }
@@ -274,11 +278,11 @@ function requirement(g: RuleGroupVM): XlsxRun[] {
 const LEGEND: ReadonlyArray<[string, string]> = [
   ["Valid values", "One code per line, the code in bold and its label after it. A range such as 0–120 is the measured value; special codes (missing, not applicable, refused, don't know …) follow under “Special codes”, in amber."],
   ["if …", "Under a code: a skip pattern that sets the variable to that code, and — in italics — the schema author's explanation of the rule."],
-  ["Constraints", "Ranges and other rules. Lines starting “When …” apply only under a condition (skip patterns that allow, rule out or require values), with the author's explanation in italics."],
-  ["Required", "The variable is present in every record. It may still hold a special code, such as “not applicable”, where a skip pattern says so."],
+  ["Constraints", "Ranges and other rules. A line with a condition — “When …”, “Required when … is present”, “Each item: When …” — applies only where the condition holds (skip patterns that allow, rule out or require values), with the author's explanation, where there is one, in italics."],
+  ["Required", "The variable is present in every record — possibly as null, where its type allows null. It may still hold a special code, such as “not applicable”, where a skip pattern says so."],
   ["Note", "A comment the schema's author wrote about a variable, a section or the dataset."],
   ["Additional information", "Further schema keywords, such as units, the universe a question is asked of, or how a value is derived."],
-  ["Skip logic", "Every skip pattern, one line per group of variables it affects: “=” sets them, “≠” and “none of” rule values out, “one of” allows only the listed values."]
+  ["Skip logic", "Every if/then skip pattern, one line per group of variables it affects. “value =” sets them, “value ≠” and “is not one of” rule values out, “is one of” allows only the listed values; “or absent”: the variable may also be left out; “(required)”: the rule also requires it, and “value must be present”: it requires the variable whatever its value (“may be null”: null will do). “If x is an object”: a field of x is required only where x is an object. “In the same item”: the condition and the variables are fields of one item of a list; “x[0]” is the first item of the list x, and “from x[1] on” its items after the first. A test of a variable that may be null says what null does (“or value is null”), unless the rule's other side settles it. A “when x is present, y is also required” rule (dependentRequired) is stated on the rows of x and y instead."]
 ];
 
 /** Each distinct special code (code, label and description), with the number of variables using it, most used first. */

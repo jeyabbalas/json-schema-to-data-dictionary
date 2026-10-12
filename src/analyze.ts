@@ -29,6 +29,7 @@ import type {
 import { describeEncodedContent, describeFormat, describePattern, formatLabel } from "./formats";
 import type { ResolutionBase, SchemaRegistry } from "./registry";
 import { sourceAt } from "./paths";
+import { readValueRule, valueRuleText, type ValueRule } from "./skipPatterns";
 import {
   asStringArray,
   cloneJson,
@@ -41,6 +42,7 @@ import {
   isSchemaObject,
   jsonTypeOf,
   normalizeTypeArray,
+  refKeyword,
   stableStringify,
   typeAlternatives,
   valueKey
@@ -152,6 +154,8 @@ interface Accumulator {
   array: { minItems?: number; maxItems?: number; uniqueItems?: boolean; minContains?: number; maxContains?: number; contains?: BranchAnalysis };
   object: { minProperties?: number; maxProperties?: number; propertyNames?: BranchAnalysis };
   extraConstraints: ConstraintItem[];
+  /** The rules the value makes of itself (`if`/`then` on its own keywords), put into words once its labels and types are known. */
+  valueRules: ValueRule[];
   additional: Record<string, unknown>;
   /** `title` / `description` text, in the order met. */
   descriptions: string[];
@@ -318,6 +322,7 @@ function newAccumulator(self: SchemaRef): Accumulator {
     array: {},
     object: {},
     extraConstraints: [],
+    valueRules: [],
     additional: {},
     descriptions: [],
     comments: [],
@@ -526,10 +531,26 @@ function collectComposition(schema: JsonSchemaObject, ctx: InternalContext, acc:
   }
 
   if (schema.if !== undefined && (schema.then !== undefined || schema.else !== undefined)) {
-    // Property-level conditionals are summarised here; the rules themselves are collected by
-    // extract.ts (row-object skip patterns, and those inside an object-shaped variable).
-    acc.extraConstraints.push({ keyword: "if/then", text: "Has a conditional (if/then) sub-rule." });
+    // A rule about the value itself ("when value ≥ 500, a multiple of 5") is one of its
+    // constraints. One between the fields of an object is a skip pattern, which extract.ts reads
+    // once it lists the fields; until then the row notes that there is one.
+    const rule = readValueRule(schema, ctx.base, ctx.registry, ctx.maxDepth, isConditionalOnly(schema) ? commentOf(schema) : undefined);
+    if (rule) acc.valueRules.push(rule);
+    else acc.extraConstraints.push({ keyword: "if/then", text: FIELD_RULE_NOTE });
   }
+}
+
+/** What an object's row says of a rule between its fields that is not read as a skip pattern (its fields are not listed). */
+export const FIELD_RULE_NOTE = "Has a conditional (if/then) sub-rule.";
+
+function commentOf(schema: JsonSchemaObject): string | undefined {
+  return typeof schema.$comment === "string" && schema.$comment.trim() ? schema.$comment.trim() : undefined;
+}
+
+/** A rule from one branch of a union holds only for values of that branch's types. */
+function inBranch(rules: readonly ValueRule[], sub: Accumulator): ValueRule[] {
+  const types = typesOf(sub);
+  return rules.map((rule) => (rule.branch || types.length === 0 ? rule : { ...rule, branch: types }));
 }
 
 function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: InternalContext, acc: Accumulator): void {
@@ -612,7 +633,11 @@ function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: In
   // value can be. Without this a union of such branches read "any", and `anyOf: [T, null]` lost
   // its null. The measured branches of a mixed union were taken apart above.
   for (const b of analyzed) {
-    if (b.analysis.values.length > 0 || (mixed && b.analysis.isMeasurement)) continue;
+    if (b.analysis.values.length > 0 || (mixed && b.analysis.isMeasurement)) {
+      // Taken apart above; the rules it makes of its values still hold.
+      acc.valueRules.push(...inBranch(b.analysis.acc.valueRules, b.analysis.acc));
+      continue;
+    }
     absorbBranch(acc, b.analysis.acc, {
       schema: b.branch,
       base: ctx.base,
@@ -642,6 +667,7 @@ function absorbBranch(acc: Accumulator, sub: Accumulator, branch: SchemaRef): vo
   acc.hasArray ||= sub.hasArray;
   acc.hasObjectShape ||= sub.hasObjectShape;
   acc.extraConstraints.push(...sub.extraConstraints);
+  acc.valueRules.push(...(branch.union !== undefined ? inBranch(sub.valueRules, sub) : sub.valueRules));
 
   const tag = branch.union !== undefined ? { union: branch.union, variant: branch.variant } : undefined;
   mergeShape(acc.shape, sub.shape, tag);
@@ -1081,6 +1107,21 @@ function buildConstraints(acc: Accumulator, item: PropertyAnalysis | undefined):
     }
   }
 
+  // The rules the value makes of itself, labelled like its Valid values.
+  if (acc.valueRules.length > 0) {
+    const labels = new Map<string, string>();
+    for (const v of acc.values) {
+      const label = v.label?.trim() || (v.description && v.description.length <= 60 ? v.description.trim() : "");
+      if (v.kind !== "measurement" && label && !labels.has(valueKey(v.value))) labels.set(valueKey(v.value), label);
+    }
+    const own = typesOf(acc);
+    const itemOwn = acc.items ? typesOf(acc.items.acc) : [];
+    for (const rule of acc.valueRules) {
+      const text = valueRuleText(rule, own, itemOwn, (value) => labels.get(valueKey(value)));
+      if (text) out.push({ keyword: "if/then", text, ...(rule.comment ? { comment: rule.comment } : {}) });
+    }
+  }
+
   out.push(...acc.extraConstraints);
   return dedupeConstraints(out);
 }
@@ -1294,12 +1335,6 @@ function dedupeConstraints(items: ConstraintItem[]): ConstraintItem[] {
 function plainAdditional(info: Record<string, unknown>): Record<string, JsonValue> | null {
   const compact = compactObject(info);
   return Object.keys(compact).length > 0 ? (compact as Record<string, JsonValue>) : null;
-}
-
-export function refKeyword(schema: JsonSchemaObject): string | undefined {
-  if (typeof schema.$ref === "string") return schema.$ref;
-  if (typeof schema.$dynamicRef === "string") return schema.$dynamicRef;
-  return undefined;
 }
 
 /** Annotation text from a schema (title / description / $comment), for category headings. */

@@ -147,8 +147,11 @@ weights             array of number + coded values   Each item: Measured value: 
   `When contact is an object` — or `In variant 2 of contact` when several alternatives are
   objects. A field the enclosing object requires reads `Required within visits[]`
   (`Required when contact is an object` when only a union branch requires it); `if`/`then` and
-  `dependentRequired` inside a nested object are qualified by the path (`visits[].fasting = 0`)
-  and join `table.conditionalRules`.
+  `dependentRequired` inside a nested object, or inside each element of a list of objects, are
+  qualified by the path (`visits[].fasting = 0`; in a list's elements `visits[].fasting = 0 in
+  the same item`: the condition and what it sets are one visit's) and join `table.conditionalRules`. A rule can
+  also reach into a value from outside — a field of an object, an item of a list, a tuple
+  position — and reads in the same names (see [the table below](#mixed-types--skip-patterns)).
 - A **recursive** definition (an event whose `follow_ups` are events) is expanded once and then
   noted (`Recursive structure: same shape as events[]`), and `maxNestingDepth` (default 6)
   bounds how deep the rows go. `expandNested: false` keeps one row per top-level property; the
@@ -193,7 +196,9 @@ Constraints   Required · Measured value: 20 ≤ value ≤ 65
 The measurement range goes to **Constraints**; the codes go to **Valid values**, badged apart
 from real categories, each carrying the condition that sets it. In the data the pattern is also
 a constraint (`When meno_status = 2 (Premenopausal), value = 777 (Premenopausal at questionnaire).`, with the
-pinned `value`), which exports and search keep; the rendered table shows it once, on the code.
+pinned `value`), which exports and search keep; the rendered table shows it once, on the code —
+unless the rule also lets the variable be absent (`value = 999 (Missing) or absent`, `orAbsent`),
+which the code alone would not say: then the sentence stays among the constraints too.
 `dependentRequired` and `dependentSchemas` are surfaced as conditional constraints too, and all
 `if/then` rules are collected into `table.conditionalRules`. Every rule, and every conditional
 constraint, names the variables its condition reads (`triggers: ["parous", "parity"]`).
@@ -205,21 +210,31 @@ A rule says exactly what the schema enforces, whatever its shape:
 | `if: { properties: { tenure: { enum: [4, 5] } } }` | `tenure ∈ {4 (Occupied without cash rent), 5 (Temporary …)}` — a code reads with the label the variable gives it (a "Label (777)" in the rule's comment labels only a code the variable does not) |
 | `{ minimum: 1, maximum: 2 }` | `1 ≤ parity ≤ 2` (exclusive bounds: `x > 5`, `1 ≤ x < 3`) |
 | `{ maximum: 0, not: { enum: [-777, -888] } }` | `income ≤ 0 and income ∉ {-777 (Refused), -888 (Don't know)}` |
-| `if: { anyOf: [ … ] }` / `oneOf` / `not` / `allOf` | `a = 1 (Yes) or b = 1 (Yes)` / `exactly one of: …` / `not (…)` / `… and …` |
+| `if: { anyOf: [ … ] }` / `oneOf` / `not` / `allOf` | `a = 1 (Yes) or b = 1 (Yes)` / `exactly one of: …` (`shifty is an integer or true or false` when the branches cannot both hold) / `not (…)` / `… and …` |
 | a property neither `required` nor in the `if`'s `required` | `smoker = 1 (Yes) or smoker is absent` (`properties` only tests what is there) |
-| `{ minimum: 1 }` on a variable that is a number or `"NA"` | `income ≥ 1 or income is a string` (a range tests only numbers, a pattern only strings); `{ type: "integer", maximum: 50 }` of a number variable keeps its type: `weight is an integer and weight ≤ 50` |
+| `{ minimum: 1 }` on a variable that is a number or `"NA"` | `income ≥ 1 or income is a string` (a range tests only numbers, a pattern only strings); `{ type: "integer", maximum: 50 }` of a number variable keeps its type: `weight is an integer and weight ≤ 50`; of an integer-or-null variable, `age ≤ 50` says it (a null age fails it) |
 | `then: { properties: { x: { const: -666 } } }` | `value = -666 (Not applicable)` — shown on the code; `value = 999 (Missing) or absent` when some records lack `x` |
 | `then: { properties: { x: { not: { const: -666 } } } }` | `value ≠ -666 (Not applicable)` |
 | `then: { properties: { x: { enum: [1, 2, 6] } } }` | `value is one of 1 (…), 2 (…), 6 (…)` — a constraint, not a badge on each code: it allows them, it sets none |
 | `then: { properties: { x: { anyOf: [{ minimum: 1, maximum: 12 }, { enum: [-777, -888] }] } } }` | `1 ≤ value ≤ 12 or value is one of -777 (Refused), -888 (…)` |
 | `then: { anyOf: [{ properties: { a: { const: 1 } } }, …] }` | on `a`, `b`, …: `at least one of these holds: a = 1 (Yes); b = 1 (Yes)` |
-| `then: { required: ["x"] }` / `then: false` | `a value is required` / `Not allowed: <condition>.` |
+| `then: { required: ["x"] }` / `then: false` | `value must be present` (`value must be present (may be null)` of a variable that can be null) / `Not allowed: <condition>.` |
 | `else` / an `if` nested in a `then` | the opposite condition (`smoker ≠ 1 (Yes)`; `… or smoker is absent` when the `if` requires a property some records lack) / both conditions (`a = 1 and b = 0`) |
-| `dependentRequired` / `dependentSchemas`, also inside a clause | `When a = 0 (No) and b is present, a value is required.` |
-| keywords it cannot put into words (`minProperties`, `patternProperties` …) | shown as written — `the record matches {"minProperties":5}` — and named in a table warning |
+| `dependentRequired` / `dependentSchemas`, also inside a clause | `When a = 0 (No) and b is present, value must be present.` |
+| `if: { properties: { point: { required: ["tier"], properties: { tier: { const: "gold" } } } } }` | `point.tier = "gold" or point is null` — a field inside an object reads as its row, and `properties`/`required` pass a value that is not an object (a nested field is absent when its object is absent or null); with `type: "object"`: `point.tier = "gold"` (a gold tier needs a point; "point is an object and" goes without saying, as does "days is an array and" before `days[0] = …`) |
+| `then: { properties: { point: { required: ["x"], properties: { tier: { const: "gold" } } } } }` | on `point.x`: `value must be present if point is an object (may be null)` (just `value must be present (may be null)` when the condition needs a point, as `point.tier = "it's"` does); on `point.tier`: `value = "gold" or absent` |
+| `{ contains: { required: ["age"], properties: { age: { minimum: 70 } } }, minContains: 2 }` | `people has at least 2 items where (people[].age ≥ 70 or people[].age is null or item is null) or people is null` — `item` is the element, `people[].age` its field |
+| `{ items: { … } }` | `people has only items where …`; of a list of values, `value has only items where (item ≤ 999 or item is null)` |
+| `{ contains: { const: "en" } }` / `{ minItems: 2 }` / `{ uniqueItems: true }` / `{ maxProperties: 3 }` | `langs includes "en" (English)` / `words has at least 2 items` / `value has no repeated items` / `value has at most 3 properties` (each `or … is null` when the variable can be null — except where nothing turns on it: a rule about one variable alone leaves out the values both sides pass, `When ids has at least 2 items, value has no repeated items.`, and a requirement leaves out what its condition rules out, `When people has at least 2 items where people[].age ≥ 70, value has at most 2 items.`) |
+| `{ prefixItems: [{ const: "0001-01-01" }] }` | `days[0] = "0001-01-01" or days[0] is absent` (a list too short has no position 0); a position is one of the list's items, so a test a null item passes says so: `d[0] ≥ 70 or d[0] is null or d[0] is absent` |
+| `{ prefixItems: [{ const: "x" }], items: { const: "y" } }` / `items: false` | `value has only items where item = "y" from value[1] on` / `value has at most 1 item` — beside `prefixItems`, `items` is about the items after those positions |
+| `then: { properties: { days: { prefixItems: [{ const: "0001-01-01" }] } } }` | on `days`: `days[0] = "0001-01-01" or absent` — a position has no row of its own: it is its list's (`parts[0].k` is one of `parts[].k`), which names it, and a condition on it is a link there (`triggers` are row names) |
+| a rule inside a nested object or a list's elements | named by the path; when every effect is on that object's fields, its condition leaves out "or point is null" — a point that is not an object has none of those fields. In a list's elements the condition ends `in the same item` (`people[].name = null in the same item`), and so does a `dependentRequired` there |
+| an `if`/`then` on a property's own value (`"if": { "minimum": 1000 }, "then": { … }`) | one of its constraints, not a skip pattern: `When value ≥ 1000, value ≥ 9007199254740990.` (`Each item: …` for a list's items; `When value is an integer and …` from one branch of a union, where the test does not already say so) |
+| keywords it cannot put into words (`minProperties` of the record, `patternProperties`, `propertyNames` …) | shown as written — `the record matches {"minProperties":5}`, `props matches {"propertyNames":…}` — and named in a table warning |
 
-The rule's `$comment` — and those of its `if`, its clause and the property it constrains — is
-the rule's `description` and each conditional constraint's `comment`: the table shows it under the
+The rule's `$comment` — and those of its clause and the property it constrains, and for a `then`
+those of its `if` (or of the definition a bare `$ref` there names) — is the rule's `description` and each conditional constraint's `comment`: the table shows it under the
 condition it explains, in the *Skip logic* panel, and in the workbook. A value a rule pins that the
 variable does not declare is listed as a special code only when it reads as one (`777`, or a label
 like "Not applicable") and the variable's own schema allows it; a rule that sets a count to 0 pins
@@ -232,7 +247,10 @@ is a link to its row, a variable that patterns read carries a **Skips N** chip u
 that opens a row listing what each of its answers sets (`if meno_status = 2 → 777
 Premenopausal at questionnaire · meno_age`, `→ one of 666 777 888 · hrt_dur`, `→ not -666 ·
 move_reason`), and the **Skip logic** button under the search box opens a panel listing every
-rule that way, grouped by the variable it reads, each with its comment.
+rule that way, grouped by the variable it reads, each with its comment. A value there is followed
+by what it leaves unsaid: `→ 999 Missing or absent`, `→ gold (required if point is an object)`.
+A chip counts the *other* variables a variable's answers set: a rule that bounds a list by its own
+length sets no other.
 
 ### Saying which codes are special: `x-value-kind`
 
@@ -516,10 +534,13 @@ a *Special codes* line in amber, under a code the skip patterns that set it with
 comment in italics, conditional constraints with theirs, the variable's `$comment` as a *Note*,
 and one keyword per line in *Additional information*. Its header is frozen and filters, a
 heavier rule separates the categories, and the header repeats on printed pages. A *Skip logic*
-sheet lists every rule (condition, what it requires, the variables, its comment) and an *About*
+sheet lists every `if`/`then` rule (condition, what it requires — about "value", as in
+`value = "gold" or absent`, codes written as JSON so `"4"` reads apart from `4` — the variables,
+its comment; a `dependentRequired` rule is stated on its variables' rows) and an *About*
 sheet the dataset's description and notes, its categories with theirs, its special codes with
 what each means, a key to the formatting and the dataset metadata. Options: `{ title, includeSkipLogic, includeAbout, compress }`. It is written by a
-small built-in writer (`buildXlsx`, also exported) with no dependencies.
+small built-in writer (`buildXlsx`, also exported) with no dependencies; text that starts like
+a formula (`=`, `+`, `-`, `@`) is quote-prefixed, so it stays text when a cell is edited.
 
 A flat cell has no formatting, so `toPlainRows` and the CSV put one value or constraint per
 line, the special codes after a `Special codes:` line, and a rule's comment after its constraint

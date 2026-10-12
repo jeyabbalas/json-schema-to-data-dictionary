@@ -131,11 +131,6 @@
      null
     ],
     [
-     "if/then",
-     "Each item: Has a conditional (if/then) sub-rule.",
-     null
-    ],
-    [
      "conditional",
      "Required when hospital_days is present.",
      "hospital_days is present"
@@ -197,8 +192,8 @@
     ],
     [
      "conditional",
-     "Required when visits[].glucose_mmol is present.",
-     "visits[].glucose_mmol is present"
+     "Required when visits[].glucose_mmol is present in the same item.",
+     "visits[].glucose_mmol is present in the same item"
     ]
    ],
    "additional": null,
@@ -261,7 +256,7 @@
      "sentinel",
      "Missing/Unknown",
      "Sentinel for a missing or unknown numeric value.",
-     "visits[].fasting = 0 (Non-fasting)"
+     "visits[].fasting = 0 (Non-fasting) in the same item"
     ]
    ],
    "constraints": [
@@ -272,13 +267,13 @@
     ],
     [
      "conditional",
-     "When visits[].fasting = 0 (Non-fasting), value = 999 (Missing/Unknown) or absent.",
-     "visits[].fasting = 0 (Non-fasting)"
+     "When visits[].fasting = 0 (Non-fasting) in the same item, value = 999 (Missing/Unknown) or absent.",
+     "visits[].fasting = 0 (Non-fasting) in the same item"
     ],
     [
      "conditional",
-     "When visits[].glucose_mmol is present, visits[].fasting is also required.",
-     "visits[].glucose_mmol is present"
+     "When visits[].glucose_mmol is present, visits[].fasting is also required in the same item.",
+     "visits[].glucose_mmol is present in the same item"
     ]
    ],
    "additional": null,
@@ -450,11 +445,6 @@
     [
      "properties",
      "Fields: visit_date, fasting, weight_kg, glucose_mmol, labs, medications",
-     null
-    ],
-    [
-     "if/then",
-     "Has a conditional (if/then) sub-rule.",
      null
     ]
    ],
@@ -1668,12 +1658,13 @@
      "value": 777,
      "label": "Not applicable",
      "kind": "equals",
+     "orAbsent": true,
      "text": "value = 777 (Not applicable) or absent"
     }
    ]
   },
   {
-   "condition": "visits[].fasting = 0 (Non-fasting)",
+   "condition": "visits[].fasting = 0 (Non-fasting) in the same item",
    "triggers": [
     "visits[].fasting"
    ],
@@ -1684,6 +1675,7 @@
      "value": 999,
      "label": "Missing/Unknown",
      "kind": "equals",
+     "orAbsent": true,
      "text": "value = 999 (Missing/Unknown) or absent"
     }
    ]
@@ -1700,6 +1692,7 @@
      "value": 999,
      "label": "Missing/Unknown",
      "kind": "equals",
+     "orAbsent": true,
      "text": "value = 999 (Missing/Unknown) or absent"
     }
    ]

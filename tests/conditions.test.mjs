@@ -22,11 +22,11 @@ test("a condition on a variable that may be absent also holds when it is absent"
   const props = { smoker: YES_NO, packs: { type: "integer", minimum: 0 } };
   const rule = { if: { properties: { smoker: { const: 1 } } }, then: { required: ["packs"] } };
   const optional = build(props, [rule], { optional: ["smoker", "packs"] });
-  assert.deepEqual(texts(optional, "packs"), ["When smoker = 1 (Yes) or smoker is absent, a value is required."]);
+  assert.deepEqual(texts(optional, "packs"), ["When smoker = 1 (Yes) or smoker is absent, value must be present."]);
   // Required by the row object, or by the `if` itself: present whenever the rule is read.
-  assert.deepEqual(texts(build(props, [rule]), "packs"), ["When smoker = 1 (Yes), a value is required."]);
+  assert.deepEqual(texts(build(props, [rule]), "packs"), ["When smoker = 1 (Yes), value must be present."]);
   const inIf = { ...rule, if: { ...rule.if, required: ["smoker"] } };
-  assert.deepEqual(texts(build(props, [inIf], { optional: ["smoker", "packs"] }), "packs"), ["When smoker = 1 (Yes), a value is required."]);
+  assert.deepEqual(texts(build(props, [inIf], { optional: ["smoker", "packs"] }), "packs"), ["When smoker = 1 (Yes), value must be present."]);
 });
 
 test("else reads as the opposite condition", () => {
@@ -184,7 +184,7 @@ test("keywords the reader cannot put into words are shown as written, and say so
   assert.deepEqual(table.conditionalRules.map((r) => r.condition), ['the record matches {"minProperties":3}', "a = 1 (Yes)", "b = 1 (Yes) and c is present"]);
   assert.ok(texts(table, "a").includes('When the record matches {"minProperties":3}, value = 0 (No).'));
   assert.ok(texts(table, "a").includes('When a = 1 (Yes), the record must also match {"maxProperties":5}.'));
-  assert.ok(texts(table, "a").includes("When b = 1 (Yes) and c is present, a value is required."), "dependentRequired inside a then is a rule");
+  assert.ok(texts(table, "a").includes("When b = 1 (Yes) and c is present, value must be present."), "dependentRequired inside a then is a rule");
   assert.ok(table.warnings.some((w) => /maxProperties, minProperties are shown as written/.test(w)));
 });
 

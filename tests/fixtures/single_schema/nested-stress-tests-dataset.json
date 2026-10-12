@@ -3,7 +3,7 @@
   "$id": "https://example.org/schemas/nested-stress-tests-dataset.json",
   "title": "Nested Stress Tests",
   "description": "The JSON file of data-table's nested stress-test fixture: 1,000 records whose 21 columns cover every nested shape DuckDB reads from JSON (lists, structs, maps and JSON values), with values chosen to break naive handling.",
-  "$comment": "Rows 0-11 are showcase rows, one kind of edge case each (x-showcase-rows); rows 12-999 are random, about 10% null. x-duckdb-type is the type DuckDB gives each column once data-table has loaded the file.",
+  "$comment": "Rows 0-11 are showcase rows, one kind of edge case each (x-showcase-rows); rows 12-999 are random, about 10% null. x-duckdb-type is the type DuckDB gives each column once data-table has loaded the file. The skip patterns -- the if/then rules on the record, those inside point, key_order, odd_keys, a person and the shifty object, and the rules some values make of themselves -- are made up to stress the dictionary: every record of the file obeys them, but data-table's generator knows nothing of them.",
   "x-source": "https://github.com/jeyabbalas/data-table/blob/main/tests/fixtures/datasets/json/nested-stress-tests.json",
   "x-showcase-rows": {
     "0": "All null: null in every column but id",
@@ -18,6 +18,12 @@
     "9": "Date and UUID edges: 0001-01-01, 9999-12-31, the nil and all-ones UUIDs",
     "10": "Demo: readable values",
     "11": "Name collisions: map keys that collide once case and punctuation are folded"
+  },
+  "$defs": {
+    "randomRow": {
+      "$comment": "The random rows follow the generator's ranges.",
+      "properties": { "id": { "minimum": 12 } }
+    }
   },
   "type": "array",
   "minItems": 1,
@@ -54,7 +60,12 @@
             "type": ["array", "null"],
             "title": "Counts",
             "description": "Up to four integers below 1,000. Row 3 holds integers past 2^53, which a JavaScript number rounds; rows 5-7 hold 1,000, 2,500 and 10,000 digits.",
-            "items": { "type": ["integer", "null"], "minimum": 0 },
+            "items": {
+              "type": ["integer", "null"],
+              "minimum": 0,
+              "if": { "minimum": 1000 },
+              "then": { "$comment": "Only row 3 holds counts past 999, all of them past 2^53 - 2.", "minimum": 9007199254740990 }
+            },
             "maxItems": 10000,
             "examples": [[1, 2, 3], [4, null, 17]],
             "x-duckdb-type": "BIGINT[]"
@@ -178,7 +189,12 @@
                 }
               },
               "required": ["name", "age", "langs"],
-              "additionalProperties": false
+              "additionalProperties": false,
+              "if": { "required": ["name"], "properties": { "name": { "const": null } } },
+              "then": {
+                "$comment": "Row 2 lists a person whose every field is null.",
+                "properties": { "age": { "const": null }, "langs": { "const": null } }
+              }
             },
             "maxItems": 3,
             "examples": [[{"name": "Ada", "age": 36, "langs": ["en", "fr"]}, {"name": "Linus", "age": 54, "langs": ["fi", "sv", "en"]}]],
@@ -191,7 +207,9 @@
             "items": {
               "type": ["array", "null"],
               "items": { "type": ["integer", "null"], "minimum": 0, "maximum": 9 },
-              "maxItems": 3
+              "maxItems": 3,
+              "if": { "minItems": 3 },
+              "then": { "$comment": "A full row of the matrix has no null digit.", "items": { "type": "integer" } }
             },
             "maxItems": 3,
             "examples": [[[1, 2, 3], [4, 5, 6]]],
@@ -229,6 +247,7 @@
                 "x-duckdb-type": "VARCHAR"
               }
             },
+            "dependentRequired": { "tier": ["x", "y"] },
             "additionalProperties": false,
             "examples": [{"x": 1.5, "y": -0.5, "tier": "gold"}],
             "x-duckdb-type": "STRUCT(x DOUBLE, y DOUBLE, tier VARCHAR)"
@@ -304,6 +323,8 @@
                 "x-duckdb-type": "BIGINT"
               }
             },
+            "if": { "required": ["2"], "properties": { "2": { "const": null } } },
+            "then": { "$comment": "Row 2 nulls key \"2\" and sets key \"1\" to 1.", "properties": { "1": { "const": 1 } } },
             "additionalProperties": false,
             "x-duckdb-type": "STRUCT(\"2\" BIGINT, \"1\" BIGINT)"
           },
@@ -342,6 +363,8 @@
                   { "type": "string" },
                   { "type": "null" }
                 ],
+                "if": { "type": "string" },
+                "then": { "$comment": "A tag word: never empty.", "minLength": 1 },
                 "x-duckdb-type": "JSON"
               },
               "a.b": {
@@ -363,6 +386,32 @@
                 "x-duckdb-type": "VARCHAR"
               }
             },
+            "allOf": [
+              {
+                "$comment": "Row 2's kind says every other key is null.",
+                "if": { "required": ["kind"], "properties": { "kind": { "const": "nulls" } } },
+                "then": {
+                  "properties": {
+                    "k": { "const": null },
+                    "score": { "const": null },
+                    "my field": { "const": null },
+                    "a.b": { "const": null },
+                    "q\"k": { "const": null },
+                    "ünï": { "const": null }
+                  }
+                }
+              },
+              {
+                "$comment": "Row 10's kind says it has every key.",
+                "if": { "required": ["kind"], "properties": { "kind": { "const": "demo" } } },
+                "then": { "required": ["k", "score", "my field", "a.b", "q\"k", "ünï"] }
+              },
+              {
+                "$comment": "Only the demo row spells out the spaced key's name.",
+                "if": { "required": ["my field"], "properties": { "my field": { "const": "spaced key" } } },
+                "then": { "properties": { "kind": { "const": "demo" } } }
+              }
+            ],
             "additionalProperties": false,
             "x-duckdb-type": "STRUCT(k VARCHAR, score DOUBLE, kind VARCHAR, \"my field\" JSON, \"a.b\" BIGINT, \"q\"\"k\" BOOLEAN, \"ünï\" VARCHAR)"
           }
@@ -390,9 +439,13 @@
               "title": "Other keys",
               "description": "Now and then size, toJSON, constructor or __proto__; the showcase rows' own keys.",
               "minimum": 0,
-              "maximum": 999
+              "maximum": 999,
+              "if": { "maximum": 9 },
+              "then": { "$comment": "The small values under other keys are the showcase rows' own, from 1 up.", "minimum": 1 }
             },
             "maxProperties": 6,
+            "if": { "minProperties": 4 },
+            "then": { "$comment": "Only row 11 has more than three keys: six that collide once case and punctuation are folded.", "minProperties": 6 },
             "examples": [{"key_398": 76, "key_107": 885}, {"width": 12, "height": 30, "depth": 4}],
             "x-duckdb-type": "MAP(VARCHAR, BIGINT)"
           },
@@ -422,6 +475,7 @@
                   "k": { "type": "string", "title": "Word" },
                   "n": { "type": "integer", "title": "Digit", "minimum": 0, "maximum": 9 }
                 },
+                "dependentRequired": { "k": ["n"], "n": ["k"] },
                 "additionalProperties": false
               },
               { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 9 }, "maxItems": 3 },
@@ -437,6 +491,130 @@
             "x-duckdb-type": "JSON"
           }
         }
+      },
+      {
+        "$comment": "Row 0 is null in every column but id.",
+        "if": { "properties": { "id": { "const": 0 } } },
+        "then": {
+          "properties": {
+            "label": { "const": null },
+            "counts": { "type": "null" },
+            "point": { "type": "null" },
+            "people": { "const": null },
+            "shifty": { "const": null }
+          }
+        }
+      },
+      {
+        "$comment": "Rows 12-999 are random; rows 0-11 show one edge case each.",
+        "if": { "$ref": "#/$defs/randomRow" },
+        "then": {
+          "$comment": "A random row has short lists of small integers, a point with every field, and people with a name and an age.",
+          "properties": {
+            "counts": { "maxItems": 4, "items": { "maximum": 999 } },
+            "signed": { "maxItems": 3, "items": { "type": "integer", "minimum": -99, "maximum": 99 } },
+            "words": { "maxItems": 2 },
+            "point": {
+              "required": ["x", "y", "tier"],
+              "properties": { "tier": { "enum": ["bronze", "silver", "gold", "platinum"] } }
+            },
+            "people": {
+              "maxItems": 2,
+              "items": { "type": "object", "properties": { "name": { "type": "string" }, "age": { "type": "integer" } } }
+            },
+            "depth5": { "properties": { "l2": { "properties": { "l3": { "type": "object" } } } } },
+            "props": { "maxProperties": 3 }
+          }
+        },
+        "else": {
+          "$comment": "A showcase row's label names the case it shows.",
+          "properties": { "label": { "pattern": "^showcase:" } }
+        }
+      },
+      {
+        "$comment": "The demo row's point is gold, and Ada comes first in its people.",
+        "if": { "properties": { "id": { "const": 10 } } },
+        "then": {
+          "properties": {
+            "point": { "properties": { "tier": { "const": "gold" } } },
+            "people": { "prefixItems": [{ "properties": { "name": { "const": "Ada" } } }] }
+          }
+        }
+      },
+      {
+        "$comment": "Only row 4 (text escapes) has the tier it's.",
+        "if": {
+          "properties": {
+            "point": { "type": "object", "required": ["tier"], "properties": { "tier": { "const": "it's" } } }
+          }
+        },
+        "then": { "properties": { "id": { "const": 4 } } }
+      },
+      {
+        "$comment": "Made up: a platinum point keeps the word list short.",
+        "if": { "properties": { "point": { "required": ["tier"], "properties": { "tier": { "const": "platinum" } } } } },
+        "then": { "properties": { "words": { "maxItems": 2 } } }
+      },
+      {
+        "$comment": "Made up: two people aged 70 or more leave no room for a third.",
+        "if": {
+          "properties": {
+            "people": {
+              "type": "array",
+              "contains": { "type": "object", "required": ["age"], "properties": { "age": { "type": "integer", "minimum": 70 } } },
+              "minContains": 2
+            }
+          }
+        },
+        "then": { "properties": { "people": { "maxItems": 2 } } }
+      },
+      {
+        "$comment": "Made up: when nobody listed speaks a language, the word list is short.",
+        "if": { "properties": { "people": { "items": { "properties": { "langs": { "maxItems": 0 } } } } } },
+        "then": { "properties": { "words": { "maxItems": 2 } } }
+      },
+      {
+        "$comment": "Only row 2 cuts the chain short: its l3 is null.",
+        "if": {
+          "properties": {
+            "depth5": {
+              "type": "object",
+              "required": ["l2"],
+              "properties": { "l2": { "required": ["l3"], "properties": { "l3": { "type": "null" } } } }
+            }
+          }
+        },
+        "then": { "properties": { "id": { "const": 2 } } }
+      },
+      {
+        "$comment": "Row 9 holds the date and UUID edges: 0001-01-01 first, and the nil UUID.",
+        "if": {
+          "anyOf": [
+            { "properties": { "days": { "type": "array", "minItems": 1, "prefixItems": [{ "const": "0001-01-01" }] } } },
+            { "properties": { "ids": { "type": "array", "contains": { "const": "00000000-0000-0000-0000-000000000000" } } } }
+          ]
+        },
+        "then": { "properties": { "id": { "const": 9 } } }
+      },
+      {
+        "$comment": "Row 9's days start with the earliest and the latest date.",
+        "if": { "properties": { "id": { "const": 9 } } },
+        "then": { "properties": { "days": { "prefixItems": [{ "const": "0001-01-01" }, { "const": "9999-12-31" }] } } }
+      },
+      {
+        "$comment": "Made up: a list of two or more IDs never repeats one.",
+        "if": { "properties": { "ids": { "minItems": 2 } } },
+        "then": { "properties": { "ids": { "uniqueItems": true } } }
+      },
+      {
+        "$comment": "Made up: a shifty number or boolean comes with a label.",
+        "if": {
+          "oneOf": [
+            { "properties": { "shifty": { "type": "integer" } } },
+            { "properties": { "shifty": { "type": "boolean" } } }
+          ]
+        },
+        "then": { "properties": { "label": { "type": "string" } } }
       }
     ],
     "required": [

@@ -6,10 +6,11 @@
 // Excel answers out-of-order elements with a "We found a problem with some content" repair
 // prompt even where other readers are forgiving. Fonts, fills, borders, number formats, cell
 // formats and strings are deduplicated. Strings are always shared strings (never inline strings
-// or formulas), so a value such as "=SUM(A1)" stays text. All text is made XML-safe: line
-// breaks are normalised to "\n", characters XML 1.0 forbids are dropped (C0 controls other than
-// tab and line feed, U+FFFE, U+FFFF, unpaired surrogates) and a cell is capped at Excel's 32,767
-// characters.
+// or formulas), so a value such as "=SUM(A1)" stays text; one that starts like a formula (with
+// =, +, - or @) is also quote-prefixed, so it stays text when someone edits the cell. All text
+// is made XML-safe: line breaks are normalised to "\n", characters XML 1.0 forbids are dropped
+// (C0 controls other than tab and line feed, U+FFFE, U+FFFF, unpaired surrogates) and a cell is
+// capped at Excel's 32,767 characters.
 //
 // The package is a ZIP archive whose parts are compressed by a built-in raw DEFLATE encoder
 // (RFC 1951): LZ77 over a 32 KiB window with hash chains and lazy matching, then per block the
@@ -430,7 +431,7 @@ function worksheetPart(sheet: XlsxSheet, index: number, name: string, styles: St
         style = entry.style;
       }
       const xf = styles.xf(columnStyles[c], row.style, style);
-      const cell = cellXml(letter(c) + rowNumber, xf, value, styles, strings);
+      const cell = cellXml(letter(c) + rowNumber, startsLikeFormula(value) ? styles.quoted(xf) : xf, value, styles, strings);
       if (!cell) continue;
       xml += cell;
       if (minRow === 0) minRow = rowNumber;
@@ -485,6 +486,12 @@ function worksheetPart(sheet: XlsxSheet, index: number, name: string, styles: St
   tail += "</worksheet>";
 
   return { xml: concatBytes([utf8(head), ...body.finish(), utf8(tail)]), autoFilter, printTitles };
+}
+
+/** Text Excel would read as a formula were it typed in: it starts with =, +, - or @. */
+function startsLikeFormula(value: unknown): boolean {
+  const text = Array.isArray(value) ? (value as XlsxRun[]).map((run) => run.text).join("") : typeof value === "string" ? value : "";
+  return /^[=+\-@]/.test(text);
 }
 
 /** One `<c>` element, or "" for an empty cell that needs no format of its own. */
@@ -680,6 +687,7 @@ class StyleSheet {
   private readonly xfFonts: FontSpec[] = [];
   private readonly xfCache = new Map<XlsxStyle | undefined, Map<XlsxStyle | undefined, Map<XlsxStyle | undefined, number>>>();
   private readonly runCache = new Map<FontSpec, Map<XlsxFont | undefined, string>>();
+  private readonly quotedCache = new Map<number, number>();
 
   constructor(font: XlsxFont | undefined) {
     const base: FontSpec = { bold: false, italic: false, underline: false, strike: false, size: 11, color: undefined, name: "Calibri" };
@@ -704,6 +712,16 @@ class StyleSheet {
 
   fontOf(xf: number): FontSpec {
     return this.xfFonts[xf] ?? this.defaultFont;
+  }
+
+  /** The same cell format, quote-prefixed: the cell's text stays text when it is edited. */
+  quoted(xf: number): number {
+    return memo(this.quotedCache, xf, () => {
+      const xml = this.xfs.items[xf] ?? "";
+      const index = this.xfs.add(xml.replace(' xfId="0"', ' xfId="0" quotePrefix="1"'));
+      this.xfFonts[index] ??= this.fontOf(xf);
+      return index;
+    });
   }
 
   /** The complete `<rPr>` of a rich-text run: the run's font merged over the cell's font. */

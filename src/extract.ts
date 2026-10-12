@@ -22,7 +22,7 @@ import type {
   ValidValue
 } from "./types";
 import { SchemaRegistry, type IndexedSchemaLocation, type ResolutionBase } from "./registry";
-import { analyzeProperty, collectRequired, isSentinelValue, refKeyword, type PropertyShape, type SchemaRef } from "./analyze";
+import { analyzeProperty, collectRequired, FIELD_RULE_NOTE, isSentinelValue, type PropertyShape, type SchemaRef } from "./analyze";
 import {
   collectSkipPatterns,
   mergeSkipPatterns,
@@ -33,7 +33,7 @@ import {
   type VariableLookup
 } from "./skipPatterns";
 import { formatVariablePath, sourceAt } from "./paths";
-import { cloneJson, compactObject, formatJsonValue, isRecord, isSchemaObject, joinNonEmpty, typeAlternatives, uniqueSlug, valueKey } from "./utils";
+import { asItems, cloneJson, compactObject, formatJsonValue, isRecord, isSchemaObject, joinNonEmpty, refKeyword, rowFor, typeAlternatives, uniqueSlug, valueKey } from "./utils";
 
 interface Options {
   includePatternProperties: boolean;
@@ -551,6 +551,13 @@ function emitVariable(path: readonly PathStep[], ref: SchemaRef, enclosing: Encl
 
   const validValues = analysis.validValues.slice();
   ctx.types.set(name, [...new Set([...(ctx.types.get(name) ?? []), ...analysis.types])]);
+  // A list's items, by the name a rule gives them (`counts[]`), whether or not they get a row:
+  // "every item ≤ 999" of nullable items also lets a null item through.
+  const items = analysis.shape.items?.analysis.types;
+  if (items) {
+    const itemName = formatVariablePath([...path, { kind: "items" }]);
+    ctx.types.set(itemName, [...new Set([...(ctx.types.get(itemName) ?? []), ...items])]);
+  }
   const constraints: ConstraintItem[] = [];
   const last = path[path.length - 1];
   // A field of one `oneOf`/`anyOf` branch says which branch: "when contact is an object" when it
@@ -647,14 +654,18 @@ function expandChildren(
       return { ...child, required, ...(own ? { variantRequired: own } : {}), ...(sole ? { soleObjectVariant: true } : {}) };
     };
     // Rules between the fields of this object, named by their rows, before the rows are built
-    // so that each row picks up its conditions.
-    const qualify = (property: string): string => formatVariablePath([...path, { kind: "property", name: property }]);
-    mergeSkipPatterns(ctx.skip, collectSkipPatterns(shape.self.schema, shape.self.base, { registry, maxDepth, qualify, required }));
+    // so that each row picks up its conditions. Once they are read, the owner's note that it
+    // has a rule ("Has a conditional (if/then) sub-rule.") says nothing the rows do not.
+    const found = [collectSkipPatterns(shape.self.schema, shape.self.base, { registry, maxDepth, path, required })];
     for (const variant of shape.variants) {
       const key = variantKey(variant);
       const own = key !== undefined ? variantRequired.get(key) : undefined;
       const inVariant = own ? new Set([...required, ...own]) : required;
-      mergeSkipPatterns(ctx.skip, collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, qualify, required: inVariant }));
+      found.push(collectSkipPatterns(variant.schema, variant.base, { registry, maxDepth, path, required: inVariant }));
+    }
+    for (const patterns of found) mergeSkipPatterns(ctx.skip, patterns);
+    if (found.some((p) => p.rules.length > 0 || p.dependencies.length > 0)) {
+      owner.Constraints = owner.Constraints.filter((c) => !(c.keyword === "if/then" && c.text.endsWith(FIELD_RULE_NOTE)));
     }
 
     for (const [name, refs] of shape.properties) {
@@ -740,10 +751,12 @@ function pushOnce(constraints: ConstraintItem[], item: ConstraintItem): void {
 
 /**
  * What the skip-pattern sentences need of each variable: the label it gives each of its codes (a
- * value's `label`, or a short description when it has none, an `enumDescriptions` entry), and the
- * JSON types its schema allows.
+ * value's `label`, or a short description when it has none, an `enumDescriptions` entry), the
+ * JSON types its schema allows, and the row that holds it. A position in a list (`days[0]`) is
+ * one of its items: it has their types, and the labels of the row that lists their codes.
  */
 function variableLookup(rows: readonly DataDictionaryRow[], types: ReadonlyMap<string, readonly string[]>): VariableLookup {
+  const names = new Set(rows.map((row) => row["Variable name"]));
   const byVariable = new Map<string, Map<string, string>>();
   for (const row of rows) {
     const name = row["Variable name"];
@@ -756,9 +769,12 @@ function variableLookup(rows: readonly DataDictionaryRow[], types: ReadonlyMap<s
     }
     byVariable.set(name, labels);
   }
+  const labelsOf = (variable: string): Map<string, string> | undefined =>
+    byVariable.get(variable) ?? (asItems(variable) === variable ? undefined : byVariable.get(rowFor(variable, names)));
   return {
-    label: (variable, value) => byVariable.get(variable)?.get(valueKey(value)),
-    types: (variable) => types.get(variable) ?? []
+    label: (variable, value) => labelsOf(variable)?.get(valueKey(value)),
+    types: (variable) => types.get(variable) ?? types.get(asItems(variable)) ?? [],
+    row: (variable) => rowFor(variable, names)
   };
 }
 
@@ -775,6 +791,7 @@ function applySkipPatterns(row: DataDictionaryRow, patterns: SkipPatternResult, 
       ...(cond.triggers.length > 0 ? { triggers: cond.triggers } : {}),
       ...(cond.references && cond.references.length > 0 ? { references: cond.references } : {}),
       ...(cond.description ? { comment: cond.description } : {}),
+      ...(cond.orAbsent ? { orAbsent: true as const } : {}),
       ...(cond.source ? { source: cond.source } : {})
     });
     // A pattern that sets the variable to one value says so on that value. One that allows a
@@ -822,7 +839,8 @@ function pinnedValue(row: DataDictionaryRow, value: JsonValue, cond: VariableCon
  * when it lists codes and nothing measured, not outside its range, not of a type it does not take.
  */
 function admits(row: DataDictionaryRow, value: JsonValue, types: readonly string[]): boolean {
-  const listed = row["Valid values"];
+  // A list's Valid values are its items' codes: they say nothing of the list itself.
+  const listed = types.includes("array") ? [] : row["Valid values"];
   if (listed.length > 0 && !listed.some((v) => v.kind === "measurement")) return false;
   if (types.length > 0 && !types.some((t) => hasType(value, t))) return false;
   const range = row["Constraints"].find((c) => c.keyword === "range")?.value;

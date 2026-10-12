@@ -184,10 +184,18 @@ export interface ConstraintItem {
   condition?: string | undefined;
   /** Variables `condition` reads, by row name (`["parous", "parity"]`). */
   triggers?: string[] | undefined;
-  /** Other variables `text` names: the rest of a group of which at least one must satisfy a rule. */
+  /**
+   * Other variables `text` names, by row name: the rest of a group of which at least one must
+   * satisfy a rule, the object a field is required of (`point`), a position in a list (`days[0]`).
+   */
   references?: string[] | undefined;
   /** The schema author's `$comment` explaining the rule this constraint comes from. */
   comment?: string | undefined;
+  /**
+   * The skip pattern pins the value only where the variable is there: it may also be absent
+   * ("value = 999 or absent"), which a badge on the value alone does not say.
+   */
+  orAbsent?: true | undefined;
   source?: SourceInfo | undefined;
 }
 
@@ -254,6 +262,15 @@ export interface ConditionalEffect {
   kind?: ConditionalEffectKind | undefined;
   /** The values a `notEquals` / `notOneOf` effect rules out. */
   excluded?: JsonValue[] | undefined;
+  /** The rule also requires the variable: in the record, or -- for a nested field -- within the object `within` names. */
+  required?: true | undefined;
+  /**
+   * The object a required nested field must be present in, when it is one ("point" for
+   * `point.x`: "value must be present if point is an object"); absent when the condition needs that object.
+   */
+  within?: string | undefined;
+  /** The variable may also be absent: the rule constrains its value only where it is there. */
+  orAbsent?: true | undefined;
   /** The requirement in words, about "value": "value ≠ -666 (Not applicable)", "1 ≤ value ≤ 12 or value is one of …". */
   text?: string | undefined;
   /** The `$comment` of the part of the rule that states this effect, when it has its own. */

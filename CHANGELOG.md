@@ -21,8 +21,9 @@ see them, and an Excel workbook instead of a CSV file.
   description and notes, its categories, a key to the formatting and the metadata. The static
   HTML embeds the workbook so its button works offline. Written by `buildXlsx`, a small
   dependency-free `.xlsx` writer (also exported); the demo no longer loads ExcelJS.
-- **Comments are shown.** A rule's `$comment` (and those of its `if`, its clause and the property
-  it constrains) is on each conditional constraint (`ConstraintItem.comment`) and under each code
+- **Comments are shown.** A rule's `$comment` (and those of its clause and the property it
+  constrains; for a `then`, its `if`'s, or that of the definition a bare `$ref` there names) is
+  on each conditional constraint (`ConstraintItem.comment`) and under each code
   it sets, and is visible in the *Skip logic* panel (it was a tooltip there and nowhere else). A
   variable's `$comment` is a *Note* under its description (`row.__comment`; it is still the
   description's last line, for flat exports), a code's `$comment` — on its branch or on the shared
@@ -38,6 +39,40 @@ see them, and an Excel workbook instead of a CSV file.
   take); types `ConditionalEffectKind`, `XlsxExportOptions` and the `Xlsx*` writer types.
 - A *HESP household panel* fixture and demo preset (`?preset=hesp`): 265 variables and 171
   skip-pattern and consistency rules of every shape this release reads.
+- **Skip patterns over nested data.** A rule can reach into a value: a field of an object, however
+  deep (`point.tier = "platinum" or point is null`, `deep.l2.l3 is null`), an item of a list
+  (`contains`, with `minContains`/`maxContains`: `people has at least 2 items where people[].age ≥
+  70`; `items`: `people has only items where …`), a tuple position (`days[0] = "0001-01-01" or
+  days[0] is absent`, with what its items' type lets through: `d[0] ≥ 70 or d[0] is null or d[0] is
+  absent`; `items` beside `prefixItems` is about the items after them: `value has only items where
+  item = "y" from value[1] on`), a list's or an object's size (`words has at least 2 items`, `value
+  has at most 3 properties`) and distinct items. Each test says what passes it untested:
+  `properties` and `required` pass a value that is not an object, `contains` and `items` one that is
+  not a list, `maximum` a null item (`value has only items where (item ≤ 999 or item is null)`). A
+  requirement inside a value is its field's: `point.x` reads `value must be present if point is an
+  object (may be null)` (`value must be present (may be null)` when the condition needs a point
+  anyway). A position has no row of its own: a rule that sets one is on its list's row, which names
+  it (`days[0] = "0001-01-01" or absent` on `days`; `parts[0].k` is on `parts[].k`), and one that
+  reads one is that row's, with a link to it (`triggers` are row names). These read as JSON before
+  (`point matches {"properties":…}`). A rule inside a nested object or in each element of a list
+  whose every effect is on that object's fields leaves out the case of an object that is not one: it
+  has no fields to constrain. A rule in each element of a list says its fields are one item's:
+  `people[].name = null in the same item`.
+- **Rules a value makes of itself** — an `if`/`then`/`else` in a property's own schema, in its
+  list's items, in a map's values or in one branch of a union — are constraints of its row, in
+  words: `When value ≥ 1000, value ≥ 9007199254740990.`, `Each item: When value has at least 3
+  items, value has only items where item is an integer.`, `When value is an integer and value ≥
+  100, …` (from one branch of a union, where the test does not already say which values it is
+  about). They read "Has a conditional (if/then) sub-rule." before.
+- `ConditionalEffect.required`, `within` and `orAbsent`, `ConstraintItem.orAbsent`,
+  `RuleGroupVM.qualifier`, `within` and `literals`: the *Skip logic* panel and sheet follow a value
+  with what it leaves unsaid (`→ 999 Missing or absent`, `→ gold (required if point is an object)`),
+  and a rule that sets a code but also lets the variable be absent keeps its sentence among the
+  constraints beside the code's badge.
+- The *Nested stress tests* example has skip patterns now, made up but true of every record of
+  data-table's file: 18 rules (on the record, inside `key_order`, `odd_keys` — whose keys need
+  quoting — and each person; some read or set a list's positions), `dependentRequired` inside
+  `point` and the object branch of `shifty`, and 5 rules values make of themselves.
 
 ### Changed
 
@@ -91,6 +126,31 @@ see them, and an Excel workbook instead of a CSV file.
   reads them as UTF-8.
 - A `pattern` is described as itself (`Matches pattern …`): the guesses "US ZIP code" and "US
   Social Security Number" named any pattern of five, or three-two-four, digits.
+- The opposite of a range on a variable that is only ever a number reads as the range it leaves
+  (`id < 12`, was `not (id ≥ 12)`), and "or" inside "or" needs no parentheses.
+- A condition leaves out what its other tests already make it: `point.tier = "it's"` needs a
+  point that is an object (it read `point is an object and point.tier = "it's"`), `days[0] = …` a
+  list with a first item (`days is an array and days has at least 1 item and …`), and `age ≥ 70`
+  a number, of an age that is an integer or null (`age is an integer and age ≥ 70`; the type
+  still rules a null age out). Tests of `oneOf` that cannot both hold read with "or" (`shifty is
+  an integer or true or false`, was `exactly one of: …`), and a rule about one variable alone
+  leaves out the values both sides pass untested (`When ids has at least 2 items, value has no
+  repeated items.`, was `… or ids is null, … or value is null.`). A requirement leaves out what
+  its condition rules out (`When people has at least 2 items where people[].age ≥ 70, value has at
+  most 2 items.`, was `… or value is null.`).
+- A rule that requires a variable says `value must be present`, and `(may be null)` where null
+  will do (it read `a value is required`, which a null meets too).
+- `dependentRequired` joins its fields with "and" (`point.x and point.y are also required`, was
+  `point.x, point.y`), each a link to its row; in each element of a list it says the fields are
+  one item's (`Required when visits[].glucose_mmol is present in the same item.`).
+- `"type": "null"` in a clause reads and groups as `= null`, like `"const": null` (one group in
+  the *Skip logic* panel and sheet). An `if`'s own `$comment` is the `then`'s alone: it no longer
+  explains the `else` rule, whose condition is the opposite.
+- The workbook's *Skip logic* sheet says what a rule requires about "value", as the dictionary's
+  sentences do, with codes as JSON so `"4"` reads apart from `4` (`value = "gold" or absent`, was
+  `= gold or absent`); its key says it lists the `if`/`then` rules, a `dependentRequired` rule
+  being stated on its variables' rows, what `value must be present`, `x[0]` and `or value is null` mean,
+  and that *Required* allows null where the type does.
 
 ### Fixed
 
@@ -99,6 +159,13 @@ see them, and an Excel workbook instead of a CSV file.
   current or former)" is a category of ever-users.
 - A range with an exclusive bound read as inclusive in Valid values (`0–100` for `0 < value ≤ 100`),
   and `minimum` with a stricter `exclusiveMinimum` stated the looser bound.
+- An object whose rules between its fields are listed on those fields no longer also says "Has a
+  conditional (if/then) sub-rule."
+- Cells of the *Skip logic* sheet started with "=" (`= null`): stored as text, but Excel read
+  them as formulas once edited. The writer now also quote-prefixes any text that starts with
+  `=`, `+`, `-` or `@`.
+- A *Skips N* chip counted the variable itself when a rule bounds a list by its own length
+  ("Answers to ids set 2 other variables" of a rule on `ids` and one on `id`).
 
 ## 0.7.0 - 2026-10-11
 

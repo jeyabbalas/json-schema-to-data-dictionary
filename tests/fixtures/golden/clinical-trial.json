@@ -767,7 +767,7 @@
     ],
     [
      "conditional",
-     "When any_ae is present, ae_count, ae_severity_max are also required.",
+     "When any_ae is present, ae_count and ae_severity_max are also required.",
      "any_ae is present"
     ]
    ],

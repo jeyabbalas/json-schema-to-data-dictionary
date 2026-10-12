@@ -351,9 +351,12 @@ export const STYLES = `
 .dd-rule-set { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; }
 .dd-rule-set .dd-code { background: var(--_sentinel-bg); color: var(--_sentinel); }
 .dd-rule-label { color: var(--_muted); }
+.dd-rule-qual { font-size: 12px; font-style: italic; color: var(--_muted); }
 .dd-rule-vars { display: flex; flex-wrap: wrap; gap: 2px 12px; font-family: var(--_mono); font-size: 11.5px; }
 .dd-rule-vars .dd-ref-self { font-weight: 600; }
 .dd-rule-text { font-size: 12px; }
+/* A requirement in words wraps beside its arrow rather than under it. */
+.dd-rule-set .dd-rule-text { flex: 1 1 0; min-width: 12ch; }
 .dd-rule-note { grid-column: 1 / -1; margin-top: 3px; font-size: 11.5px; font-style: italic; color: var(--_muted); max-width: 120ch; }
 
 /* The schema author's $comments: a note set apart from the definition it annotates (a variable,

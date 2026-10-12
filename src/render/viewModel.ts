@@ -15,7 +15,7 @@ import type {
 } from "../types";
 import type { SearchFields } from "../search/ranking";
 import { additionalInfoText, constraintsText, validValuesText } from "../serialize";
-import { displayValue, valueKey } from "../utils";
+import { displayValue, formatJsonValue, valueKey } from "../utils";
 import { widthsByKey } from "./columns";
 import type { WidthsByKey } from "./columns";
 
@@ -136,9 +136,19 @@ export interface RuleGroupVM {
   kind?: ConditionalEffectKind | undefined;
   /** The values it sets, allows or rules out, displayed; empty when the effect is stated in `text`. */
   values: string[];
+  /** The same values as JSON, a string in quotes (`"gold"`, `4`, `null`): text that must tell "4" from 4. */
+  literals: string[];
   label?: string | undefined;
+  /**
+   * What the values leave unsaid: "or absent" (the rule allows the variable to be missing) or
+   * "(required)" / "(required if point is an object)" (the rule also requires it).
+   */
+  qualifier?: string | undefined;
   /** The requirement in words, for effects that are not about listed values (a range, "at least one of …"). */
   text?: string | undefined;
+  /** The object a field is required of ("point"), which `qualifier` or `text` names. */
+  within?: string | undefined;
+  /** The variables, by their names in the rule: a position in a list (`days[0]`) is its list's row's. */
   variables: string[];
 }
 
@@ -302,8 +312,9 @@ function buildRowVM(
 
   // Skip patterns that set this variable to one value: the conditions each value is used under
   // come from them, with the variables each condition reads. A pin whose value is listed is then
-  // shown there, and needs no repeating among the constraints. A pattern that allows a set of
-  // values stays a constraint: under it the variable may take any of them.
+  // shown there, and needs no repeating among the constraints -- unless it also lets the variable
+  // be absent, which the value's badge does not say. A pattern that allows a set of values stays
+  // a constraint: under it the variable may take any of them.
   const pins = row["Constraints"].filter((c) => c.keyword === "conditional" && c.value !== undefined && !Array.isArray(c.value) && c.condition);
   const shown = new Set<ConstraintItem>();
   const conditionsOf = (v: ValidValue): ConditionVM[] => {
@@ -336,7 +347,7 @@ function buildRowVM(
     triggers: c.triggers ?? (c.condition ? triggersByCondition.get(c.condition) ?? [] : []),
     references: c.references ?? [],
     ...(c.comment ? { comment: c.comment } : {}),
-    onValues: shown.has(c)
+    onValues: shown.has(c) && !c.orAbsent
   }));
 
   const searchText = rowSearchText(row);
@@ -411,7 +422,7 @@ function buildRuleVM(rule: ConditionalRule): RuleVM {
   const byKey = new Map<string, RuleGroupVM>();
   for (const e of rule.effects) {
     const group = groupOf(e);
-    const key = JSON.stringify([group.kind ?? null, group.values, group.label ?? null, group.text ?? null]);
+    const key = JSON.stringify([group.kind ?? null, group.literals, group.label ?? null, group.qualifier ?? null, group.text ?? null]);
     let existing = byKey.get(key);
     if (!existing) {
       existing = group;
@@ -432,18 +443,22 @@ function buildRuleVM(rule: ConditionalRule): RuleVM {
 /** How one effect shows in a rule's list: the values it is about, or its requirement in words. */
 function groupOf(e: ConditionalEffect): RuleGroupVM {
   const label = e.label ? { label: e.label } : {};
+  const within = e.required && e.within ? { within: e.within } : {};
+  const qualifier = e.required ? { qualifier: e.within ? `(required if ${e.within} is an object)` : "(required)" } : e.orAbsent ? { qualifier: "or absent" } : {};
   switch (e.kind) {
     case undefined:
     case "equals":
     case "oneOf": {
       const values = Array.isArray(e.value) ? e.value : [e.value];
-      return { ...(e.kind ? { kind: e.kind } : {}), values: values.map(displayValue), ...label, variables: [] };
+      return { ...(e.kind ? { kind: e.kind } : {}), values: values.map(displayValue), literals: values.map(formatJsonValue), ...label, ...qualifier, ...within, variables: [] };
     }
     case "notEquals":
-    case "notOneOf":
-      return { kind: e.kind, values: (e.excluded ?? []).map(displayValue), ...label, variables: [] };
+    case "notOneOf": {
+      const values = e.excluded ?? [];
+      return { kind: e.kind, values: values.map(displayValue), literals: values.map(formatJsonValue), ...label, ...qualifier, ...within, variables: [] };
+    }
     default:
-      return { kind: e.kind, values: [], ...(e.text ? { text: e.text } : {}), variables: [] };
+      return { kind: e.kind, values: [], literals: [], ...(e.text ? { text: e.text } : {}), ...within, variables: [] };
   }
 }
 

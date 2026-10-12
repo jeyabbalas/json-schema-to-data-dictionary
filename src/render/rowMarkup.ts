@@ -4,7 +4,7 @@
 // from the schema is HTML-escaped before interpolation — the highlighter escapes as it marks.
 
 import type { JsonValue } from "../types";
-import { escapeHtml } from "../utils";
+import { escapeHtml, rowFor } from "../utils";
 import { PLAIN } from "./highlight";
 import type { Highlighter } from "./highlight";
 import type { ConditionVM, ConstraintVM, RowVM, RuleGroupVM, RuleVM, ValueVM, ViewModel } from "./viewModel";
@@ -137,8 +137,9 @@ let detailCounter = 0;
 function skipsToggle(row: RowVM, vm: ViewModel, withDetail: boolean): { toggle: string; detail: string } {
   if (row.skipRules.length === 0) return { toggle: "", detail: "" };
   const rules = rulesOf(row, vm);
+  // The variables its answers set: a rule that reads a list to bound the same list sets no other.
   const affected = new Set<string>();
-  for (const rule of rules) for (const g of rule.groups) for (const name of g.variables) affected.add(name);
+  for (const rule of rules) for (const g of rule.groups) for (const name of g.variables) if (rowName(name, vm) !== row.name) affected.add(rowName(name, vm));
   const count = affected.size;
   const label = count > 0 ? `Skips ${count}` : `${rules.length} rule${rules.length === 1 ? "" : "s"}`;
   const title =
@@ -173,7 +174,7 @@ export function rulesMarkup(rules: RuleVM[], vm: ViewModel, self: string | undef
     lastTrigger = first;
     const groups = rule.groups
       .map((g) => {
-        const variables = g.variables.map((name) => reference(name, vm, name === self, PLAIN)).join("");
+        const variables = g.variables.map((name) => reference(name, vm, self, PLAIN)).join("");
         return `<div class="dd-rule-group"><div class="dd-rule-set"><span class="dd-kw" aria-hidden="true">→</span>${ruleSet(g, vm, self)}</div><div class="dd-rule-vars">${variables}</div></div>`;
       })
       .join("");
@@ -184,24 +185,30 @@ export function rulesMarkup(rules: RuleVM[], vm: ViewModel, self: string | undef
   return `<div class="dd-rules">${items.join("")}</div>`;
 }
 
-/** What a rule does to a group of variables: the value it sets (`→ 777 Nonparous`), allows or rules out, or its requirement in words. */
+/**
+ * What a rule does to a group of variables: the value it sets (`→ 777 Nonparous`), allows or
+ * rules out -- with what that leaves unsaid ("or absent", "required") -- or its requirement in words.
+ */
 function ruleSet(g: RuleGroupVM, vm: ViewModel, self: string | undefined): string {
   const codes = g.values.map((value) => `<code class="dd-code">${escapeHtml(value)}</code>`).join("");
   const label = g.label ? ` <span class="dd-rule-label">${escapeHtml(g.label)}</span>` : "";
+  const within = g.within ? [g.within] : [];
+  const qualifier = g.qualifier ? ` <span class="dd-rule-qual">${linkNames(g.qualifier, within, vm, self, PLAIN)}</span>` : "";
   const kw = (word: string): string => `<span class="dd-kw">${word}</span>`;
   switch (g.kind) {
     case undefined:
     case "equals":
-      return g.values.length ? `${codes}${label}` : `<span class="dd-muted">constrained</span>`;
+      return g.values.length ? `${codes}${label}${qualifier}` : `<span class="dd-muted">constrained</span>`;
     case "oneOf":
-      return `${kw("one of")}${codes}`;
+      return `${kw("one of")}${codes}${qualifier}`;
     case "notEquals":
-      return `${kw("not")}${codes}${label}`;
+      return `${kw("not")}${codes}${label}${qualifier}`;
     case "notOneOf":
-      return `${kw("none of")}${codes}`;
+      return `${kw("none of")}${codes}${qualifier}`;
     default:
-      // A requirement in words names other variables when it is shared ("at least one of …").
-      return `<span class="dd-rule-text">${g.text ? linkNames(g.text, g.kind === "combination" ? g.variables : [], vm, self, PLAIN) : "constrained"}</span>`;
+      // A requirement in words names other variables when it is shared ("at least one of …"),
+      // and the object a field is required of ("must be present if point is an object").
+      return `<span class="dd-rule-text">${g.text ? linkNames(g.text, g.kind === "combination" ? g.variables : within, vm, self, PLAIN) : "constrained"}</span>`;
   }
 }
 
@@ -211,28 +218,61 @@ function condition(c: ConditionVM, vm: ViewModel, self: string | undefined, hl: 
 }
 
 /**
- * `text` with every occurrence of the `names` (as whole names, longest first) turned into a
- * reference to that variable's row. `self` is the row being rendered: named, never linked.
- * A code's label ("parous = 0 (Non-parous)") and a quoted value are text, never references.
+ * `text` with every mention of the variables `names` (as whole names, longest first) turned
+ * into a reference to its row. `self` is the row being rendered: named, never linked. A code's
+ * label ("parous = 0 (Non-parous)") and a quoted value are text, never references.
  */
 function linkNames(text: string, names: string[], vm: ViewModel, self: string | undefined, hl: Highlighter): string {
-  const candidates = [...new Set(names)].filter((n) => n.length > 0).sort((a, b) => b.length - a.length);
-  if (candidates.length === 0) return hl(text);
+  const rows = [...new Set(names.map((n) => rowName(n, vm)))].filter((n) => n.length > 0).sort((a, b) => b.length - a.length);
+  if (rows.length === 0) return hl(text);
   let out = "";
   let plain = "";
   for (let i = 0; i < text.length; ) {
-    const name = candidates.find((n) => text.startsWith(n, i) && !isNameChar(text.charAt(i - 1)) && !isNameChar(text.charAt(i + n.length)));
-    if (name === undefined) {
+    const found = isNameChar(text.charAt(i - 1)) ? undefined : mention(text, i, rows);
+    if (found === undefined) {
       const end = labelEnd(text, i) ?? quotedEnd(text, i) ?? i + 1;
       plain += text.slice(i, end);
       i = end;
       continue;
     }
-    out += hl(plain) + reference(name, vm, name === self, hl);
+    out += hl(plain) + reference(found.row, vm, self, hl, found.name);
     plain = "";
-    i += name.length;
+    i += found.name.length;
   }
   return out + hl(plain);
+}
+
+/** The first of `rows` that `text` names at `i`, and the name it gives it there. */
+function mention(text: string, i: number, rows: readonly string[]): { row: string; name: string } | undefined {
+  for (const row of rows) {
+    if (text.charAt(i) !== row.charAt(0)) continue;
+    const pattern = spelling(row);
+    pattern.lastIndex = i;
+    const match = pattern.exec(text);
+    if (match && !isNameChar(text.charAt(i + match[0].length))) return { row, name: match[0] };
+  }
+  return undefined;
+}
+
+const SPELLINGS = new Map<string, RegExp>();
+
+/**
+ * The names a row's variable goes by in a rule: its own, one position of the list whose items
+ * it is (`parts[0].k` of `parts[].k`), and a position inside it that has no row (`days[0]`).
+ */
+function spelling(row: string): RegExp {
+  let pattern = SPELLINGS.get(row);
+  if (!pattern) {
+    const own = row.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\[\\\]/g, "\\[\\d*\\]");
+    pattern = new RegExp(`${own}(?:\\[\\d+\\])*`, "y");
+    SPELLINGS.set(row, pattern);
+  }
+  return pattern;
+}
+
+/** The row that holds a variable a rule names (`days` for `days[0]`). */
+function rowName(name: string, vm: ViewModel): string {
+  return vm.names.has(name) ? name : rowFor(name, vm.names);
 }
 
 function isNameChar(ch: string): boolean {
@@ -242,9 +282,12 @@ function isNameChar(ch: string): boolean {
 /** A value written before "(" at `i` -- "0 (", "-666 (", "\"NA\" (", "true (" -- opens its label. */
 const VALUE_BEFORE_LABEL = /(?:^|[\s{,(])(?:-?\d[\d.eE+-]*|"(?:[^"\\]|\\.)*"|true|false|null) $/;
 
+/** What a rule leaves unsaid of the values it allows -- "(required if point is an object)" -- is no label. */
+const REQUIRED_NOTE = /^\(required[ )]/;
+
 /** The end of the code label that opens at `i` (balanced parentheses), if one does. */
 function labelEnd(text: string, i: number): number | undefined {
-  if (text.charAt(i) !== "(" || !VALUE_BEFORE_LABEL.test(text.slice(0, i))) return undefined;
+  if (text.charAt(i) !== "(" || REQUIRED_NOTE.test(text.slice(i, i + 10)) || !VALUE_BEFORE_LABEL.test(text.slice(0, i))) return undefined;
   let depth = 0;
   for (let j = i; j < text.length; j += 1) {
     if (text.charAt(j) === "(") depth += 1;
@@ -263,10 +306,14 @@ function quotedEnd(text: string, i: number): number | undefined {
   return undefined;
 }
 
-/** A variable named in a skip pattern: a button that jumps to its row, or plain code without one. */
-function reference(name: string, vm: ViewModel, self: boolean, hl: Highlighter): string {
-  if (self || !vm.names.has(name)) return `<code class="dd-ref-self">${hl(name)}</code>`;
-  return `<button type="button" class="dd-ref" data-dd-goto="${escapeHtml(name)}" title="Go to ${escapeHtml(name)}">${hl(name)}</button>`;
+/**
+ * A variable named in a skip pattern (as `shown`): a button that jumps to the row that holds it,
+ * or plain code on that row itself or without one.
+ */
+function reference(name: string, vm: ViewModel, self: string | undefined, hl: Highlighter, shown = name): string {
+  const row = rowName(name, vm);
+  if (row === self || !vm.names.has(row)) return `<code class="dd-ref-self">${hl(shown)}</code>`;
+  return `<button type="button" class="dd-ref" data-dd-goto="${escapeHtml(row)}" title="Go to ${escapeHtml(row)}">${hl(shown)}</button>`;
 }
 
 const ICON_SKIP = `<svg class="dd-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3v4.5A2.5 2.5 0 0 0 5.5 10H12m0 0-2.5-2.5M12 10l-2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

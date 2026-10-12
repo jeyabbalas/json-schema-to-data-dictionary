@@ -464,6 +464,20 @@ test("exceljs: plain, number, boolean and empty cells; non-finite numbers and fo
   assert.equal(ws.getCell("F1").type, ExcelJS.ValueType.Boolean);
 });
 
+test("xml: text that starts like a formula is quote-prefixed, so it stays text when edited", () => {
+  const rich = [{ text: "= " }, { text: "null", font: { bold: true } }];
+  const cells = ["=SUM(A1)", "+1", "-1 apples", "@here", rich, "plain", -1, "a = b", { value: "-x", style: { font: { bold: true } } }];
+  const bytes = buildXlsx(oneSheet({ rows: [{ cells }] }));
+  const styles = partText(bytes, "xl/styles.xml");
+  const sheet = partText(bytes, "xl/worksheets/sheet1.xml");
+  const xfs = [...styles.match(/<cellXfs count="\d+">(.*?)<\/cellXfs>/)[1].matchAll(/<xf [^>]*?(?:\/>|>.*?<\/xf>)/g)].map((m) => m[0]);
+  const xfOf = (ref) => xfs[Number(new RegExp(`<c r="${ref}"(?: s="(\\d+)")?`).exec(sheet)?.[1] ?? 0)];
+  for (const ref of ["A1", "B1", "C1", "D1", "E1", "I1"]) assert.match(xfOf(ref), / quotePrefix="1"/, `${ref} is quote-prefixed`);
+  for (const ref of ["F1", "G1", "H1"]) assert.doesNotMatch(xfOf(ref), /quotePrefix/, `${ref} is not`);
+  assert.match(xfOf("I1"), /fontId="1"/, "the cell keeps its own format");
+  assert.equal(xfs.filter((xf) => xf.includes("quotePrefix")).length, 2, "one quote-prefixed variant per format");
+});
+
 test("exceljs: rich text runs keep their text and fonts, merged over the cell font", async () => {
   const bold = { bold: true };
   const workbook = await loadExcel(

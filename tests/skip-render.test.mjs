@@ -112,9 +112,9 @@ test("view model: variables know the rules they trigger; rules group their effec
   const meno = vm.rules[index("meno_status = 2 (Premenopausal)")];
   assert.deepEqual(meno.groups, [
     // Each code reads with its variable's own label, as in that variable's Valid values.
-    { kind: "equals", values: ["777"], label: "Premenopausal at questionnaire", variables: ["meno_age"] },
-    { kind: "equals", values: ["777"], label: "NA (premenopausal)", variables: ["meno_reason"] },
-    { kind: "oneOf", values: ["666", "777", "888"], variables: ["hrt_dur", "hrtep_dur", "hrteonly_dur"] }
+    { kind: "equals", values: ["777"], literals: ["777"], label: "Premenopausal at questionnaire", variables: ["meno_age"] },
+    { kind: "equals", values: ["777"], literals: ["777"], label: "NA (premenopausal)", variables: ["meno_reason"] },
+    { kind: "oneOf", values: ["666", "777", "888"], literals: ["666", "777", "888"], variables: ["hrt_dur", "hrtep_dur", "hrteonly_dur"] }
   ]);
   assert.match(meno.description, /^Skip pattern: premenopausal/);
 });

@@ -12,6 +12,13 @@ export function isJsonSchema(value: unknown): value is JsonSchema {
   return typeof value === "boolean" || isRecord(value);
 }
 
+/** The reference a schema makes: its `$ref`, else its `$dynamicRef`. */
+export function refKeyword(schema: JsonSchemaObject): string | undefined {
+  if (typeof schema.$ref === "string") return schema.$ref;
+  if (typeof schema.$dynamicRef === "string") return schema.$dynamicRef;
+  return undefined;
+}
+
 /** Deterministic stringify with sorted keys — used as a stable identity key for values. */
 export function stableStringify(value: unknown): string {
   if (typeof value === "string") return value;
@@ -151,6 +158,32 @@ export function displayValue(value: unknown): string {
   if (value === null) return "null";
   if (value === undefined) return "";
   return JSON.stringify(value);
+}
+
+/** A step of a variable name that is a quoted property name (`["a.b"]`) or a position in a list (`[0]`). */
+const QUOTED_OR_POSITION = /\["(?:[^"\\]|\\.)*"\]|\[\d+\]/g;
+
+/** A variable named with positions in lists, named as their items: `parts[0].k` is one of `parts[].k`. */
+export function asItems(name: string): string {
+  return name.replace(QUOTED_OR_POSITION, (step) => (step.startsWith('["') ? step : "[]"));
+}
+
+/**
+ * The row, among `rows`, that holds a variable a skip pattern names: its own -- or, for a
+ * position in a list, which has none (`days[0]`), the row of the list's items (`parts[0].k` is
+ * one of `parts[].k`) or, when they have none either, of the nearest value it is inside that
+ * has one (`days`). The name itself when no row holds it.
+ */
+export function rowFor(name: string, rows: ReadonlySet<string>): string {
+  if (rows.has(name)) return name;
+  const items = asItems(name);
+  if (rows.has(items)) return items;
+  let best = name;
+  for (const row of rows) {
+    const next = items.charAt(row.length);
+    if ((next === "." || next === "[") && (best === name || row.length > best.length) && items.startsWith(row)) best = row;
+  }
+  return best;
 }
 
 /** Drop undefined/null/empty entries from an object (used to keep "Additional information" tidy). */

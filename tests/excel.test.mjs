@@ -136,7 +136,9 @@ test("xlsx: the Skip logic sheet lists every rule, one line per group of variabl
   const lines = [];
   for (let r = 2; r <= sheet.rowCount; r += 1) lines.push([2, 3, 4, 5].map((c) => text(sheet.getRow(r).getCell(c))));
   const applicability = lines.find((l) => l[0] === "moved_since_last_wave = 1 (Yes)");
-  assert.deepEqual(applicability.slice(1, 3), ["≠ -666 (Not applicable / structural skip)", "move_reason"]);
+  assert.deepEqual(applicability.slice(1, 3), ["value ≠ -666 (Not applicable / structural skip)", "move_reason"]);
+  // Said about "value", as the dictionary's sentences are: no cell reads as a formula when edited.
+  assert.ok(lines.every((l) => !/^[=+\-@]/.test(l[1])), "no Then cell starts like a formula");
   assert.match(applicability[3], /^Applicability:/);
   const banked = lines.find((l) => l[0] === "banked_status = 1 (Banked and not underbanked)" && l[1].startsWith("at least one"));
   assert.equal(banked[2], "checking_owned, savings_owned, prepaid_account_owned, money_market_cd_owned");

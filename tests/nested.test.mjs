@@ -225,11 +225,12 @@ test("a field the enclosing object requires says so, and within what", () => {
 test("skip patterns inside a nested object are qualified by the path, once per use of the definition", () => {
   const rule = (condition) => T.conditionalRules.find((r) => r.condition === condition);
   assert.equal(T.conditionalRules[0].condition, "vital_status = 0 (Alive)", "row-level rules come first");
-  assert.deepEqual(rule("visits[].fasting = 0 (Non-fasting)").effects, [
+  // A rule in the elements' schema is about one visit at a time.
+  assert.deepEqual(rule("visits[].fasting = 0 (Non-fasting) in the same item").effects, [
     // The variable's own label for 999, and the field may be left out of a visit.
-    { variable: "visits[].glucose_mmol", value: 999, label: "Missing/Unknown", kind: "equals", text: "value = 999 (Missing/Unknown) or absent" }
+    { variable: "visits[].glucose_mmol", value: 999, label: "Missing/Unknown", kind: "equals", orAbsent: true, text: "value = 999 (Missing/Unknown) or absent" }
   ]);
-  assert.match(rule("visits[].fasting = 0 (Non-fasting)").description, /non-fasting visit/);
+  assert.match(rule("visits[].fasting = 0 (Non-fasting) in the same item").description, /non-fasting visit/);
   assert.ok(rule("baseline.fasting = 0 (Non-fasting)"), "the same def used as an object gets its own rule");
   assert.equal(T.conditionalRules.find((r) => r.condition.startsWith("fasting")), undefined, "no unqualified rule");
   assert.equal(T.conditionalRules.length, 3);
@@ -237,14 +238,15 @@ test("skip patterns inside a nested object are qualified by the path, once per u
   const glucose = findRow(T, "visits[].glucose_mmol");
   const code = value(glucose, 999);
   assert.equal(code.kind, "sentinel");
-  assert.equal(code.condition, "visits[].fasting = 0 (Non-fasting)");
-  assert.ok(texts(glucose).includes("When visits[].fasting = 0 (Non-fasting), value = 999 (Missing/Unknown) or absent."));
+  assert.equal(code.condition, "visits[].fasting = 0 (Non-fasting) in the same item");
+  assert.ok(texts(glucose).includes("When visits[].fasting = 0 (Non-fasting) in the same item, value = 999 (Missing/Unknown) or absent."));
   assert.equal(value(findRow(T, "death_year"), 777).condition, "vital_status = 0 (Alive)", "row-level rules still annotate top-level rows");
 });
 
 test("dependentRequired inside a nested object is qualified too", () => {
-  assert.ok(texts(findRow(T, "visits[].fasting")).includes("Required when visits[].glucose_mmol is present."));
-  assert.ok(texts(findRow(T, "visits[].glucose_mmol")).includes("When visits[].glucose_mmol is present, visits[].fasting is also required."));
+  // Both fields are the same visit's.
+  assert.ok(texts(findRow(T, "visits[].fasting")).includes("Required when visits[].glucose_mmol is present in the same item."));
+  assert.ok(texts(findRow(T, "visits[].glucose_mmol")).includes("When visits[].glucose_mmol is present, visits[].fasting is also required in the same item."));
   assert.ok(texts(findRow(T, "hospital_days")).includes("When hospital_days is present, visits is also required."));
   assert.ok(texts(findRow(T, "visits")).includes("Required when hospital_days is present."));
 });

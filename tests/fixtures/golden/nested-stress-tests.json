@@ -98,6 +98,21 @@
      "range",
      "0 ≤ value ≤ 999",
      null
+    ],
+    [
+     "conditional",
+     "When point.tier = \"it's\" (Row 4: text that needs escaping), value = 4.",
+     "point.tier = \"it's\" (Row 4: text that needs escaping)"
+    ],
+    [
+     "conditional",
+     "When depth5.l2.l3 is null, value = 2.",
+     "depth5.l2.l3 is null"
+    ],
+    [
+     "conditional",
+     "When days[0] = \"0001-01-01\" or ids includes \"00000000-0000-0000-0000-000000000000\", value = 9.",
+     "days[0] = \"0001-01-01\" or ids includes \"00000000-0000-0000-0000-000000000000\""
     ]
    ],
    "additional": {
@@ -120,6 +135,21 @@
      "required",
      "Required",
      null
+    ],
+    [
+     "conditional",
+     "When id = 0, value = null.",
+     "id = 0"
+    ],
+    [
+     "conditional",
+     "When id < 12, value matches ^showcase: or value is null.",
+     "id < 12"
+    ],
+    [
+     "conditional",
+     "When shifty is an integer or true or false, value is a string.",
+     "shifty is an integer or true or false"
     ]
    ],
    "additional": {
@@ -156,6 +186,21 @@
      "range",
      "Each item: value ≥ 0",
      null
+    ],
+    [
+     "if/then",
+     "Each item: When value ≥ 1000, value ≥ 9007199254740990.",
+     null
+    ],
+    [
+     "conditional",
+     "When id = 0, value = null.",
+     "id = 0"
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, (value has at most 4 items and value has only items where (item ≤ 999 or item is null)) or value is null.",
+     "id ≥ 12"
     ]
    ],
    "additional": {
@@ -195,6 +240,11 @@
      "items",
      "At most 4 item(s)",
      null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, (value has at most 3 items and value has only items where -99 ≤ item ≤ 99) or value is null.",
+     "id ≥ 12"
     ]
    ],
    "additional": {
@@ -310,6 +360,21 @@
      "length",
      "Each item: At most 20000 character(s)",
      null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, value has at most 2 items or value is null.",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "When point.tier = \"platinum\" or point is null, value has at most 2 items or value is null.",
+     "point.tier = \"platinum\" or point is null"
+    ],
+    [
+     "conditional",
+     "When people has only items where (people[].langs has no items or people[].langs is null or people[].langs is absent) or people is null, value has at most 2 items or value is null.",
+     "people has only items where (people[].langs has no items or people[].langs is null or people[].langs is absent) or people is null"
     ]
    ],
    "additional": {
@@ -344,6 +409,16 @@
      "items",
      "At most 4 item(s)",
      null
+    ],
+    [
+     "conditional",
+     "When id = 9, days[0] = \"0001-01-01\" or absent.",
+     "id = 9"
+    ],
+    [
+     "conditional",
+     "When id = 9, days[1] = \"9999-12-31\" or absent.",
+     "id = 9"
     ]
    ],
    "additional": {
@@ -377,6 +452,11 @@
      "items",
      "At most 2 item(s)",
      null
+    ],
+    [
+     "conditional",
+     "When ids has at least 2 items, value has no repeated items.",
+     "ids has at least 2 items"
     ]
    ],
    "additional": {
@@ -556,6 +636,21 @@
      "additionalProperties",
      "No other properties allowed",
      null
+    ],
+    [
+     "conditional",
+     "When id = 0, value = null.",
+     "id = 0"
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, (value has at most 2 items and value has only items where item is an object) or value is null.",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "When people has at least 2 items where people[].age ≥ 70, value has at most 2 items.",
+     "people has at least 2 items where people[].age ≥ 70"
     ]
    ],
    "additional": {
@@ -599,6 +694,16 @@
      "required",
      "Required within people[]",
      null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, value is a string or absent.",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "When id = 10, people[0].name = \"Ada\" or absent.",
+     "id = 10"
     ]
    ],
    "additional": {
@@ -630,6 +735,16 @@
      "range",
      "18 ≤ value ≤ 89",
      null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, value is an integer or absent.",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "When people[].name = null in the same item, value = null.",
+     "people[].name = null in the same item"
     ]
    ],
    "additional": {
@@ -728,6 +843,11 @@
      "items",
      "At most 3 item(s)",
      null
+    ],
+    [
+     "conditional",
+     "When people[].name = null in the same item, value = null.",
+     "people[].name = null in the same item"
     ]
    ],
    "additional": {
@@ -764,6 +884,11 @@
     [
      "range",
      "Each inner item: 0 ≤ value ≤ 9",
+     null
+    ],
+    [
+     "if/then",
+     "Each item: When value has at least 3 items, value has only items where item is an integer.",
      null
     ]
    ],
@@ -806,6 +931,11 @@
      "range",
      "Each item: 0 ≤ value ≤ 9",
      null
+    ],
+    [
+     "if/then",
+     "When value has at least 3 items, value has only items where item is an integer.",
+     null
     ]
    ],
    "additional": null,
@@ -836,6 +966,11 @@
      "additionalProperties",
      "No other properties allowed",
      null
+    ],
+    [
+     "conditional",
+     "When id = 0, value = null.",
+     "id = 0"
     ]
    ],
    "additional": {
@@ -860,7 +995,18 @@
    "type": "number (nullable)",
    "format": "",
    "values": [],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When id ≥ 12, value must be present if point is an object (may be null).",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "Required when point.tier is present.",
+     "point.tier is present"
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "DOUBLE"
    },
@@ -876,7 +1022,18 @@
    "type": "number (nullable)",
    "format": "",
    "values": [],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When id ≥ 12, value must be present if point is an object (may be null).",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "Required when point.tier is present.",
+     "point.tier is present"
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "DOUBLE"
    },
@@ -911,7 +1068,7 @@
      "value",
      null,
      null,
-     null
+     "id = 10"
     ],
     [
      "platinum",
@@ -928,7 +1085,23 @@
      null
     ]
    ],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When id ≥ 12, value is one of \"bronze\", \"silver\", \"gold\", \"platinum\" (required if point is an object).",
+     "id ≥ 12"
+    ],
+    [
+     "conditional",
+     "When id = 10, value = \"gold\" or absent.",
+     "id = 10"
+    ],
+    [
+     "conditional",
+     "When point.tier is present, point.x and point.y are also required.",
+     "point.tier is present"
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "VARCHAR"
    },
@@ -1029,6 +1202,11 @@
      "additionalProperties",
      "No other properties allowed",
      null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, value is an object or absent.",
+     "id ≥ 12"
     ]
    ],
    "additional": null,
@@ -1168,6 +1346,11 @@
      "range",
      "0 ≤ value ≤ 9",
      null
+    ],
+    [
+     "conditional",
+     "When key_order.2 = null, value = 1 or absent.",
+     "key_order.2 = null"
     ]
    ],
    "additional": {
@@ -1239,7 +1422,18 @@
    "type": "string (nullable)",
    "format": "",
    "values": [],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
+    ]
+   ],
    "additional": {
     "examples": [
      "red",
@@ -1264,6 +1458,16 @@
      "range",
      "0 ≤ value ≤ 1",
      null
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
     ]
    ],
    "additional": {
@@ -1312,12 +1516,18 @@
     [
      "demo",
      "value",
-     null,
      "Row 10",
-     null
+     "Row 10",
+     "odd_keys[\"my field\"] = \"spaced key\""
     ]
    ],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When odd_keys[\"my field\"] = \"spaced key\", value = \"demo\" (Row 10) or absent.",
+     "odd_keys[\"my field\"] = \"spaced key\""
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "VARCHAR"
    },
@@ -1338,6 +1548,21 @@
      "range",
      "0 ≤ value ≤ 9",
      null
+    ],
+    [
+     "if/then",
+     "When value is a string, value has at least 1 character.",
+     null
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
     ]
    ],
    "additional": {
@@ -1360,6 +1585,16 @@
      "range",
      "0 ≤ value ≤ 99",
      null
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
     ]
    ],
    "additional": {
@@ -1377,7 +1612,18 @@
    "type": "boolean (nullable)",
    "format": "",
    "values": [],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "BOOLEAN"
    },
@@ -1393,7 +1639,18 @@
    "type": "string (nullable)",
    "format": "",
    "values": [],
-   "constraints": [],
+   "constraints": [
+    [
+     "conditional",
+     "When odd_keys.kind = \"nulls\" (Row 2, where every other key is null), value = null or absent.",
+     "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)"
+    ],
+    [
+     "conditional",
+     "When odd_keys.kind = \"demo\" (Row 10), value must be present (may be null).",
+     "odd_keys.kind = \"demo\" (Row 10)"
+    ]
+   ],
    "additional": {
     "x-duckdb-type": "VARCHAR"
    },
@@ -1419,6 +1676,16 @@
      "maxProperties",
      "At most 6 properties",
      null
+    ],
+    [
+     "if/then",
+     "When value has at least 4 properties, value has at least 6 properties.",
+     null
+    ],
+    [
+     "conditional",
+     "When id ≥ 12, value has at most 3 properties or value is null.",
+     "id ≥ 12"
     ]
    ],
    "additional": {
@@ -1481,6 +1748,11 @@
     [
      "range",
      "0 ≤ value ≤ 999",
+     null
+    ],
+    [
+     "if/then",
+     "When value ≤ 9, value ≥ 1.",
      null
     ]
    ],
@@ -1549,6 +1821,11 @@
      "range",
      "Each item: 0 ≤ value ≤ 9",
      null
+    ],
+    [
+     "conditional",
+     "When id = 0, value = null.",
+     "id = 0"
     ]
    ],
    "additional": {
@@ -1585,6 +1862,16 @@
      "oneOf",
      "When shifty is an object",
      null
+    ],
+    [
+     "conditional",
+     "When shifty.k is present, shifty.n is also required.",
+     "shifty.k is present"
+    ],
+    [
+     "conditional",
+     "Required when shifty.n is present.",
+     "shifty.n is present"
     ]
    ],
    "additional": null,
@@ -1610,6 +1897,16 @@
      "range",
      "0 ≤ value ≤ 9",
      null
+    ],
+    [
+     "conditional",
+     "Required when shifty.k is present.",
+     "shifty.k is present"
+    ],
+    [
+     "conditional",
+     "When shifty.n is present, shifty.k is also required.",
+     "shifty.n is present"
     ]
    ],
    "additional": null,
@@ -1641,6 +1938,476 @@
    }
   }
  ],
- "conditionalRules": [],
+ "conditionalRules": [
+  {
+   "condition": "id = 0",
+   "triggers": [
+    "id"
+   ],
+   "description": "Row 0 is null in every column but id.",
+   "effects": [
+    {
+     "variable": "label",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    },
+    {
+     "variable": "counts",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    },
+    {
+     "variable": "point",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    },
+    {
+     "variable": "people",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    },
+    {
+     "variable": "shifty",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    }
+   ]
+  },
+  {
+   "condition": "id ≥ 12",
+   "triggers": [
+    "id"
+   ],
+   "description": "Rows 12-999 are random; rows 0-11 show one edge case each. The random rows follow the generator's ranges. A random row has short lists of small integers, a point with every field, and people with a name and an age.",
+   "effects": [
+    {
+     "variable": "counts",
+     "value": [],
+     "kind": "constraint",
+     "text": "(value has at most 4 items and value has only items where (item ≤ 999 or item is null)) or value is null"
+    },
+    {
+     "variable": "signed",
+     "value": [],
+     "kind": "constraint",
+     "text": "(value has at most 3 items and value has only items where -99 ≤ item ≤ 99) or value is null"
+    },
+    {
+     "variable": "words",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has at most 2 items or value is null"
+    },
+    {
+     "variable": "point.tier",
+     "value": [
+      "bronze",
+      "silver",
+      "gold",
+      "platinum"
+     ],
+     "kind": "oneOf",
+     "required": true,
+     "within": "point",
+     "text": "value is one of \"bronze\", \"silver\", \"gold\", \"platinum\" (required if point is an object)"
+    },
+    {
+     "variable": "point.x",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "within": "point",
+     "text": "value must be present if point is an object (may be null)"
+    },
+    {
+     "variable": "point.y",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "within": "point",
+     "text": "value must be present if point is an object (may be null)"
+    },
+    {
+     "variable": "people",
+     "value": [],
+     "kind": "constraint",
+     "text": "(value has at most 2 items and value has only items where item is an object) or value is null"
+    },
+    {
+     "variable": "people[].name",
+     "value": [],
+     "kind": "constraint",
+     "orAbsent": true,
+     "text": "value is a string or absent"
+    },
+    {
+     "variable": "people[].age",
+     "value": [],
+     "kind": "constraint",
+     "orAbsent": true,
+     "text": "value is an integer or absent"
+    },
+    {
+     "variable": "depth5.l2.l3",
+     "value": [],
+     "kind": "constraint",
+     "orAbsent": true,
+     "text": "value is an object or absent"
+    },
+    {
+     "variable": "props",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has at most 3 properties or value is null"
+    }
+   ]
+  },
+  {
+   "condition": "id < 12",
+   "triggers": [
+    "id"
+   ],
+   "description": "Rows 12-999 are random; rows 0-11 show one edge case each. A showcase row's label names the case it shows.",
+   "effects": [
+    {
+     "variable": "label",
+     "value": [],
+     "kind": "constraint",
+     "text": "value matches ^showcase: or value is null"
+    }
+   ]
+  },
+  {
+   "condition": "id = 10",
+   "triggers": [
+    "id"
+   ],
+   "description": "The demo row's point is gold, and Ada comes first in its people.",
+   "effects": [
+    {
+     "variable": "point.tier",
+     "value": "gold",
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = \"gold\" or absent"
+    },
+    {
+     "variable": "people[0].name",
+     "value": "Ada",
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = \"Ada\" or absent"
+    }
+   ]
+  },
+  {
+   "condition": "point.tier = \"it's\" (Row 4: text that needs escaping)",
+   "triggers": [
+    "point.tier"
+   ],
+   "description": "Only row 4 (text escapes) has the tier it's.",
+   "effects": [
+    {
+     "variable": "id",
+     "value": 4,
+     "kind": "equals",
+     "text": "value = 4"
+    }
+   ]
+  },
+  {
+   "condition": "point.tier = \"platinum\" or point is null",
+   "triggers": [
+    "point.tier",
+    "point"
+   ],
+   "description": "Made up: a platinum point keeps the word list short.",
+   "effects": [
+    {
+     "variable": "words",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has at most 2 items or value is null"
+    }
+   ]
+  },
+  {
+   "condition": "people has at least 2 items where people[].age ≥ 70",
+   "triggers": [
+    "people",
+    "people[].age"
+   ],
+   "description": "Made up: two people aged 70 or more leave no room for a third.",
+   "effects": [
+    {
+     "variable": "people",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has at most 2 items"
+    }
+   ]
+  },
+  {
+   "condition": "people has only items where (people[].langs has no items or people[].langs is null or people[].langs is absent) or people is null",
+   "triggers": [
+    "people",
+    "people[].langs"
+   ],
+   "description": "Made up: when nobody listed speaks a language, the word list is short.",
+   "effects": [
+    {
+     "variable": "words",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has at most 2 items or value is null"
+    }
+   ]
+  },
+  {
+   "condition": "depth5.l2.l3 is null",
+   "triggers": [
+    "depth5.l2.l3"
+   ],
+   "description": "Only row 2 cuts the chain short: its l3 is null.",
+   "effects": [
+    {
+     "variable": "id",
+     "value": 2,
+     "kind": "equals",
+     "text": "value = 2"
+    }
+   ]
+  },
+  {
+   "condition": "days[0] = \"0001-01-01\" or ids includes \"00000000-0000-0000-0000-000000000000\"",
+   "triggers": [
+    "days",
+    "ids"
+   ],
+   "description": "Row 9 holds the date and UUID edges: 0001-01-01 first, and the nil UUID.",
+   "effects": [
+    {
+     "variable": "id",
+     "value": 9,
+     "kind": "equals",
+     "text": "value = 9"
+    }
+   ]
+  },
+  {
+   "condition": "id = 9",
+   "triggers": [
+    "id"
+   ],
+   "description": "Row 9's days start with the earliest and the latest date.",
+   "effects": [
+    {
+     "variable": "days[0]",
+     "value": "0001-01-01",
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = \"0001-01-01\" or absent"
+    },
+    {
+     "variable": "days[1]",
+     "value": "9999-12-31",
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = \"9999-12-31\" or absent"
+    }
+   ]
+  },
+  {
+   "condition": "ids has at least 2 items",
+   "triggers": [
+    "ids"
+   ],
+   "description": "Made up: a list of two or more IDs never repeats one.",
+   "effects": [
+    {
+     "variable": "ids",
+     "value": [],
+     "kind": "constraint",
+     "text": "value has no repeated items"
+    }
+   ]
+  },
+  {
+   "condition": "shifty is an integer or true or false",
+   "triggers": [
+    "shifty"
+   ],
+   "description": "Made up: a shifty number or boolean comes with a label.",
+   "effects": [
+    {
+     "variable": "label",
+     "value": [],
+     "kind": "constraint",
+     "text": "value is a string"
+    }
+   ]
+  },
+  {
+   "condition": "people[].name = null in the same item",
+   "triggers": [
+    "people[].name"
+   ],
+   "description": "Row 2 lists a person whose every field is null.",
+   "effects": [
+    {
+     "variable": "people[].age",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    },
+    {
+     "variable": "people[].langs",
+     "value": null,
+     "kind": "equals",
+     "text": "value = null"
+    }
+   ]
+  },
+  {
+   "condition": "key_order.2 = null",
+   "triggers": [
+    "key_order.2"
+   ],
+   "description": "Row 2 nulls key \"2\" and sets key \"1\" to 1.",
+   "effects": [
+    {
+     "variable": "key_order.1",
+     "value": 1,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = 1 or absent"
+    }
+   ]
+  },
+  {
+   "condition": "odd_keys.kind = \"nulls\" (Row 2, where every other key is null)",
+   "triggers": [
+    "odd_keys.kind"
+   ],
+   "description": "Row 2's kind says every other key is null.",
+   "effects": [
+    {
+     "variable": "odd_keys.k",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    },
+    {
+     "variable": "odd_keys.score",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    },
+    {
+     "variable": "odd_keys[\"my field\"]",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    },
+    {
+     "variable": "odd_keys[\"a.b\"]",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    },
+    {
+     "variable": "odd_keys[\"q\\\"k\"]",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    },
+    {
+     "variable": "odd_keys.ünï",
+     "value": null,
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = null or absent"
+    }
+   ]
+  },
+  {
+   "condition": "odd_keys.kind = \"demo\" (Row 10)",
+   "triggers": [
+    "odd_keys.kind"
+   ],
+   "description": "Row 10's kind says it has every key.",
+   "effects": [
+    {
+     "variable": "odd_keys.k",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    },
+    {
+     "variable": "odd_keys.score",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    },
+    {
+     "variable": "odd_keys[\"my field\"]",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    },
+    {
+     "variable": "odd_keys[\"a.b\"]",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    },
+    {
+     "variable": "odd_keys[\"q\\\"k\"]",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    },
+    {
+     "variable": "odd_keys.ünï",
+     "value": [],
+     "kind": "required",
+     "required": true,
+     "text": "value must be present (may be null)"
+    }
+   ]
+  },
+  {
+   "condition": "odd_keys[\"my field\"] = \"spaced key\"",
+   "triggers": [
+    "odd_keys[\"my field\"]"
+   ],
+   "description": "Only the demo row spells out the spaced key's name.",
+   "effects": [
+    {
+     "variable": "odd_keys.kind",
+     "value": "demo",
+     "label": "Row 10",
+     "kind": "equals",
+     "orAbsent": true,
+     "text": "value = \"demo\" (Row 10) or absent"
+    }
+   ]
+  }
+ ],
  "warnings": []
 }
