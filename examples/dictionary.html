@@ -95,7 +95,21 @@
 /* ---- Header & toolbar ---- */
 .dd-header { flex: none; padding-bottom: 12px; }
 .dd-title { font-size: 17px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.3; margin: 0; }
+/* The dataset's description and note: at most --dd-description-max-height tall, scrolling past
+   it, so the table keeps its room. A shadow on an edge with more beyond it says so even while an
+   overlay scrollbar is hidden: covers in the background colour scroll with the text and hide
+   each shadow once its edge is reached. */
+.dd-about {
+  max-width: 120ch; max-height: var(--dd-description-max-height, min(25vh, 200px));
+  margin-top: 4px; padding-right: 8px; overflow-y: auto; overscroll-behavior: contain;
+  background:
+    linear-gradient(var(--_bg) 40%, transparent) top / 100% 24px no-repeat local,
+    linear-gradient(transparent, var(--_bg) 60%) bottom / 100% 24px no-repeat local,
+    linear-gradient(color-mix(in srgb, var(--_fg) 14%, transparent), transparent) top / 100% 8px no-repeat scroll,
+    linear-gradient(transparent, color-mix(in srgb, var(--_fg) 14%, transparent)) bottom / 100% 8px no-repeat scroll;
+}
 .dd-description, .dd-comment { margin: 4px 0 0; max-width: 120ch; color: var(--_muted); }
+.dd-about > :first-child { margin-top: 0; }
 .dd-comment { font-size: 12px; }
 
 .dd-toolbar { display: grid; gap: 8px; margin-top: 14px; }
@@ -407,6 +421,7 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
 
 @media print {
   .dd-root { height: auto; }
+  .dd-about { max-height: none; overflow: visible; background: none; }
   .dd-viewport { overflow: visible; border: none; box-shadow: none; }
   .dd-head, .dd-group, .dd-col-name, .dd-pin { position: static; }
   .dd-category { content-visibility: visible; contain-intrinsic-size: none; }
@@ -423,8 +438,7 @@ mark.dd-hit { background: var(--_mark); color: inherit; border-radius: 3px; padd
   
   <header class="dd-header">
     <h2 class="dd-title">BCRPP - CORE table</h2>
-    <p class="dd-description">Array of CORE records. One element = one participant at one questionnaire / record cycle. Each record is the union of the category object schemas; structurally-missing values are encoded via sentinels and the key skip patterns are enforced by the conditional blocks below.</p>
-    
+    <div class="dd-about"><p class="dd-description">Array of CORE records. One element = one participant at one questionnaire / record cycle. Each record is the union of the category object schemas; structurally-missing values are encoded via sentinels and the key skip patterns are enforced by the conditional blocks below.</p></div>
     <div class="dd-toolbar">
       <div class="dd-searchbar">
         <div class="dd-search">

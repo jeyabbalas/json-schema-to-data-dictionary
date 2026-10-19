@@ -136,7 +136,7 @@ export function schemaDocumentsToTable(
     usedIds: new Set(),
     root: { name: "the record", identities: new Set([itemObject]) }
   };
-  const categories = collectCategories(itemObject, itemDeref.base, itemSource, ctx);
+  const categories = collectCategories(itemObject, itemDeref.base, itemSource, ctx, itemDeref.schema === root.schema);
 
   if (categories.length === 0) warnings.push("No object properties were found; the table has no variable rows.");
 
@@ -389,7 +389,20 @@ function findItems(schema: JsonSchema, base: ResolutionBase, registry: SchemaReg
   return visit(schema, base, 0);
 }
 
-function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBase, itemSource: SourceInfo | undefined, ctx: ExtractCtx): DataDictionaryCategory[] {
+function collectCategories(
+  itemObject: JsonSchemaObject,
+  itemBase: ResolutionBase,
+  itemSource: SourceInfo | undefined,
+  ctx: ExtractCtx,
+  recordIsRoot: boolean
+): DataDictionaryCategory[] {
+  // The record's own section. A record that is the root schema has its description and comment
+  // shown as the dataset's, so its section does not repeat them.
+  const recordCategory = (title: string): CategoryBuilder => {
+    const builder = newCategoryBuilder(title, itemObject, itemBase, itemSource, ctx);
+    if (recordIsRoot) builder.description = builder.comment = undefined;
+    return builder;
+  };
   const branches: Array<{ schema: JsonSchema; base: ResolutionBase }> = [];
   const compositors = [itemObject.allOf, itemObject.anyOf, itemObject.oneOf].filter(Array.isArray) as JsonSchema[][];
   for (const list of compositors) for (const b of list) branches.push({ schema: b, base: itemBase });
@@ -402,7 +415,7 @@ function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBas
 
   if (!ctx.options.splitAllOfObjectCategories) {
     // One merged category: own properties + every object branch.
-    const merged = newCategoryBuilder("Variables", itemObject, itemBase, itemSource, ctx);
+    const merged = recordCategory("Variables");
     addObjectProperties(itemObject, itemBase, itemSource, merged, ctx);
     for (const d of derefs) {
       if (isSchemaObject(d.schema) && hasProperties(d.schema)) addObjectProperties(d.schema, d.base, d.source, merged, ctx);
@@ -415,7 +428,7 @@ function collectCategories(itemObject: JsonSchemaObject, itemBase: ResolutionBas
   // 1) Inline properties on the row object form a "General" section.
   if (hasOwnProperties(itemObject)) {
     const title = itemObject.title && !branches.length ? itemObject.title : "General";
-    const builder = newCategoryBuilder(title, itemObject, itemBase, itemSource, ctx);
+    const builder = recordCategory(title);
     addObjectProperties(itemObject, itemBase, itemSource, builder, ctx);
     categories.push(builder);
   }

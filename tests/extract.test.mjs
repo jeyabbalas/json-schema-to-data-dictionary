@@ -119,3 +119,26 @@ test("single format showcase: built-in string formats map to data types", () => 
   assert.match(findRow(table, "contact_email")["Data type"], /email/);
   assert.match(findRow(table, "server_ipv4")["Data type"], /IPv4/);
 });
+
+test("a root schema that is the record: its description and comment are the dataset's, not repeated on its section", () => {
+  const record = {
+    title: "Reports",
+    description: "One row per report.",
+    $comment: "Rules follow the source dictionary.",
+    type: "object",
+    properties: { a: { type: "string" } },
+    allOf: [{ if: { properties: { a: { const: "x" } } }, then: { required: ["a"] } }]
+  };
+  for (const splitAllOfObjectCategories of [true, false]) {
+    const table = schemaDocumentsToTable([{ uri: "https://example.org/r.json", schema: record }], { splitAllOfObjectCategories });
+    assert.equal(table.description, "One row per report.");
+    assert.equal(table.comment, "Rules follow the source dictionary.");
+    assert.equal(table.categories.length, 1);
+    assert.equal(table.categories[0].description, undefined);
+    assert.equal(table.categories[0].comment, undefined);
+  }
+
+  // Under an array root, the record's description is its section's.
+  const table = schemaDocumentsToTable([{ uri: "https://example.org/r.json", schema: { title: "Reports", type: "array", items: record } }]);
+  assert.equal(table.categories[0].description, "One row per report.");
+});

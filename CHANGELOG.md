@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- A long dataset description no longer crowds out the table. The description and its note sit in
+  a box at most `min(25vh, 200px)` tall that scrolls when the text is longer, with a shadow on
+  the edge that has more beyond it; the table keeps the rest of the height. Before, an
+  11,000-character description filled the header and left the table no room at all.
+  `--dd-description-max-height` sets another bound (`none` shows the whole description).
+- When the root schema is the record itself (an object, not an array of them), its description
+  and `$comment` were both the dataset's and its section's, so the table opened with the same
+  text again. They are now the dataset's only.
+
 ## 0.8.0 - 2026-10-11
 
 Skip patterns that say exactly what the schema enforces, the schema's comments where readers

@@ -152,14 +152,18 @@ function header(vm: ViewModel, uid: string): string {
       : [])
   ].join("")}</div>`;
 
-  // The search box on a line of its own, then the panel toggles under it -- what the reader
-  // should not miss -- with the table's own controls at the far end. A dictionary with nothing
-  // to open keeps those controls beside the search box instead of on a line of their own.
+  // The dataset's description and note in a box of bounded height, scrolling when longer, so a
+  // long one never takes the table's room. Then the search box on a line of its own, then the
+  // panel toggles under it -- what the reader should not miss -- with the table's own controls
+  // at the far end. A dictionary with nothing to open keeps those controls beside the search
+  // box instead of on a line of their own.
+  const about =
+    (vm.description ? `<p class="dd-description">${multiline(vm.description)}</p>` : "") +
+    (vm.comment ? `<div class="dd-comment">${note(vm.comment)}</div>` : "");
   return `
   <header class="dd-header">
     <h2 class="dd-title">${escapeHtml(vm.title)}</h2>
-    ${vm.description ? `<p class="dd-description">${multiline(vm.description)}</p>` : ""}
-    ${vm.comment ? `<div class="dd-comment">${note(vm.comment)}</div>` : ""}
+    ${about ? `<div class="dd-about">${about}</div>` : ""}
     <div class="dd-toolbar">
       <div class="dd-searchbar">
         <div class="dd-search">

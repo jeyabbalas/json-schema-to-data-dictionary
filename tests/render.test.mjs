@@ -157,3 +157,20 @@ test("tableToHtml: a value cannot break out of the embedded script", () => {
   assert.match(html, /\\u003c\/script>\\u003cscript>alert\(1\)\\u003c\/script>/, "the CSV keeps the text, JSON-escaped");
   assert.match(html, /&lt;b&gt;bold&lt;\/b&gt;/, "the cell shows the escaped text");
 });
+
+test("tableToHtml: the dataset's description and note scroll in a box of bounded height", () => {
+  const long = schemaDocumentsToTable([
+    {
+      uri: "https://example.org/p.json",
+      schema: { title: "P", description: "Line one.\nLine two.", $comment: "A note.", type: "object", properties: { a: { type: "string" } } }
+    }
+  ]);
+  const html = tableToHtml(long);
+  const markup = html.slice(html.indexOf("</style>"), html.indexOf("<script>"));
+  assert.match(markup, /<h2 class="dd-title">P<\/h2>\s*<div class="dd-about"><p class="dd-description">Line one\.<br>Line two\.<\/p><div class="dd-comment"><div class="dd-note">[\s\S]*A note\.<\/div><\/div><\/div>\s*<div class="dd-toolbar">/);
+  assert.match(html, /\.dd-about \{[^}]*max-height: var\(--dd-description-max-height, [^;]+\);[^}]*overflow-y: auto;/);
+
+  const bare = schemaDocumentsToTable([{ uri: "https://example.org/q.json", schema: { type: "object", properties: { a: { type: "string" } } } }]);
+  const plain = tableToHtml(bare);
+  assert.doesNotMatch(plain.slice(plain.indexOf("</style>")), /class="dd-about"/, "no box without a description or note");
+});

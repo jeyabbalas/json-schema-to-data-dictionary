@@ -302,7 +302,9 @@ collapsible JSON trees, copy as CSV / download as an Excel workbook, and optiona
 
 Give the element a height — or put it in a container that has one — and the dictionary fills it:
 the title and toolbar stay put while the table scrolls inside, under its column header, with
-the horizontal scrollbar always in reach. Without a height it is as tall as its content.
+the horizontal scrollbar always in reach. Without a height it is as tall as its content. A long
+dataset description scrolls in a box of its own, at most `min(25vh, 200px)` tall
+(`--dd-description-max-height` sets another bound).
 
 ```css
 #dict { height: 80vh; }   /* renderDataDictionary(#dict, …) fills it */
