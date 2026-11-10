@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Skip patterns that assign `null` to nullable categorical fields no longer emit false
+  contradiction warnings. Nullability is checked before the list of non-null codes; rules
+  assigning null to non-nullable fields or assigning unlisted codes still warn.
 - A long dataset description no longer crowds out the table. The description and its note sit in
   a box at most `min(25vh, 200px)` tall that scrolls when the text is longer, with a shadow on
   the edge that has more beyond it; the table keeps the rest of the height. Before, an

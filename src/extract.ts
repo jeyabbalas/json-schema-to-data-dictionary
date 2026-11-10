@@ -852,6 +852,8 @@ function pinnedValue(row: DataDictionaryRow, value: JsonValue, cond: VariableCon
  * when it lists codes and nothing measured, not outside its range, not of a type it does not take.
  */
 function admits(row: DataDictionaryRow, value: JsonValue, types: readonly string[]): boolean {
+  // Nullability is tracked in the types, not in the categorical Valid values list.
+  if (value === null && types.includes("null")) return true;
   // A list's Valid values are its items' codes: they say nothing of the list itself.
   const listed = types.includes("array") ? [] : row["Valid values"];
   if (listed.length > 0 && !listed.some((v) => v.kind === "measurement")) return false;
