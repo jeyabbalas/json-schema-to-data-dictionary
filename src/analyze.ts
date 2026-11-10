@@ -473,25 +473,46 @@ function collectEnumConst(schema: JsonSchemaObject, ctx: InternalContext, acc: A
   if (Array.isArray(schema.enum)) {
     const descriptions = schema.enumDescriptions ?? schema["x-enumDescriptions"];
     for (const [index, value] of schema.enum.entries()) {
+      const description = enumDescriptionFor(value, index, descriptions);
       if (value === null) {
         acc.nullable = true;
+        // A null the schema says something about is a code of its own; a bare one only makes
+        // the variable nullable.
+        if (nonBlank(description)) acc.values.push(declare(makeValue(null, description, undefined, ctx.source), acc));
         continue;
       }
-      acc.values.push(declare(makeValue(value, enumDescriptionFor(value, index, descriptions), undefined, ctx.source), acc));
+      acc.values.push(declare(makeValue(value, description, undefined, ctx.source), acc));
       acc.jsonTypes.add(jsonTypeOf(value));
     }
   }
   if (hasOwn(schema, "const")) {
     const value = schema.const as JsonValue;
-    if (value === null) acc.nullable = true;
-    else {
-      // For a bare const the local title/description annotate the value itself.
-      const label = typeof schema.title === "string" ? schema.title : undefined;
-      const desc = typeof schema.description === "string" ? schema.description : undefined;
+    // For a bare const the local title/description annotate the value itself.
+    const label = typeof schema.title === "string" ? schema.title : undefined;
+    const desc = typeof schema.description === "string" ? schema.description : undefined;
+    if (value === null) {
+      acc.nullable = true;
+      // `{ "const": null, "title": "Missing (Unknown)" }` names what a null means, as a titled
+      // `{ "const": 9 }` names what 9 means: list it, with its label, among the codes. An
+      // untitled null only makes the variable nullable.
+      if (nonBlank(label) || nonBlank(desc)) acc.values.push(declare(makeValue(null, desc, label, ctx.source), acc));
+    } else {
       acc.values.push(declare(makeValue(value, desc, label, ctx.source), acc));
       acc.jsonTypes.add(jsonTypeOf(value));
     }
   }
+}
+
+function nonBlank(text: string | undefined): text is string {
+  return typeof text === "string" && text.trim() !== "";
+}
+
+/**
+ * A code's kind when the schema does not declare one: a labelled null is how a schema writes
+ * "missing", so it is a special code unless `x-value-kind: "value"` says it is an answer.
+ */
+function guessKind(v: ValidValue, refName?: string): ValidValueKind {
+  return v.value === null || isSentinelValue(v, refName) ? "sentinel" : "value";
 }
 
 /** Stamp the kind in effect where the value was declared, if the schema declared one. */
@@ -570,7 +591,7 @@ function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: In
     // branch's declaration, which beats the property's, which beats the wording.
     const explicit = v.declaredKind ?? declared ?? acc.valueKind;
     if (explicit) return explicit;
-    return isSentinelValue(v, refName) ? "sentinel" : "value";
+    return guessKind(v, refName);
   };
   // Once per branch, not once per value: a branch can carry a 200-member enum.
   const refNameOf = (branch: JsonSchema): string | undefined => (isSchemaObject(branch) ? refKeyword(branch) : undefined);
@@ -610,15 +631,18 @@ function handleUnion(branches: JsonSchema[], keyword: "oneOf" | "anyOf", ctx: In
     }
     for (const c of categoricals) {
       const refName = refNameOf(c.branch);
+      // A branch that lists a labelled null is not absorbed below, so its null is noted here.
+      acc.nullable ||= c.analysis.acc.nullable;
       for (const v of c.analysis.values) acc.values.push(withComment({ ...v, kind: classify(v, refName, c.analysis.valueKind) }, c.analysis.comment));
     }
   } else if (hasCategorical) {
     // Pure categorical: tag each value as substantive or sentinel.
     for (const c of categoricals) {
       const refName = refNameOf(c.branch);
+      acc.nullable ||= c.analysis.acc.nullable;
       for (const v of c.analysis.values) {
         acc.values.push(withComment({ ...v, kind: classify(v, refName, c.analysis.valueKind) }, c.analysis.comment));
-        acc.jsonTypes.add(jsonTypeOf(v.value));
+        if (v.value !== null) acc.jsonTypes.add(jsonTypeOf(v.value));
       }
     }
   } else {
@@ -895,7 +919,7 @@ function materialize(acc: Accumulator, mode: "row" | "item"): Materialized {
   // them yet. Run the same rule here: a code should not mean one thing written as `enum` and
   // another written as a `oneOf` of titled consts.
   for (const v of acc.values as DraftValue[]) {
-    if (v.kind === undefined) v.kind = acc.valueKind ?? (isSentinelValue(v) ? "sentinel" : "value");
+    if (v.kind === undefined) v.kind = acc.valueKind ?? guessKind(v);
     delete v.declaredKind;
   }
   // The item schema is a property in its own right; whatever it says about a single element
@@ -997,8 +1021,9 @@ function scalarTypeText(acc: Accumulator): string {
   // "categorical" claims the field is a coded enumeration, so it needs at least one real
   // category: a sparse coding table that declares nothing but missing/NA codes is a plain
   // typed field that happens to have special codes, not a categorical one. Array- or
-  // object-valued members (`enum: [[1, 2], [3]]`) are the container's business.
-  const coded = acc.values.filter((v) => v.kind !== "measurement" && !isContainerValue(v.value));
+  // object-valued members (`enum: [[1, 2], [3]]`) are the container's business, and a labelled
+  // null is the "(nullable)" the type already says.
+  const coded = acc.values.filter((v) => v.kind !== "measurement" && v.value !== null && !isContainerValue(v.value));
   if (coded.length >= 2 && coded.some((v) => v.kind !== "sentinel")) {
     return `categorical (${baseTypeOfValues(coded, acc)})`;
   }

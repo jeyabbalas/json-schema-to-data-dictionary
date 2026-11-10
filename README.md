@@ -81,7 +81,7 @@ Each variable becomes one row with these columns:
 | **Variable name** | The property key — or, for a field inside an array/object variable, its path (`visits[].date`, `address.city`). |
 | **Description** | `title` + `description` (the codebook text), following `$ref`s — the variable's own `title` first, replacing the title of a shared definition it `$ref`s — then its `$comment`s, which the table and the workbook show as a **Note**. |
 | **Data type** | JSON type / built-in `format` (`date`, `email`, `uuid`, …), `categorical (…)`, `array of …`, or `… + coded values` for mixed types. |
-| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. A typed branch beside the codes — a range, a date, an identifier's pattern — is the substantive value (`20–65`, `any date`, `matches ^HH[0-9]{8}$`). A code's `$comment` (or its shared definition's) is shown under it. |
+| **Valid values** | `enum`/`const`/`oneOf`/`anyOf` members with labels (`enumDescriptions`, `x-enumDescriptions`, or branch `title`s). Substantive categories are kept visually separate from **special codes** (missing / N/A / skip sentinels); `x-value-kind` declares which is which. A typed branch beside the codes — a range, a date, an identifier's pattern — is the substantive value (`20–65`, `any date`, `matches ^HH[0-9]{8}$`). A code's `$comment` (or its shared definition's) is shown under it. A `null` the schema names — `{ "const": null, "title": "Missing" }`, or an `enumDescriptions` entry for `null` — is a special code too (`null = Missing`); an untitled `null` only makes the type `(nullable)`. |
 | **Constraints** | `required`, numeric ranges, lengths, patterns, array/object bounds (`Each item: …` for the items of an array, `Fields: …` for an object), and **conditional** rules from skip patterns. |
 | **Additional information** | Everything else — `default`, `examples`, `deprecated`, vendor `x-*` keywords, … — as a JSON tree: each keyword on a line of its own, short values written out (`examples: [[1, 2, 3]]`) and longer ones collapsible. |
 
@@ -256,8 +256,9 @@ length sets no other.
 
 Whether `-7` means *"none of the listed options apply"* (a real answer) or *"not recorded"* (a
 special code) is not something JSON Schema states, so it is guessed from the value's label and
-the name of the `$ref` it came from — plus the conventional `666`/`777`/`888`/`999` codes. When
-the wording does not give it away, say so:
+the name of the `$ref` it came from — plus the conventional `666`/`777`/`888`/`999` codes; a
+titled `null` is a special code whatever its wording. When the wording does not give it away, say
+so:
 
 ```jsonc
 "$defs": {

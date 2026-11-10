@@ -145,7 +145,11 @@ export type DeclaredValueKind = Exclude<ValidValueKind, "measurement">;
 
 /** One allowed value (or value range) for a variable. */
 export interface ValidValue {
-  /** The concrete value (`const`/`enum` member). For a measurement range this is `null`. */
+  /**
+   * The concrete value (`const`/`enum` member). For a measurement range this is `null`; a
+   * `null` the schema names (`{ "const": null, "title": "Missing" }`) is listed with its label,
+   * as a "sentinel" unless declared otherwise.
+   */
   value: JsonValue;
   /** Short human label (e.g. "White", "Premenopausal", or a range like "20–65"). */
   label?: string | undefined;

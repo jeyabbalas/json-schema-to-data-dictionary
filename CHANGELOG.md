@@ -8,6 +8,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A titled `null` branch is listed among the special codes (#3). `{ "const": null, "title":
+  "Missing (Unknown; Passthru)" }` in a `oneOf`/`anyOf` (inline or through a shared `$ref`), or an
+  `enumDescriptions` entry for `null`, was dropped: only the type's `(nullable)` was left, and its
+  label appeared nowhere. It now reads `null = Missing (Unknown; Passthru)` under *Special codes*
+  in the table, the CSV and the workbook, a skip pattern that sets it says so under it, and a
+  condition that tests it uses the label. A labelled `null` is a special code whatever its
+  wording (`x-value-kind: "value"` makes it an answer); the data type is unchanged, and an
+  untitled `null` still only makes it `(nullable)`.
 - Skip patterns that assign `null` to nullable categorical fields no longer emit false
   contradiction warnings. Nullability is checked before the list of non-null codes; rules
   assigning null to non-nullable fields or assigning unlisted codes still warn.
